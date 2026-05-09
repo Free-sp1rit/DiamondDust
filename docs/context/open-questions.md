@@ -12,12 +12,6 @@ Last updated: 2026-05-10
 - Needed decision: Product owner should review and approve, request changes, or explicitly defer parts of the governance set.
 - Impact: Product implementation should not begin until the applicable gate state is clear.
 
-### 2026-05-10 — Should the governance initialization branch move to PR review?
-
-- Context: Initialization acceptance scored 18/20 and passed with follow-up, but the governance docs and skills remain uncommitted in `chore/context-initialization`.
-- Needed decision: Decide when to commit, push, and prepare a PR for the initialization branch.
-- Impact: Gate 2 implementation should not start until initialization artifacts are reviewable and branch scope is clean.
-
 ## First Implementation Milestone
 
 ### 2026-05-10 — Should the next task be Gate 2 Schema Skeleton?
@@ -39,6 +33,12 @@ Last updated: 2026-05-10
 - Context: Minimal governance skills were created under `skills/` because `.codex/` and `.agents/` are read-only in this workspace.
 - Needed decision: Confirm whether `skills/` is the desired durable repo-local path or whether a later install/discovery step should mirror them into the active Codex skill directory.
 - Impact: Affects whether future sessions can trigger these skills automatically or must load them by path.
+
+### 2026-05-10 — Is local `gh` authentication valid before first `gh pr create`?
+
+- Context: `gh` is installed, but `gh auth status` reported an invalid token in the current shell on 2026-05-10.
+- Needed decision: Re-authenticate or verify `gh auth status` before relying on `gh pr create`.
+- Impact: Affects whether future task branches can create PRs directly from the CLI.
 
 ### 2026-05-10 — What minimal test/tooling setup should Gate 2 use?
 

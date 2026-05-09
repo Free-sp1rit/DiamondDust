@@ -27,3 +27,11 @@ Record completed development milestones and links to reviews here.
 - Gate impact: Gate 2 planning may begin; Gate 2 implementation is not yet recommended.
 - Validation: Manual review of governance docs, repo-local skills, context memory, Git status, and acceptance report.
 - Follow-up: Prepare governance initialization for PR review, confirm Gate 0/Gate 1 status, confirm skill discovery path, and create a Gate 2 execution plan before implementation.
+
+## 2026-05-10 — Governance Initialization PR Merged
+
+- Scope: Product owner completed PR review and merge for the initialization branch.
+- Outcome: `main` now includes governance docs, context memory, review templates, initialization acceptance review, and minimal governance skills.
+- Gate impact: Gate 2 planning may begin; Gate 2 implementation still requires Gate 0/Gate 1 status confirmation and a Gate 2 execution plan.
+- Workflow update: Future development may push current task branches and use `gh pr create`, but must not use `gh pr merge`, push `main`, or force push.
+- Follow-up: Verify `gh auth status` before first CLI PR creation.
