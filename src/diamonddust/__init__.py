@@ -1,1 +1,1 @@
-"""DiamondDust domain package."""
+"""DiamondDust package."""

@@ -4,13 +4,13 @@ Last updated: 2026-05-10
 
 ## Current Stage
 
-Gate 3 Markdown Ingestion complete.
+Gate 4 AI Extraction Proposal complete.
 
 ## Current Focus
 
-Prepare for Gate 4 AI Extraction Proposal planning after completing the Markdown ingestion boundary.
+Prepare for Gate 5 Patch Review planning after completing the provider-neutral extraction proposal boundary.
 
-Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2 and Gate 3 planning and implementation are complete.
+Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2, Gate 3, and Gate 4 planning and implementation are complete.
 
 ## Repo-Local Skills
 
@@ -28,7 +28,7 @@ Each skill is intentionally lightweight and contains only workflow guidance in `
 
 DiamondDust is a local-first semantic knowledge compiler. Its MVP path is to turn Markdown essays into structured `KnowledgeUnit` candidates, candidate `Relation`s, validated `KnowledgePatch` files, review reports, blog drafts, and blog quality reports.
 
-The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, and unit tests. AI extraction, patch review runtime behavior, blog drafting, scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
+The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, and unit tests. Real provider calls, patch review runtime behavior, blog drafting, scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
 
 ## Source-of-Truth Documents
 
@@ -57,7 +57,8 @@ Current gate position:
 - Gate 1: Architecture Freeze is satisfied by merged architecture, domain, data, and AI pipeline contracts.
 - Gate 2: Schema Skeleton passed on 2026-05-10.
 - Gate 3: Markdown Ingestion passed with follow-up on 2026-05-10.
-- Next likely gate: Gate 4 AI Extraction Proposal.
+- Gate 4: AI Extraction Proposal passed with follow-up on 2026-05-10.
+- Next likely gate: Gate 5 Patch Review.
 
 Initialization acceptance review:
 
@@ -79,16 +80,22 @@ Gate 3 review:
 - decision: pass with follow-up
 - tests: 19 unit tests passed, compile check passed, diff check passed
 
+Gate 4 review:
+
+- `docs/reviews/milestone-reviews/2026-05-10-gate-4-ai-extraction-proposal.md`
+- decision: pass with follow-up
+- tests: 27 unit tests passed, compile check passed, diff check passed
+
 ## Immediate Next Development Path
 
-The likely next implementation milestone is Gate 4: AI Extraction Proposal.
+The likely next implementation milestone is Gate 5: Patch Review.
 
 Expected next product implementation focus:
 
-- define the AI extraction proposal boundary
-- validate structured LLM-like output against typed schemas
-- fail safely on invalid output
-- record prompt/run metadata without binding domain core to a provider SDK
+- generate a `KnowledgePatch` from accepted candidate units and relations
+- make patch diffs inspectable
+- model accept/reject behavior without letting AI write formal notes directly
+- keep formal vault changes behind validated patch review and user acceptance
 
 ## Git State Notes
 

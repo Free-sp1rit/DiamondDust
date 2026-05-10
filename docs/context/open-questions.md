@@ -25,3 +25,17 @@ Last updated: 2026-05-10
 - Context: MVP success requires 5 real or semi-real Markdown essays passing the end-to-end flow.
 - Needed decision: Identify or create fixture essays before golden and integration tests are finalized.
 - Impact: Affects extraction quality evaluation and regression coverage.
+
+## AI Pipeline
+
+### 2026-05-10 — When should AI run logs become durable files?
+
+- Context: Gate 4 returns typed run logs for extraction validation, but does not yet write `_ai_runs/` files.
+- Needed decision: Add durable run log storage before real provider calls are introduced.
+- Impact: Affects traceability, debugging, replay, and future cache keys.
+
+### 2026-05-10 — Which provider adapter should be implemented first?
+
+- Context: Gate 4 is provider-neutral and does not call an LLM.
+- Needed decision: Choose provider adapter and model policy only when the patch review workflow is ready for real model output.
+- Impact: Affects dependencies, cost, auth, prompt design, and run log fields.

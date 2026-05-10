@@ -64,3 +64,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 19 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Reconsider parser dependencies only after fixture evidence requires richer Markdown or YAML behavior.
+
+## 2026-05-10 — Gate 4 AI Extraction Proposal Completed
+
+- Scope: Implemented provider-neutral validation for structured AI extraction proposal output.
+- Outcome: Added typed AI run metadata, run logs, extraction proposals, validation results, output hashing, and fail-safe invalid-output handling under `src/diamonddust/ai/`.
+- Review: `docs/reviews/milestone-reviews/2026-05-10-gate-4-ai-extraction-proposal.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Gate 4 AI Extraction Proposal is passed for the MVP skeleton; next candidate milestone is Gate 5 Patch Review.
+- Validation: 27 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add durable AI run log storage and provider adapter interfaces before real model calls are enabled.
