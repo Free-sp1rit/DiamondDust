@@ -4,13 +4,13 @@ Last updated: 2026-05-10
 
 ## Current Stage
 
-Gate 5 Patch Review complete.
+Gate 6 Blog Draft complete.
 
 ## Current Focus
 
-Prepare for Gate 6 Blog Draft planning after completing the application-layer patch review boundary.
+Prepare for Gate 7 MVP Release planning after completing the blog draft workflow.
 
-Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2, Gate 3, Gate 4, and Gate 5 planning and implementation are complete.
+Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2 through Gate 6 planning and implementation are complete.
 
 ## Repo-Local Skills
 
@@ -28,7 +28,7 @@ Each skill is intentionally lightweight and contains only workflow guidance in `
 
 DiamondDust is a local-first semantic knowledge compiler. Its MVP path is to turn Markdown essays into structured `KnowledgeUnit` candidates, candidate `Relation`s, validated `KnowledgePatch` files, review reports, blog drafts, and blog quality reports.
 
-The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, an application-layer patch review workflow, and unit tests. Real provider calls, formal vault patch apply behavior, blog drafting, scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
+The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, an application-layer patch review workflow, a deterministic blog draft workflow, and unit tests. Real provider calls, formal vault patch apply behavior, draft persistence/export, scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
 
 ## Source-of-Truth Documents
 
@@ -59,7 +59,8 @@ Current gate position:
 - Gate 3: Markdown Ingestion passed with follow-up on 2026-05-10.
 - Gate 4: AI Extraction Proposal passed with follow-up on 2026-05-10.
 - Gate 5: Patch Review passed with follow-up on 2026-05-10.
-- Next likely gate: Gate 6 Blog Draft.
+- Gate 6: Blog Draft passed with follow-up on 2026-05-10.
+- Next likely gate: Gate 7 MVP Release.
 
 Initialization acceptance review:
 
@@ -93,16 +94,22 @@ Gate 5 review:
 - decision: pass with follow-up
 - tests: 38 unit tests passed, compile check passed, diff check passed
 
+Gate 6 review:
+
+- `docs/reviews/milestone-reviews/2026-05-10-gate-6-blog-draft.md`
+- decision: pass with follow-up
+- tests: 46 unit tests passed, compile check passed, diff check passed
+
 ## Immediate Next Development Path
 
-The likely next implementation milestone is Gate 6: Blog Draft.
+The likely next implementation milestone is Gate 7: MVP Release.
 
 Expected next product implementation focus:
 
-- generate a blog draft from accepted or reviewed units
-- include a claim inventory
-- report unsupported claims
-- produce a blog quality report without inventing sources
+- define MVP release readiness checks
+- add sample essay fixtures or golden tests
+- connect existing skeleton pieces into an end-to-end smoke path
+- keep formal vault mutation, provider calls, and publishing behind their existing gates
 
 ## Git State Notes
 

@@ -53,3 +53,17 @@ Last updated: 2026-05-10
 - Context: Gate 5 models accepted patch handoff but does not mutate formal vault files.
 - Needed decision: Implement storage adapter apply/revert only after patch persistence and path/ID conflict checks are ready.
 - Impact: Affects formal write safety, rollback guarantees, and Git diff inspection.
+
+## Blog Draft
+
+### 2026-05-10 — When should blog drafts become durable files?
+
+- Context: Gate 6 returns typed draft packages and quality reports, but does not write draft files under `knowledge-vault/`.
+- Needed decision: Add draft persistence/export after the desired draft directory and review UX are clear.
+- Impact: Affects traceability, review flow, and publication workflow.
+
+### 2026-05-10 — When should provider-backed editorial drafting be introduced?
+
+- Context: Gate 6 uses deterministic scaffolding from accepted units and does not call an LLM.
+- Needed decision: Introduce provider-backed prose generation only after provider policy, prompt versions, fixtures, and quality thresholds are ready.
+- Impact: Affects dependencies, cost, evidence coverage, unsupported claim risk, and quality evaluation.
