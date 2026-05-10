@@ -53,3 +53,14 @@ Record completed development milestones and links to reviews here.
 - Gate impact: Gate 2 Schema Skeleton is passed; next candidate milestone is Gate 3 Markdown Ingestion.
 - Validation: 12 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
+
+## 2026-05-10 — Gate 3 Markdown Ingestion Completed
+
+- Scope: Implemented read-only Markdown ingestion with frontmatter parsing, source ref creation, and content hashing.
+- Outcome: Added a standard-library storage adapter under `src/diamonddust/storage/`.
+- Review: `docs/reviews/milestone-reviews/2026-05-10-gate-3-markdown-ingestion.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Gate 3 Markdown Ingestion is passed for the MVP skeleton; next candidate milestone is Gate 4 AI Extraction Proposal.
+- Validation: 19 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Reconsider parser dependencies only after fixture evidence requires richer Markdown or YAML behavior.
