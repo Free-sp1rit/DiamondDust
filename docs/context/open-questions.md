@@ -12,12 +12,6 @@ Last updated: 2026-05-10
 - Needed decision: Product owner should review and approve, request changes, or explicitly defer parts of the governance set.
 - Impact: Product implementation should not begin until the applicable gate state is clear.
 
-### 2026-05-10 — Should the governance initialization branch move to PR review?
-
-- Context: Initialization acceptance scored 18/20 and passed with follow-up, but the governance docs and skills remain uncommitted in `chore/context-initialization`.
-- Needed decision: Decide when to commit, push, and prepare a PR for the initialization branch.
-- Impact: Gate 2 implementation should not start until initialization artifacts are reviewable and branch scope is clean.
-
 ## First Implementation Milestone
 
 ### 2026-05-10 — Should the next task be Gate 2 Schema Skeleton?

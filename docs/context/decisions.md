@@ -52,6 +52,14 @@ Record durable technical and governance decisions here.
 - Risks: `skills/` may require later wiring if the active Codex environment discovers only a different skill path.
 - Follow-up: Confirm or document the skill discovery path when repo-local skill loading becomes necessary.
 
+### 2026-05-10 — GitHub task-branch push and PR creation permission
+
+- Decision: For future development, the coding agent may run GitHub PR workflow preflight, push the current task branch, and use `gh pr create`; the coding agent must not use `gh pr merge`, must not push `main`, and must not force push.
+- Reason: The product owner explicitly approved task-branch push and PR creation while keeping merge and protected-branch authority with the product owner.
+- Alternatives: Require approval for every push and PR creation; allow full PR merge automation.
+- Risks: Local proxy or `gh` authentication can still fail even when the permission boundary is approved.
+- Follow-up: Before PR creation, run preflight with `gh auth status --hostname github.com`, `gh repo view --json nameWithOwner,url`, `curl -I https://api.github.com`, `git status`, and `git branch --show-current`; if preflight fails, stop and output an escalation request.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

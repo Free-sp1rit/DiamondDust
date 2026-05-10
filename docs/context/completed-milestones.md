@@ -27,3 +27,19 @@ Record completed development milestones and links to reviews here.
 - Gate impact: Gate 2 planning may begin; Gate 2 implementation is not yet recommended.
 - Validation: Manual review of governance docs, repo-local skills, context memory, Git status, and acceptance report.
 - Follow-up: Prepare governance initialization for PR review, confirm Gate 0/Gate 1 status, confirm skill discovery path, and create a Gate 2 execution plan before implementation.
+
+## 2026-05-10 — Governance Initialization PR Merged
+
+- Scope: Product owner completed PR review and merge for the initialization branch.
+- Outcome: `main` now includes governance docs, context memory, review templates, initialization acceptance review, and minimal governance skills.
+- Gate impact: Gate 2 planning may begin; Gate 2 implementation still requires Gate 0/Gate 1 status confirmation and a Gate 2 execution plan.
+- Workflow update: Future development may run GitHub PR preflight, push current task branches, and use `gh pr create`, but must not use `gh pr merge`, push `main`, or force push.
+- Follow-up: Run proxy and GitHub preflight before PR creation; if it fails, stop and output an escalation request.
+
+## 2026-05-10 — GitHub PR Workflow Verified
+
+- Scope: Verified proxy, GitHub authentication, repository lookup, current task branch push, and PR creation for the workflow-permissions branch.
+- Outcome: Created PR #2 for `docs/github-workflow-permissions`.
+- PR: `https://github.com/Free-sp1rit/DiamondDust/pull/2`
+- Boundary respected: Did not merge, did not push `main`, did not force push, did not print token values in the final report, and did not start Gate 2 implementation.
+- Follow-up: Keep using preflight before future PR creation in workspace-write mode.

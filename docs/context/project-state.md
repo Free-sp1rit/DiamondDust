@@ -10,7 +10,7 @@ Pre-MVP governance and architecture setup.
 
 Finalize agent operating rules, skill boundaries, execution plan policy, persistence policy, and review gates.
 
-Initialization acceptance is complete with a `pass with follow-up` decision. The project may enter Gate 2 planning, but Gate 2 implementation is not yet recommended until governance initialization is reviewed and Gate 0/Gate 1 status is recorded.
+Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. The project may enter Gate 2 planning, but Gate 2 implementation is not yet recommended until Gate 0/Gate 1 status is recorded and a Gate 2 execution plan exists.
 
 ## Repo-Local Skills
 
@@ -79,6 +79,30 @@ Expected first product implementation focus:
 
 ## Git State Notes
 
-Current branch during initialization: `chore/context-initialization`.
+Governance initialization branch: `chore/context-initialization`.
 
-Remote `origin` is configured, but remote synchronization and PR creation were not performed during context initialization.
+The governance initialization branch was pushed, reviewed through PR, and merged by the product owner.
+
+Future development workflow permissions:
+
+- The coding agent may run GitHub PR preflight in ordinary workspace-write mode.
+- The coding agent may push the current task branch.
+- The coding agent may run `gh pr create`.
+- The coding agent must not run `gh pr merge`.
+- The coding agent must not push `main`.
+- The coding agent must not force push.
+
+Allowed PR preflight commands include:
+
+- `gh auth status --hostname github.com`
+- `gh repo view --json nameWithOwner,url`
+- `curl -I https://api.github.com`
+- `git status`
+- `git branch --show-current`
+
+Proxy and auth note:
+
+- Network access may require the host proxy on port 7890.
+- Do not assume `127.0.0.1:7890` is always the host proxy; run proxy preflight first.
+- On 2026-05-10, full-permission proxy preflight found `127.0.0.1:7890` reachable, `gh auth status` successful, `gh repo view` successful, branch push successful, and PR creation successful.
+- If future preflight fails, stop and output an escalation request instead of trying to bypass the failure.
