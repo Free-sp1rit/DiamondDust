@@ -68,6 +68,14 @@ Record durable technical and governance decisions here.
 - Risks: Future schema complexity may require migrating to Pydantic or another structured validation library.
 - Follow-up: Reconsider a validation dependency only when schema complexity or adapter integration warrants it.
 
+### 2026-05-10 — Implement Gate 3 Markdown ingestion with a minimal standard-library parser
+
+- Decision: Implement Markdown ingestion in a storage adapter using only the Python standard library, with a constrained frontmatter parser for flat key/value pairs and string lists.
+- Reason: Gate 3 needs read-only Markdown ingestion, source refs, and content hashes, but current fixture evidence does not justify a production Markdown or YAML dependency.
+- Alternatives: Add PyYAML or a Markdown parser immediately; defer frontmatter parsing until later.
+- Risks: Real-world essays may need richer YAML or Markdown parsing, and changing generated source id strategy later may require migration notes.
+- Follow-up: Reconsider parser dependencies after MVP fixture/golden tests show concrete parsing requirements.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
