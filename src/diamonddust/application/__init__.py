@@ -11,6 +11,16 @@ from diamonddust.application.blog_draft import (
     EvidenceCoverageItem,
     generate_blog_draft_from_review,
 )
+from diamonddust.application.mvp_release import (
+    MINIMUM_MVP_SAMPLE_COUNT,
+    MVPReleaseError,
+    MVPReleaseReadinessReport,
+    MVPReleaseSample,
+    MVPReleaseStatus,
+    MVPSampleResult,
+    run_mvp_release_readiness,
+    scan_critical_architecture_violations,
+)
 from diamonddust.application.patch_review import (
     PatchDiff,
     PatchDiffLine,
@@ -33,6 +43,12 @@ __all__ = [
     "BlogQualityStatus",
     "ClaimInventoryItem",
     "EvidenceCoverageItem",
+    "MINIMUM_MVP_SAMPLE_COUNT",
+    "MVPReleaseError",
+    "MVPReleaseReadinessReport",
+    "MVPReleaseSample",
+    "MVPReleaseStatus",
+    "MVPSampleResult",
     "PatchDiff",
     "PatchDiffLine",
     "PatchReviewDecision",
@@ -42,6 +58,8 @@ __all__ = [
     "generate_patch_from_extraction",
     "inspect_patch_diff",
     "review_patch",
+    "run_mvp_release_readiness",
+    "scan_critical_architecture_violations",
     "target_path_for_unit",
     "validate_patch_review_safety",
 ]

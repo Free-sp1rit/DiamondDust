@@ -100,6 +100,14 @@ Record durable technical and governance decisions here.
 - Risks: Draft content is not final editorial prose, and accepted units are sourced from accepted patch review results until formal apply behavior exists.
 - Follow-up: Add durable draft persistence/export and provider-backed editorial drafting only after fixtures, provider policy, and review UX are ready.
 
+### 2026-05-10 — Validate Gate 7 with deterministic release readiness fixtures
+
+- Decision: Implement Gate 7 release readiness as an application-layer harness that runs five deterministic Markdown fixtures through ingestion, structured extraction validation, patch review acceptance, and blog draft generation without provider calls or formal vault writes.
+- Reason: Gate 7 needs an end-to-end safety check across the MVP skeleton while preserving provider neutrality and the formal write boundary.
+- Alternatives: Add real LLM provider calls and formal vault apply behavior now; mark Gate 7 manually without a runnable harness.
+- Risks: The fixtures prove orchestration and boundary safety, not real extraction quality or editorial quality.
+- Follow-up: Add product-owner-approved golden essays, durable AI working artifacts, candidate Markdown rendering/export, and formal vault apply/revert only after their safety checks are designed.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
