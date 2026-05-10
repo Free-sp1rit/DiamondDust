@@ -39,3 +39,17 @@ Last updated: 2026-05-10
 - Context: Gate 4 is provider-neutral and does not call an LLM.
 - Needed decision: Choose provider adapter and model policy only when the patch review workflow is ready for real model output.
 - Impact: Affects dependencies, cost, auth, prompt design, and run log fields.
+
+## Patch Review
+
+### 2026-05-10 — When should KnowledgePatch files become durable suggestions?
+
+- Context: Gate 5 generates typed patches and review results, but does not write `_ai_suggestions/patches/`.
+- Needed decision: Add patch persistence before integrating a review UI or real provider outputs.
+- Impact: Affects traceability, replay, auditability, and rollback workflows.
+
+### 2026-05-10 — When should storage apply/revert behavior be implemented?
+
+- Context: Gate 5 models accepted patch handoff but does not mutate formal vault files.
+- Needed decision: Implement storage adapter apply/revert only after patch persistence and path/ID conflict checks are ready.
+- Impact: Affects formal write safety, rollback guarantees, and Git diff inspection.

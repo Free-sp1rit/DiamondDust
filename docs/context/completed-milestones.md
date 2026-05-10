@@ -75,3 +75,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 27 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add durable AI run log storage and provider adapter interfaces before real model calls are enabled.
+
+## 2026-05-10 — Gate 5 Patch Review Completed
+
+- Scope: Implemented application-layer patch generation, diff inspection, rollback instructions, and accept/reject review results.
+- Outcome: Added a patch review workflow under `src/diamonddust/application/`.
+- Review: `docs/reviews/milestone-reviews/2026-05-10-gate-5-patch-review.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Gate 5 Patch Review is passed for the MVP skeleton; next candidate milestone is Gate 6 Blog Draft.
+- Validation: 38 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add patch persistence, duplicate ID/path checks, and storage apply/revert behavior before formal vault mutation is enabled.

@@ -84,6 +84,14 @@ Record durable technical and governance decisions here.
 - Risks: Extraction quality cannot be measured until prompts, provider adapters, and golden fixtures exist.
 - Follow-up: Add durable `_ai_runs/` storage and provider adapter interfaces in future tasks before real model calls are enabled.
 
+### 2026-05-10 — Keep Gate 5 patch review separate from formal vault apply
+
+- Decision: Implement patch review in the application layer as patch generation, diff inspection, rollback instructions, and accept/reject handoff without writing formal vault files.
+- Reason: Gate 5 needs user acceptance before formal writes, while actual file mutation belongs in a future storage adapter.
+- Alternatives: Apply accepted patches to Markdown files immediately; defer patch review until storage apply exists.
+- Risks: Diff output is a structured summary rather than a real file diff, and duplicate path/ID checks need a vault index later.
+- Follow-up: Add patch persistence and storage apply/revert behavior in later tasks while reusing `validate_patch_review_safety`.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
