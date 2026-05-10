@@ -92,6 +92,14 @@ Record durable technical and governance decisions here.
 - Risks: Diff output is a structured summary rather than a real file diff, and duplicate path/ID checks need a vault index later.
 - Follow-up: Add patch persistence and storage apply/revert behavior in later tasks while reusing `validate_patch_review_safety`.
 
+### 2026-05-10 — Keep Gate 6 blog drafting deterministic and provider-free
+
+- Decision: Implement blog draft generation as deterministic application-layer scaffolding from accepted patch review results, with claim inventory, unsupported claim reporting, and quality reports.
+- Reason: Gate 6 needs blog draft safety and evidence coverage before real LLM editorial generation, publishing, or draft persistence.
+- Alternatives: Add provider-backed prose generation now; defer blog draft workflow until formal vault apply exists.
+- Risks: Draft content is not final editorial prose, and accepted units are sourced from accepted patch review results until formal apply behavior exists.
+- Follow-up: Add durable draft persistence/export and provider-backed editorial drafting only after fixtures, provider policy, and review UX are ready.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

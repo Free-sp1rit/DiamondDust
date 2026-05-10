@@ -86,3 +86,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 38 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add patch persistence, duplicate ID/path checks, and storage apply/revert behavior before formal vault mutation is enabled.
+
+## 2026-05-10 — Gate 6 Blog Draft Completed
+
+- Scope: Implemented deterministic blog draft generation, claim inventory, unsupported claim reporting, and blog quality reports.
+- Outcome: Added a blog draft workflow under `src/diamonddust/application/`.
+- Review: `docs/reviews/milestone-reviews/2026-05-10-gate-6-blog-draft.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Gate 6 Blog Draft is passed for the MVP skeleton; next candidate milestone is Gate 7 MVP Release.
+- Validation: 46 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add durable draft persistence/export, provider-backed editorial drafting, and golden fixture quality evaluation later.
