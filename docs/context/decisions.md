@@ -60,6 +60,14 @@ Record durable technical and governance decisions here.
 - Risks: Local proxy or `gh` authentication can still fail even when the permission boundary is approved.
 - Follow-up: Before PR creation, run preflight with `gh auth status --hostname github.com`, `gh repo view --json nameWithOwner,url`, `curl -I https://api.github.com`, `git status`, and `git branch --show-current`; if preflight fails, stop and output an escalation request.
 
+### 2026-05-10 — Implement Gate 2 schema skeleton with Python standard library
+
+- Decision: Implement the initial domain schema skeleton with Python standard-library dataclasses, enums, and explicit `from_mapping` validation boundaries.
+- Reason: Gate 2 needs typed schema validation, but the current scope does not require a production validation dependency.
+- Alternatives: Add Pydantic immediately; defer all schema implementation.
+- Risks: Future schema complexity may require migrating to Pydantic or another structured validation library.
+- Follow-up: Reconsider a validation dependency only when schema complexity or adapter integration warrants it.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
