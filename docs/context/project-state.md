@@ -85,10 +85,24 @@ The governance initialization branch was pushed, reviewed through PR, and merged
 
 Future development workflow permissions:
 
+- The coding agent may run GitHub PR preflight in ordinary workspace-write mode.
 - The coding agent may push the current task branch.
 - The coding agent may run `gh pr create`.
 - The coding agent must not run `gh pr merge`.
 - The coding agent must not push `main`.
 - The coding agent must not force push.
 
-Local note: `gh` is installed, but `gh auth status` reported an invalid token on 2026-05-10. Recheck authentication before the first `gh pr create`.
+Allowed PR preflight commands include:
+
+- `gh auth status --hostname github.com`
+- `gh repo view --json nameWithOwner,url`
+- `curl -I https://api.github.com`
+- `git status`
+- `git branch --show-current`
+
+Proxy and auth note:
+
+- Network access may require the host proxy on port 7890.
+- Do not assume `127.0.0.1:7890` is always the host proxy; run proxy preflight first.
+- On 2026-05-10, full-permission proxy preflight found `127.0.0.1:7890` reachable, `gh auth status` successful, `gh repo view` successful, branch push successful, and PR creation successful.
+- If future preflight fails, stop and output an escalation request instead of trying to bypass the failure.

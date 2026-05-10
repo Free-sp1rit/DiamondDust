@@ -34,12 +34,6 @@ Last updated: 2026-05-10
 - Needed decision: Confirm whether `skills/` is the desired durable repo-local path or whether a later install/discovery step should mirror them into the active Codex skill directory.
 - Impact: Affects whether future sessions can trigger these skills automatically or must load them by path.
 
-### 2026-05-10 — Is local `gh` authentication valid before first `gh pr create`?
-
-- Context: `gh` is installed, but `gh auth status` reported an invalid token in the current shell on 2026-05-10.
-- Needed decision: Re-authenticate or verify `gh auth status` before relying on `gh pr create`.
-- Impact: Affects whether future task branches can create PRs directly from the CLI.
-
 ### 2026-05-10 — What minimal test/tooling setup should Gate 2 use?
 
 - Context: Gate 2 planning can begin, but implementation needs a concrete package and test runner setup.

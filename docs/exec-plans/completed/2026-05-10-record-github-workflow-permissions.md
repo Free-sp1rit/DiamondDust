@@ -8,7 +8,7 @@ Persist the product owner's updated GitHub workflow permission boundary for futu
 
 The governance initialization PR has been completed and merged by the product owner. Future development may push the current task branch and may use `gh pr create`, but must not use `gh pr merge`, push `main`, or force push.
 
-Local `gh` is installed, but `gh auth status` currently reports an invalid token in this shell.
+Local `gh` is installed. Initial workspace-write authentication checks failed, but a later full-permission proxy preflight verified proxy access, GitHub authentication, repository lookup, branch push, and PR creation.
 
 ## Assumptions
 
@@ -21,7 +21,7 @@ Local `gh` is installed, but `gh auth status` currently reports an invalid token
 - Modify `AGENTS.md` or `docs/10_GIT_WORKFLOW.md`.
 - Push, merge, or create a PR.
 - Start Gate 2 planning or implementation.
-- Fix local `gh` authentication.
+- Start Gate 2 implementation.
 
 ## Proposed Technical Approach
 
@@ -30,6 +30,7 @@ Local `gh` is installed, but `gh auth status` currently reports an invalid token
 3. Remove stale open question about moving initialization to PR review.
 4. Add a follow-up to verify `gh auth status` before first `gh pr create`.
 5. Record the completed milestone and compress this plan.
+6. After proxy access is verified, update repo memory with the final PR workflow boundary.
 
 ## Task Breakdown
 
@@ -63,8 +64,8 @@ No review gate is passed or changed. This update records development workflow pe
 
 ## Risks
 
-- `gh` is installed, but current local authentication reports an invalid token.
-- This records permissions but does not itself verify future GitHub PR creation.
+- Future workspace-write sessions may still need proxy preflight before PR creation.
+- This records permissions but does not permit merge, `main` push, force push, or unapproved product implementation.
 
 ## Escalation Needed
 
@@ -89,6 +90,7 @@ Final implementation:
 - `docs/context/decisions.md` records permission to push the current task branch and use `gh pr create`, with explicit prohibition on `gh pr merge`, pushing `main`, and force pushing.
 - `docs/context/open-questions.md` removes the stale initialization PR question and adds a `gh auth status` follow-up.
 - `docs/context/completed-milestones.md` records the governance initialization PR merge and workflow update.
+- A later update records successful proxy preflight, `gh auth status`, `gh repo view`, task-branch push, and PR #2 creation.
 
 Validation results:
 
@@ -98,4 +100,4 @@ Validation results:
 
 Known risk:
 
-- `gh` is installed, but `gh auth status` reported an invalid token in this shell. Re-authentication or verification is required before the first `gh pr create`.
+- Future workspace-write sessions should run proxy and GitHub preflight before `gh pr create`; if preflight fails, stop and output an escalation request.
