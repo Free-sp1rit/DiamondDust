@@ -4,13 +4,13 @@ Last updated: 2026-05-10
 
 ## Current Stage
 
-Pre-MVP governance and architecture setup.
+Gate 2 Schema Skeleton complete.
 
 ## Current Focus
 
-Finalize agent operating rules, skill boundaries, execution plan policy, persistence policy, and review gates.
+Prepare for Gate 3 Markdown Ingestion planning after completing the typed domain schema skeleton.
 
-Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. The project may enter Gate 2 planning, but Gate 2 implementation is not yet recommended until Gate 0/Gate 1 status is recorded and a Gate 2 execution plan exists.
+Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2 planning and implementation are complete.
 
 ## Repo-Local Skills
 
@@ -51,12 +51,12 @@ The current repository state is documentation-first. Product implementation code
 
 ## Review Gate Position
 
-The project is preparing for:
+Current gate position:
 
-- Gate 0: Direction Freeze
-- Gate 1: Architecture Freeze
-
-The relevant startup documents are drafted in the working tree, but no gate is recorded as passed yet. Product implementation should wait until the startup documents are approved and applicable review requirements are satisfied.
+- Gate 0: Direction Freeze is satisfied by merged startup governance docs.
+- Gate 1: Architecture Freeze is satisfied by merged architecture, domain, data, and AI pipeline contracts.
+- Gate 2: Schema Skeleton passed on 2026-05-10.
+- Next likely gate: Gate 3 Markdown Ingestion.
 
 Initialization acceptance review:
 
@@ -66,16 +66,23 @@ Initialization acceptance review:
 - Gate 2 planning readiness: yes
 - Gate 2 implementation readiness: not yet recommended
 
+Gate 2 review:
+
+- `docs/reviews/milestone-reviews/2026-05-10-gate-2-schema-skeleton.md`
+- decision: pass
+- tests: 12 unit tests passed, compile check passed, diff check passed
+
 ## Immediate Next Development Path
 
-After governance approval, the likely next implementation milestone is Gate 2: Schema Skeleton.
+The likely next implementation milestone is Gate 3: Markdown Ingestion.
 
-Expected first product implementation focus:
+Expected next product implementation focus:
 
-- domain package structure
-- typed `KnowledgeUnit`, `Relation`, and `KnowledgePatch` schemas
-- validation rules for unit type, relation type, status, confidence, source refs, and patch operations
-- narrow schema and patch validation tests
+- read Markdown essay files
+- preserve original raw essays
+- parse frontmatter when present
+- create source references
+- compute content hashes
 
 ## Git State Notes
 

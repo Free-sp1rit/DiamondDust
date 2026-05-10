@@ -12,21 +12,7 @@ Last updated: 2026-05-10
 - Needed decision: Product owner should review and approve, request changes, or explicitly defer parts of the governance set.
 - Impact: Product implementation should not begin until the applicable gate state is clear.
 
-## First Implementation Milestone
-
-### 2026-05-10 — Should the next task be Gate 2 Schema Skeleton?
-
-- Context: The docs point to `KnowledgeUnit`, `Relation`, and `KnowledgePatch` validation as the first implementation foundation.
-- Needed decision: Confirm whether to start the schema skeleton next, or handle a governance review/milestone review first.
-- Impact: Determines the first product-code branch and test scope.
-
 ## Tooling and Repository Shape
-
-### 2026-05-10 — What concrete Python project layout and test tooling should be used?
-
-- Context: The docs allow Python and Pydantic as core dependencies, but no package layout, dependency file, or test runner is present yet.
-- Needed decision: The coding agent can propose the smallest coherent setup when implementation starts; user approval is only needed if production dependencies or project governance change.
-- Impact: Affects initial files, validation commands, and CI readiness.
 
 ### 2026-05-10 — Should repo-local skills be wired into Codex discovery?
 
@@ -34,11 +20,11 @@ Last updated: 2026-05-10
 - Needed decision: Confirm whether `skills/` is the desired durable repo-local path or whether a later install/discovery step should mirror them into the active Codex skill directory.
 - Impact: Affects whether future sessions can trigger these skills automatically or must load them by path.
 
-### 2026-05-10 — What minimal test/tooling setup should Gate 2 use?
+### 2026-05-10 — What minimal test/tooling setup should Gate 3 use?
 
-- Context: Gate 2 planning can begin, but implementation needs a concrete package and test runner setup.
-- Needed decision: The coding agent can propose the smallest coherent tooling plan; escalation is needed only if production dependency or governance impact exceeds the approved boundary.
-- Impact: Determines whether Gate 2 can implement typed schema validation and run schema tests.
+- Context: Gate 2 uses standard-library unittest and no dependency metadata. Gate 3 may need Markdown parsing and fixtures.
+- Needed decision: The coding agent can propose the smallest coherent tooling plan; escalation is needed if a production dependency or governance impact exceeds the approved boundary.
+- Impact: Determines whether Gate 3 can read Markdown essays, parse optional frontmatter, preserve source refs, and compute content hashes.
 
 ## Fixtures
 

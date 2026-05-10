@@ -43,3 +43,13 @@ Record completed development milestones and links to reviews here.
 - PR: `https://github.com/Free-sp1rit/DiamondDust/pull/2`
 - Boundary respected: Did not merge, did not push `main`, did not force push, did not print token values in the final report, and did not start Gate 2 implementation.
 - Follow-up: Keep using preflight before future PR creation in workspace-write mode.
+
+## 2026-05-10 — Gate 2 Schema Skeleton Completed
+
+- Scope: Implemented typed domain schemas and validation tests for `KnowledgeUnit`, `Relation`, and `KnowledgePatch`.
+- Outcome: Added standard-library domain schema package under `src/diamonddust/domain/`.
+- Review: `docs/reviews/milestone-reviews/2026-05-10-gate-2-schema-skeleton.md`.
+- Review decision: pass.
+- Gate impact: Gate 2 Schema Skeleton is passed; next candidate milestone is Gate 3 Markdown Ingestion.
+- Validation: 12 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
