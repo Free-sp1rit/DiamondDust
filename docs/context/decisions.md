@@ -76,6 +76,14 @@ Record durable technical and governance decisions here.
 - Risks: Real-world essays may need richer YAML or Markdown parsing, and changing generated source id strategy later may require migration notes.
 - Follow-up: Reconsider parser dependencies after MVP fixture/golden tests show concrete parsing requirements.
 
+### 2026-05-10 — Keep Gate 4 extraction provider-neutral
+
+- Decision: Implement AI extraction proposal validation as a provider-neutral boundary that accepts already-structured output, validates it into domain candidates, and records typed run logs without calling an LLM provider.
+- Reason: Gate 4 needs structured output validation and run logs, but real provider calls would introduce external service, cost, prompt, and dependency decisions before the patch review workflow is stable.
+- Alternatives: Add a concrete provider SDK now; defer AI boundary code until provider integration.
+- Risks: Extraction quality cannot be measured until prompts, provider adapters, and golden fixtures exist.
+- Follow-up: Add durable `_ai_runs/` storage and provider adapter interfaces in future tasks before real model calls are enabled.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
