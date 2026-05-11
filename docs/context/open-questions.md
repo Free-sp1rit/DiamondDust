@@ -22,9 +22,15 @@ Last updated: 2026-05-10
 
 ### 2026-05-10 — Which essays should become the MVP golden fixtures?
 
-- Context: MVP success requires 5 real or semi-real Markdown essays passing the end-to-end flow.
-- Needed decision: Identify or create fixture essays before golden and integration tests are finalized.
-- Impact: Affects extraction quality evaluation and regression coverage.
+- Context: Gate 7 now has five deterministic Markdown fixtures for readiness tests, but they are not yet product-owner-approved golden essays.
+- Needed decision: Identify or create real or semi-real fixture essays before golden quality evaluation is finalized.
+- Impact: Affects extraction quality evaluation, regression coverage, and release confidence.
+
+### 2026-05-10 — When should candidate Markdown rendering/export be implemented?
+
+- Context: Gate 7 validates patch generation and accepted-unit blog drafting, but does not yet render or persist candidate Markdown notes from a `KnowledgePatch`.
+- Needed decision: Decide whether candidate Markdown rendering belongs before formal vault apply/revert or as part of the storage apply milestone.
+- Impact: Affects review UX, patch inspection fidelity, and MVP done-condition coverage.
 
 ## AI Pipeline
 
@@ -67,3 +73,11 @@ Last updated: 2026-05-10
 - Context: Gate 6 uses deterministic scaffolding from accepted units and does not call an LLM.
 - Needed decision: Introduce provider-backed prose generation only after provider policy, prompt versions, fixtures, and quality thresholds are ready.
 - Impact: Affects dependencies, cost, evidence coverage, unsupported claim risk, and quality evaluation.
+
+## Release Automation
+
+### 2026-05-10 — When should CI become a required PR gate?
+
+- Context: Gate 7 validation is currently local: unit tests, compile check, and diff check.
+- Needed decision: Decide when to add CI and which checks should block PR merge.
+- Impact: Affects review reliability, merge safety, and future contributor workflow.
