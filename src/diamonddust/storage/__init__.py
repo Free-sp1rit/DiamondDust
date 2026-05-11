@@ -7,6 +7,7 @@ from diamonddust.storage.ai_run_log import (
     render_ai_run_log_artifact,
     write_ai_run_log_artifact,
 )
+from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 from diamonddust.storage.blog_draft import (
     AI_BLOG_DRAFTS_DIR,
     AI_BLOG_QUALITY_REPORTS_DIR,
@@ -60,6 +61,7 @@ __all__ = [
     "AI_RUNS_DIR",
     "AIRunLogArtifact",
     "AIRunLogPersistenceError",
+    "ARTIFACT_SCHEMA_VERSION",
     "BlogDraftMarkdownArtifact",
     "BlogDraftPackageExport",
     "BlogDraftPersistenceError",

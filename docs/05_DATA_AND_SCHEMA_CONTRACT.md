@@ -59,6 +59,23 @@ Rules:
 - AI must not directly overwrite formal knowledge files.
 - Formal writes require a validated KnowledgePatch and user acceptance.
 
+## AI Working Artifact Schema Versioning
+
+Persisted AI working artifacts must include:
+
+```text
+artifact_schema_version: 0.1.0
+```
+
+Rules:
+
+- Artifact schema versioning is separate from formal note `schema_version`.
+- The initial AI working artifact schema version is `0.1.0`.
+- JSON artifacts should store `artifact_schema_version` as a top-level field.
+- Markdown artifacts should expose `artifact_schema_version` in frontmatter or visible report metadata.
+- Artifact readers should tolerate older artifacts without this field until migration/import behavior is introduced.
+- Changing persisted artifact shapes for CLI/UI consumers requires a migration note or compatibility strategy.
+
 ## Minimum Frontmatter
 
 Every formal knowledge note must include:
@@ -270,6 +287,7 @@ Rules:
 
 - Candidate notes may mirror intended formal target paths inside the candidate export directory.
 - Candidate exports must preserve source references where available.
+- Candidate exports must include `artifact_schema_version`.
 - Candidate exports must include patch metadata and mark `formal_write: false`.
 - Candidate exports must not write files to formal vault directories.
 - Formal writes still require a validated patch and explicit user acceptance.
@@ -288,6 +306,7 @@ Rules:
 
 - Review reports must include patch diff summaries, risks, rollback steps, and review boundaries.
 - Review reports should link candidate Markdown notes when candidate notes exist.
+- Review reports must include `artifact_schema_version`.
 - Review reports must mark `formal_write: false`.
 - Review reports must not mark patches as accepted or rejected.
 - Formal writes still require a validated patch and explicit user acceptance.
@@ -306,6 +325,7 @@ Rules:
 
 - Review package persistence must validate patch safety before writing artifacts.
 - Review package persistence must write only to AI working directories.
+- Review package artifacts must include `artifact_schema_version`.
 - Review package persistence must mark `formal_write_allowed: false`.
 - Review package persistence must not record accept/reject decisions.
 - Formal writes still require explicit user acceptance and a separate storage apply step.
@@ -324,6 +344,7 @@ Rules:
 - Blog draft package persistence must write only to AI working directories.
 - Blog draft artifacts must preserve source unit IDs and unsupported claim IDs.
 - Blog quality reports must preserve validation status, risks, unsupported claims, evidence coverage, and suggested actions.
+- Blog draft package artifacts must include `artifact_schema_version`.
 - Blog draft artifacts must mark `formal_write: false` and `publication_ready: false`.
 - Blog draft persistence must not write files to `70-publications/`.
 - Publishing still requires separate user approval and a future publication workflow.
@@ -381,6 +402,7 @@ _ai_runs/
 Each run must include:
 
 - `artifact_type`
+- `artifact_schema_version`
 - `run_id`
 - `task`
 - `provider`

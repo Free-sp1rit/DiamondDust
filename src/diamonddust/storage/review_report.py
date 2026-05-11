@@ -13,6 +13,7 @@ from diamonddust.storage.candidate_markdown import (
     CandidateMarkdownExport,
     render_candidate_markdown,
 )
+from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 
 
 AI_PATCH_REVIEW_REPORTS_DIR = "_ai_reports/patch-reviews"
@@ -112,6 +113,8 @@ def _report_content(
 ) -> str:
     lines = [
         "# Patch Review Report",
+        "",
+        f"Artifact schema version: `{ARTIFACT_SCHEMA_VERSION}`",
         "",
         f"Patch: `{patch.patch_id}`",
         "",

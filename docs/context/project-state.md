@@ -4,11 +4,11 @@ Last updated: 2026-05-11
 
 ## Current Stage
 
-Post-Gate 7 local trial harness complete with follow-up.
+Post-Gate 7 artifact schema versioning complete with follow-up.
 
 ## Current Focus
 
-Prepare post-Gate 7 hardening for artifact versioning, golden fixtures, formal vault apply/revert safety, and CI.
+Prepare post-Gate 7 hardening for golden fixtures, formal vault apply/revert safety, and CI.
 
 Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2 through Gate 6 planning and implementation are complete.
 
@@ -28,7 +28,7 @@ Each skill is intentionally lightweight and contains only workflow guidance in `
 
 DiamondDust is a local-first semantic knowledge compiler. Its MVP path is to turn Markdown essays into structured `KnowledgeUnit` candidates, candidate `Relation`s, validated `KnowledgePatch` files, review reports, blog drafts, and blog quality reports.
 
-The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence, an application-layer patch review workflow, candidate Markdown export, patch review report, review package storage adapters, a deterministic blog draft workflow, durable blog draft package persistence, a local trial CLI, a Gate 7 release readiness harness, five sample essay fixtures, and unit tests. Real provider calls, formal vault patch apply behavior, installed console scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
+The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence, an application-layer patch review workflow, candidate Markdown export, patch review report, review package storage adapters, a deterministic blog draft workflow, durable blog draft package persistence, artifact schema versioning, a local trial CLI, a Gate 7 release readiness harness, five sample essay fixtures, and unit tests. Real provider calls, formal vault patch apply behavior, installed console scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
 
 ## Source-of-Truth Documents
 
@@ -143,16 +143,22 @@ Local trial harness review:
 - decision: pass with follow-up
 - tests: 85 unit tests passed, compile check passed, diff check passed
 
+Artifact schema versioning review:
+
+- `docs/reviews/milestone-reviews/2026-05-11-artifact-schema-versioning.md`
+- decision: pass with follow-up
+- tests: 89 unit tests passed, compile check passed, diff check passed
+
 ## Immediate Next Development Path
 
 Gate 7 readiness is complete for the current skeleton.
 
 Expected next product implementation focus:
 
-- add explicit artifact schema versioning before CLI/UI consumers depend on persisted artifact shapes
 - replace or supplement deterministic fixtures with product-owner-approved golden essays
 - add formal vault apply/revert only after duplicate path/ID checks and rollback tests exist
 - add CI and release-quality automation
+- add example local trial extraction JSON fixtures and user-facing schema notes
 - keep provider calls, formal writes, and publishing behind their existing approval and review gates
 
 ## Git State Notes

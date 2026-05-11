@@ -40,11 +40,11 @@ Last updated: 2026-05-11
 - Needed decision: Add an example extraction JSON fixture and optional schema documentation before broader product-owner trial runs.
 - Impact: Affects trial ergonomics, validation clarity, and future provider adapter handoff.
 
-### 2026-05-11 — Should AI run log artifacts get an explicit schema version?
+### 2026-05-11 — When should artifact versions diverge by artifact type?
 
-- Context: AI run logs are now persisted under `_ai_runs/`, but the artifact JSON does not yet have a separate artifact schema version.
-- Needed decision: Add explicit artifact schema versioning before external CLI/UI consumers depend on the JSON shape.
-- Impact: Affects traceability, debugging, replay, and future cache migrations.
+- Context: Persisted AI working artifacts now share `artifact_schema_version: 0.1.0`.
+- Needed decision: Introduce per-artifact versioning only if run logs, patch packages, review reports, or draft packages evolve independently enough that one shared version becomes misleading.
+- Impact: Affects migration strategy, compatibility checks, and future artifact import/replay behavior.
 
 ### 2026-05-10 — Which provider adapter should be implemented first?
 
@@ -53,12 +53,6 @@ Last updated: 2026-05-11
 - Impact: Affects dependencies, cost, auth, prompt design, and run log fields.
 
 ## Patch Review
-
-### 2026-05-11 — Should raw patch JSON get an explicit artifact schema version?
-
-- Context: Review package persistence now writes raw patch JSON under `_ai_suggestions/patches/`, but the artifact format currently mirrors existing domain schema values without a separate artifact schema version.
-- Needed decision: Add explicit artifact schema versioning before external CLI/UI consumers depend on the JSON shape.
-- Impact: Affects traceability, replay, auditability, and future migration behavior.
 
 ### 2026-05-11 — Should review package writes become transactional?
 
@@ -73,12 +67,6 @@ Last updated: 2026-05-11
 - Impact: Affects formal write safety, rollback guarantees, and Git diff inspection.
 
 ## Blog Draft
-
-### 2026-05-11 — Should blog draft artifacts get an explicit schema version?
-
-- Context: Blog drafts and quality reports are now persisted under AI working directories, but the Markdown artifact shape does not yet have a separate artifact schema version.
-- Needed decision: Add explicit artifact schema versioning before external CLI/UI consumers depend on the Markdown shape.
-- Impact: Affects traceability, review flow, and future migration behavior.
 
 ### 2026-05-10 — When should provider-backed editorial drafting be introduced?
 

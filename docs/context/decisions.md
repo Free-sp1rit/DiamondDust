@@ -156,6 +156,14 @@ Record durable technical and governance decisions here.
 - Risks: The trial still requires structured JSON, and simulated patch acceptance for draft generation must not be confused with user approval for formal vault apply.
 - Follow-up: Add artifact schema versioning, product-owner-approved golden essays, and provider adapters only after the review boundary remains stable.
 
+### 2026-05-11 — Version AI working artifacts separately from domain schemas
+
+- Decision: Add a shared `artifact_schema_version` value of `0.1.0` to persisted AI working artifacts.
+- Reason: Local trial outputs are now user-visible files, and version markers make future replay, migration, and CLI/UI compatibility safer without changing formal domain schemas.
+- Alternatives: Leave artifacts unversioned; bump formal domain `schema_version`; assign independent versions to every artifact type immediately.
+- Risks: Future artifact formats may diverge and require per-artifact versioning or tolerant readers for older unversioned artifacts.
+- Follow-up: Add compatibility handling when artifact import/replay is introduced and document any future artifact schema bumps.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
