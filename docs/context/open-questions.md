@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-10
+Last updated: 2026-05-11
 
 ## Tooling and Repository Shape
 
@@ -26,11 +26,11 @@ Last updated: 2026-05-10
 - Needed decision: Identify or create real or semi-real fixture essays before golden quality evaluation is finalized.
 - Impact: Affects extraction quality evaluation, regression coverage, and release confidence.
 
-### 2026-05-10 — When should candidate Markdown rendering/export be implemented?
+### 2026-05-11 — When should candidate Markdown export use a richer serializer?
 
-- Context: Gate 7 validates patch generation and accepted-unit blog drafting, but does not yet render or persist candidate Markdown notes from a `KnowledgePatch`.
-- Needed decision: Decide whether candidate Markdown rendering belongs before formal vault apply/revert or as part of the storage apply milestone.
-- Impact: Affects review UX, patch inspection fidelity, and MVP done-condition coverage.
+- Context: Candidate Markdown export now uses a minimal standard-library YAML-like renderer.
+- Needed decision: Reconsider a serializer dependency only if review fixtures need richer frontmatter or round-trip parsing.
+- Impact: Affects candidate note fidelity, dependency posture, and future migration surface.
 
 ## AI Pipeline
 
@@ -50,7 +50,7 @@ Last updated: 2026-05-10
 
 ### 2026-05-10 — When should KnowledgePatch files become durable suggestions?
 
-- Context: Gate 5 generates typed patches and review results, but does not write `_ai_suggestions/patches/`.
+- Context: Gate 5 generates typed patches and review results, and candidate Markdown export writes rendered notes under `_ai_suggestions/candidate-notes/`, but raw patch files are still not persisted under `_ai_suggestions/patches/`.
 - Needed decision: Add patch persistence before integrating a review UI or real provider outputs.
 - Impact: Affects traceability, replay, auditability, and rollback workflows.
 

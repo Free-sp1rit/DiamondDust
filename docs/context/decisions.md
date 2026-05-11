@@ -108,6 +108,14 @@ Record durable technical and governance decisions here.
 - Risks: The fixtures prove orchestration and boundary safety, not real extraction quality or editorial quality.
 - Follow-up: Add product-owner-approved golden essays, durable AI working artifacts, candidate Markdown rendering/export, and formal vault apply/revert only after their safety checks are designed.
 
+### 2026-05-11 — Export candidate Markdown only under AI suggestions
+
+- Decision: Render candidate Markdown notes from safe `KnowledgePatch` create-note operations and write them only under `_ai_suggestions/candidate-notes/<patch_id>/`.
+- Reason: MVP output needs candidate Markdown notes, but formal vault mutation must remain behind explicit patch acceptance and future storage apply/revert safety checks.
+- Alternatives: Write candidate notes directly to formal target paths; defer candidate Markdown output until formal apply exists.
+- Risks: The current frontmatter renderer is minimal and candidate note format may change when review UI and formal apply/revert are implemented.
+- Follow-up: Add durable patch persistence, review report rendering, duplicate target checks, and formal apply/revert in separate reviewed milestones.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
