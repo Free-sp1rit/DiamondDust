@@ -256,6 +256,24 @@ _ai_reports/
 _ai_runs/
 ```
 
+## Candidate Markdown Export
+
+Candidate Markdown notes rendered from a `KnowledgePatch` are AI working artifacts, not formal vault writes.
+
+They should be exported under:
+
+```text
+_ai_suggestions/candidate-notes/<patch_id>/
+```
+
+Rules:
+
+- Candidate notes may mirror intended formal target paths inside the candidate export directory.
+- Candidate exports must preserve source references where available.
+- Candidate exports must include patch metadata and mark `formal_write: false`.
+- Candidate exports must not write files to formal vault directories.
+- Formal writes still require a validated patch and explicit user acceptance.
+
 ## Schema Versioning
 
 Every persisted formal note must include:

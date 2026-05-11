@@ -108,3 +108,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 53 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Keep provider calls, formal vault mutation, and publishing behind explicit review and approval boundaries.
+
+## 2026-05-11 — Candidate Markdown Export Completed
+
+- Scope: Implemented rendering and export of candidate Markdown notes from validated `KnowledgePatch` create-note operations.
+- Outcome: Added a storage adapter that writes candidate notes and a manifest under `_ai_suggestions/candidate-notes/<patch_id>/` while preserving formal target paths as metadata only.
+- Review: `docs/reviews/milestone-reviews/2026-05-11-candidate-markdown-export.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves MVP candidate Markdown output without enabling formal vault mutation.
+- Validation: 59 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add raw patch persistence, review report rendering, duplicate target checks, and formal apply/revert in separate reviewed milestones.
