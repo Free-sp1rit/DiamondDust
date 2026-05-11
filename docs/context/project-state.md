@@ -4,11 +4,11 @@ Last updated: 2026-05-11
 
 ## Current Stage
 
-Post-Gate 7 candidate Markdown export complete with follow-up.
+Post-Gate 7 review report rendering complete with follow-up.
 
 ## Current Focus
 
-Prepare post-Gate 7 hardening for durable patch/run/draft persistence, review report rendering, formal vault apply/revert safety, and CI.
+Prepare post-Gate 7 hardening for durable patch/run/draft persistence, formal vault apply/revert safety, and CI.
 
 Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2 through Gate 6 planning and implementation are complete.
 
@@ -28,7 +28,7 @@ Each skill is intentionally lightweight and contains only workflow guidance in `
 
 DiamondDust is a local-first semantic knowledge compiler. Its MVP path is to turn Markdown essays into structured `KnowledgeUnit` candidates, candidate `Relation`s, validated `KnowledgePatch` files, review reports, blog drafts, and blog quality reports.
 
-The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, an application-layer patch review workflow, a candidate Markdown export storage adapter, a deterministic blog draft workflow, a Gate 7 release readiness harness, five sample essay fixtures, and unit tests. Real provider calls, formal vault patch apply behavior, durable patch/run/draft persistence, scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
+The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, an application-layer patch review workflow, candidate Markdown export and patch review report storage adapters, a deterministic blog draft workflow, a Gate 7 release readiness harness, five sample essay fixtures, and unit tests. Real provider calls, formal vault patch apply behavior, durable patch/run/draft persistence, scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
 
 ## Source-of-Truth Documents
 
@@ -113,6 +113,12 @@ Candidate Markdown export review:
 - decision: pass with follow-up
 - tests: 59 unit tests passed, compile check passed, diff check passed
 
+Review report rendering review:
+
+- `docs/reviews/milestone-reviews/2026-05-11-review-report-rendering.md`
+- decision: pass with follow-up
+- tests: 65 unit tests passed, compile check passed, diff check passed
+
 ## Immediate Next Development Path
 
 Gate 7 readiness is complete for the current skeleton.
@@ -120,7 +126,7 @@ Gate 7 readiness is complete for the current skeleton.
 Expected next product implementation focus:
 
 - add durable patch, run log, and draft persistence under AI working directories
-- add review report rendering that links patch diff, candidate notes, and rollback instructions
+- add a combined review package writer that persists patch, candidate notes, and review report together
 - add formal vault apply/revert only after duplicate path/ID checks and rollback tests exist
 - replace or supplement deterministic fixtures with product-owner-approved golden essays
 - add CI and release-quality automation

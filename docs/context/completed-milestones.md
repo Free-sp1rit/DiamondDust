@@ -119,3 +119,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 59 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add raw patch persistence, review report rendering, duplicate target checks, and formal apply/revert in separate reviewed milestones.
+
+## 2026-05-11 — Review Report Rendering Completed
+
+- Scope: Implemented rendering and export of patch review reports from validated `KnowledgePatch` values.
+- Outcome: Added a storage adapter that writes reports under `_ai_reports/patch-reviews/<patch_id>.md` with patch diff summaries, candidate note links, risks, rollback steps, and explicit review boundaries.
+- Review: `docs/reviews/milestone-reviews/2026-05-11-review-report-rendering.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves MVP review report output without enabling formal vault mutation.
+- Validation: 65 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add raw patch persistence and a combined review package writer before formal apply/revert.
