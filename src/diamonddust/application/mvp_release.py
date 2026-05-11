@@ -19,7 +19,7 @@ from diamonddust.application.patch_review import (
     generate_patch_from_extraction,
     review_patch,
 )
-from diamonddust.storage import read_markdown_essay
+from diamonddust.storage.markdown import read_markdown_essay
 
 
 MINIMUM_MVP_SAMPLE_COUNT = 5
