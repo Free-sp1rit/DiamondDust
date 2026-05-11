@@ -362,6 +362,7 @@ _ai_runs/
 
 Each run must include:
 
+- `artifact_type`
 - `run_id`
 - `task`
 - `provider`
@@ -379,6 +380,12 @@ Optional:
 - `latency`
 - `knowledge_base_snapshot_hash`
 - `cache_key`
+
+Rules:
+
+- AI run artifacts may record both passed and failed validation runs.
+- AI run artifacts must not persist raw model output.
+- AI run artifacts must stay under `_ai_runs/`.
 
 ## Formal Write Rule
 

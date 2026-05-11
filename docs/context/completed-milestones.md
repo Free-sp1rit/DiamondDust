@@ -141,3 +141,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 70 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add AI run log and blog draft persistence, then duplicate path/ID checks before formal apply/revert.
+
+## 2026-05-11 — AI Run Log Persistence Completed
+
+- Scope: Implemented rendering and writing of typed AI run logs under `_ai_runs/`.
+- Outcome: Added a storage adapter that persists passed and failed run logs with run metadata, output hash, validation status, `created_at`, and optional cache metadata while excluding raw AI output.
+- Review: `docs/reviews/milestone-reviews/2026-05-11-ai-run-log-persistence.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves AI pipeline traceability before real provider integration.
+- Validation: 76 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add durable blog draft package persistence and artifact schema versioning before external CLI/UI consumers depend on artifact JSON shape.

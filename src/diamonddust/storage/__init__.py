@@ -1,5 +1,12 @@
 """Storage adapter boundaries for DiamondDust."""
 
+from diamonddust.storage.ai_run_log import (
+    AI_RUNS_DIR,
+    AIRunLogArtifact,
+    AIRunLogPersistenceError,
+    render_ai_run_log_artifact,
+    write_ai_run_log_artifact,
+)
 from diamonddust.storage.candidate_markdown import (
     AI_CANDIDATE_NOTES_DIR,
     CandidateMarkdownError,
@@ -37,6 +44,9 @@ __all__ = [
     "AI_CANDIDATE_NOTES_DIR",
     "AI_PATCH_REVIEW_REPORTS_DIR",
     "AI_PATCH_SUGGESTIONS_DIR",
+    "AI_RUNS_DIR",
+    "AIRunLogArtifact",
+    "AIRunLogPersistenceError",
     "CandidateMarkdownError",
     "CandidateMarkdownExport",
     "CandidateMarkdownFile",
@@ -52,10 +62,12 @@ __all__ = [
     "compute_content_hash",
     "ingest_markdown_text",
     "read_markdown_essay",
+    "render_ai_run_log_artifact",
     "render_candidate_markdown",
     "render_patch_json_artifact",
     "render_patch_review_report",
     "write_candidate_markdown_export",
+    "write_ai_run_log_artifact",
     "write_review_package",
     "write_patch_review_report",
 ]

@@ -132,6 +132,14 @@ Record durable technical and governance decisions here.
 - Risks: The current package write is not transactional, and raw patch JSON may need explicit versioning once external consumers depend on it.
 - Follow-up: Add AI run log and blog draft persistence, then add duplicate path/ID checks before formal apply/revert.
 
+### 2026-05-11 — Persist AI run logs without raw AI output
+
+- Decision: Persist typed AI run logs under `_ai_runs/<run_id>.json`, including run metadata, hashes, validation status, `created_at`, and optional cache metadata, while excluding raw model output.
+- Reason: Traceability needs durable run artifacts, but raw AI output should remain outside durable run logs until retention and privacy behavior are explicitly designed.
+- Alternatives: Do not persist run logs; persist raw model outputs with run logs; wait for real provider integration.
+- Risks: The run artifact JSON shape may need versioning before CLI/UI consumers depend on it.
+- Follow-up: Add explicit artifact schema versioning and provider-specific metadata only when real provider adapters are introduced.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

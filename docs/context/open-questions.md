@@ -34,11 +34,11 @@ Last updated: 2026-05-11
 
 ## AI Pipeline
 
-### 2026-05-10 — When should AI run logs become durable files?
+### 2026-05-11 — Should AI run log artifacts get an explicit schema version?
 
-- Context: Gate 4 returns typed run logs for extraction validation, but does not yet write `_ai_runs/` files.
-- Needed decision: Add durable run log storage before real provider calls are introduced.
-- Impact: Affects traceability, debugging, replay, and future cache keys.
+- Context: AI run logs are now persisted under `_ai_runs/`, but the artifact JSON does not yet have a separate artifact schema version.
+- Needed decision: Add explicit artifact schema versioning before external CLI/UI consumers depend on the JSON shape.
+- Impact: Affects traceability, debugging, replay, and future cache migrations.
 
 ### 2026-05-10 — Which provider adapter should be implemented first?
 
