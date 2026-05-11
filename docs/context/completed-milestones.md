@@ -152,3 +152,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 76 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add durable blog draft package persistence and artifact schema versioning before external CLI/UI consumers depend on artifact JSON shape.
+
+## 2026-05-11 — Blog Draft Package Persistence Completed
+
+- Scope: Implemented rendering and writing of blog draft packages under AI working directories.
+- Outcome: Added a storage adapter that persists draft Markdown under `_ai_suggestions/blog-drafts/<draft_id>/draft.md` and quality reports under `_ai_reports/blog-quality/<draft_id>.md` while marking `formal_write: false` and `publication_ready: false`.
+- Review: `docs/reviews/milestone-reviews/2026-05-11-blog-draft-persistence.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves local trial output without enabling publication or formal vault mutation.
+- Validation: 81 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add local trial harness or CLI and explicit artifact versioning before external consumers depend on draft artifact shape.

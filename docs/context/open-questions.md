@@ -68,11 +68,11 @@ Last updated: 2026-05-11
 
 ## Blog Draft
 
-### 2026-05-10 — When should blog drafts become durable files?
+### 2026-05-11 — Should blog draft artifacts get an explicit schema version?
 
-- Context: Gate 6 returns typed draft packages and quality reports, but does not write draft files under `knowledge-vault/`.
-- Needed decision: Add draft persistence/export after the desired draft directory and review UX are clear.
-- Impact: Affects traceability, review flow, and publication workflow.
+- Context: Blog drafts and quality reports are now persisted under AI working directories, but the Markdown artifact shape does not yet have a separate artifact schema version.
+- Needed decision: Add explicit artifact schema versioning before external CLI/UI consumers depend on the Markdown shape.
+- Impact: Affects traceability, review flow, and future migration behavior.
 
 ### 2026-05-10 — When should provider-backed editorial drafting be introduced?
 

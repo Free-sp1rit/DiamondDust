@@ -310,6 +310,24 @@ Rules:
 - Review package persistence must not record accept/reject decisions.
 - Formal writes still require explicit user acceptance and a separate storage apply step.
 
+## Blog Draft Package Persistence
+
+Blog draft packages are AI working artifacts, not publication records and not formal vault writes.
+
+The package may write:
+
+- blog draft Markdown under `_ai_suggestions/blog-drafts/<draft_id>/draft.md`
+- blog quality report under `_ai_reports/blog-quality/<draft_id>.md`
+
+Rules:
+
+- Blog draft package persistence must write only to AI working directories.
+- Blog draft artifacts must preserve source unit IDs and unsupported claim IDs.
+- Blog quality reports must preserve validation status, risks, unsupported claims, evidence coverage, and suggested actions.
+- Blog draft artifacts must mark `formal_write: false` and `publication_ready: false`.
+- Blog draft persistence must not write files to `70-publications/`.
+- Publishing still requires separate user approval and a future publication workflow.
+
 ## Schema Versioning
 
 Every persisted formal note must include:
