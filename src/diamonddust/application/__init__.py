@@ -11,6 +11,12 @@ from diamonddust.application.blog_draft import (
     EvidenceCoverageItem,
     generate_blog_draft_from_review,
 )
+from diamonddust.application.local_trial import (
+    LocalTrialError,
+    LocalTrialResult,
+    LocalTrialSpec,
+    run_local_trial,
+)
 from diamonddust.application.mvp_release import (
     MINIMUM_MVP_SAMPLE_COUNT,
     MVPReleaseError,
@@ -43,6 +49,9 @@ __all__ = [
     "BlogQualityStatus",
     "ClaimInventoryItem",
     "EvidenceCoverageItem",
+    "LocalTrialError",
+    "LocalTrialResult",
+    "LocalTrialSpec",
     "MINIMUM_MVP_SAMPLE_COUNT",
     "MVPReleaseError",
     "MVPReleaseReadinessReport",
@@ -58,6 +67,7 @@ __all__ = [
     "generate_patch_from_extraction",
     "inspect_patch_diff",
     "review_patch",
+    "run_local_trial",
     "run_mvp_release_readiness",
     "scan_critical_architecture_violations",
     "target_path_for_unit",

@@ -163,3 +163,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 81 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add local trial harness or CLI and explicit artifact versioning before external consumers depend on draft artifact shape.
+
+## 2026-05-11 — Local Trial Harness Completed
+
+- Scope: Implemented local trial orchestration for one Markdown essay plus structured extraction JSON.
+- Outcome: Added an application harness and module-based CLI that write AI run logs, review packages, candidate Markdown notes, patch review reports, blog draft packages, and blog quality reports under AI working directories without provider calls or formal vault mutation.
+- Review: `docs/reviews/milestone-reviews/2026-05-11-local-trial-harness.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves product-owner trialability before real provider integration and formal apply/revert.
+- Validation: 85 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add example extraction JSON fixtures, artifact schema versioning, product-owner-approved golden essays, CI, and formal apply/revert safety checks.
