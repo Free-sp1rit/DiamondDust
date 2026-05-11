@@ -140,6 +140,14 @@ Record durable technical and governance decisions here.
 - Risks: The run artifact JSON shape may need versioning before CLI/UI consumers depend on it.
 - Follow-up: Add explicit artifact schema versioning and provider-specific metadata only when real provider adapters are introduced.
 
+### 2026-05-11 — Persist blog draft packages only in AI working directories
+
+- Decision: Persist blog draft Markdown under `_ai_suggestions/blog-drafts/<draft_id>/draft.md` and blog quality reports under `_ai_reports/blog-quality/<draft_id>.md`.
+- Reason: Local trial and review workflows need durable draft artifacts, while publishing and formal vault mutation must remain behind explicit future approval.
+- Alternatives: Keep drafts in memory only; write drafts directly to `70-publications/`; defer draft persistence until a CLI exists.
+- Risks: The artifact Markdown shape may need explicit versioning before CLI/UI consumers depend on it, and deterministic draft content is still scaffold-quality prose.
+- Follow-up: Add a local trial harness or CLI that writes review packages, run logs, and draft packages together without formal vault mutation.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
