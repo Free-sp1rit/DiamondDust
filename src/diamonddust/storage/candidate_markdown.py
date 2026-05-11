@@ -15,6 +15,7 @@ from diamonddust.domain import (
     Relation,
     SourceRef,
 )
+from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 
 
 AI_CANDIDATE_NOTES_DIR = "_ai_suggestions/candidate-notes"
@@ -174,6 +175,8 @@ def _unit_markdown(
 ) -> str:
     frontmatter = [
         "---",
+        "artifact_type: candidate_markdown_note",
+        f"artifact_schema_version: {_yaml_scalar(ARTIFACT_SCHEMA_VERSION)}",
         f"id: {_yaml_scalar(unit.id)}",
         f"type: {_yaml_scalar(unit.type.value)}",
         f"status: {_yaml_scalar(unit.status.value)}",
@@ -254,6 +257,8 @@ def _relations_for_unit(
 def _manifest_content(manifest: CandidateMarkdownManifest) -> str:
     lines = [
         "# Candidate Markdown Export",
+        "",
+        f"Artifact schema version: `{ARTIFACT_SCHEMA_VERSION}`",
         "",
         f"Patch: `{manifest.patch_id}`",
         "",

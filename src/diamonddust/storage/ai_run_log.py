@@ -9,6 +9,7 @@ import re
 from typing import Any
 
 from diamonddust.ai import AIRunLog
+from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 
 
 AI_RUNS_DIR = "_ai_runs"
@@ -100,6 +101,7 @@ def _run_log_mapping(
     data: dict[str, Any] = dict(run_log.to_mapping())
     data["created_at"] = created_at
     data["artifact_type"] = "ai_run_log"
+    data["artifact_schema_version"] = ARTIFACT_SCHEMA_VERSION
     _set_optional(data, "knowledge_base_snapshot_hash", knowledge_base_snapshot_hash)
     _set_optional(data, "cache_key", cache_key)
     return data

@@ -174,3 +174,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 85 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add example extraction JSON fixtures, artifact schema versioning, product-owner-approved golden essays, CI, and formal apply/revert safety checks.
+
+## 2026-05-11 — Artifact Schema Versioning Completed
+
+- Scope: Added explicit artifact schema version markers to persisted AI working artifacts.
+- Outcome: Introduced shared `artifact_schema_version: 0.1.0` metadata for AI run logs, raw patch JSON, candidate Markdown notes and manifests, patch review reports, blog drafts, and blog quality reports.
+- Review: `docs/reviews/milestone-reviews/2026-05-11-artifact-schema-versioning.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; stabilizes local trial output formats before broader CLI/UI consumption.
+- Validation: 89 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add example local trial extraction JSON fixtures, golden essays, CI, and future compatibility handling when artifact import/replay exists.

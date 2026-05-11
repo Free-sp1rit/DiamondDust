@@ -22,6 +22,7 @@ from diamonddust.storage.candidate_markdown import (
     CandidateMarkdownExport,
     render_candidate_markdown,
 )
+from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 from diamonddust.storage.review_report import (
     PatchReviewReport,
     render_patch_review_report,
@@ -139,6 +140,8 @@ def _candidate_export_for(patch: KnowledgePatch) -> CandidateMarkdownExport | No
 
 def _patch_mapping(patch: KnowledgePatch) -> dict[str, Any]:
     return {
+        "artifact_type": "knowledge_patch",
+        "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
         "patch_id": patch.patch_id,
         "created_at": patch.created_at,
         "source_input_ids": list(patch.source_input_ids),
@@ -229,6 +232,8 @@ def _candidate_manifest_content(candidate_export: CandidateMarkdownExport) -> st
     manifest = candidate_export.manifest
     lines = [
         "# Candidate Markdown Export",
+        "",
+        f"Artifact schema version: `{ARTIFACT_SCHEMA_VERSION}`",
         "",
         f"Patch: `{manifest.patch_id}`",
         "",

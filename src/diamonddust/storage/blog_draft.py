@@ -12,6 +12,7 @@ from diamonddust.application.blog_draft import (
     ClaimInventoryItem,
     EvidenceCoverageItem,
 )
+from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 
 
 AI_BLOG_DRAFTS_DIR = "_ai_suggestions/blog-drafts"
@@ -108,6 +109,7 @@ def render_blog_draft_markdown(
         [
             "---",
             "artifact_type: blog_draft",
+            f"artifact_schema_version: {_json_string(ARTIFACT_SCHEMA_VERSION)}",
             f"draft_id: {_json_string(draft.id)}",
             f"quality_report_id: {_json_string(draft.quality_report_id)}",
             f"mode: {_json_string(draft.mode.value)}",
@@ -186,6 +188,8 @@ def _quality_report_content(package: BlogDraftPackage) -> str:
     report = package.quality_report
     lines = [
         "# Blog Quality Report",
+        "",
+        f"Artifact schema version: `{ARTIFACT_SCHEMA_VERSION}`",
         "",
         f"Draft: `{package.draft.id}`",
         f"Report: `{report.id}`",
