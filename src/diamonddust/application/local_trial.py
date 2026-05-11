@@ -1,0 +1,368 @@
+"""Local trial orchestration for inspectable MVP artifacts."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+import re
+
+from diamonddust.ai import AIRunMetadata, EXTRACTION_TASK, validate_extraction_output
+from diamonddust.application.blog_draft import BlogMode, generate_blog_draft_from_review
+from diamonddust.application.patch_review import (
+    PatchReviewDecision,
+    generate_patch_from_extraction,
+    review_patch,
+)
+
+
+class LocalTrialError(ValueError):
+    """Raised when a local trial request is invalid."""
+
+
+@dataclass(frozen=True)
+class LocalTrialSpec:
+    trial_id: str
+    essay_path: str
+    extraction_output: object
+    blog_title: str
+    blog_mode: BlogMode
+    audience: str
+    reader_problem: str
+    provider: str = "local-trial"
+    model: str = "structured-json"
+    prompt_version: str = "extract_units.v1"
+    schema_version: str = "0.1.0"
+
+    def __post_init__(self) -> None:
+        _require_safe_fragment("trial_id", self.trial_id)
+        _require_non_empty("essay_path", self.essay_path)
+        _require_non_empty("blog_title", self.blog_title)
+        if not isinstance(self.blog_mode, BlogMode):
+            raise LocalTrialError("blog_mode must be a BlogMode")
+        _require_non_empty("audience", self.audience)
+        _require_non_empty("reader_problem", self.reader_problem)
+        _require_non_empty("provider", self.provider)
+        _require_non_empty("model", self.model)
+        _require_non_empty("prompt_version", self.prompt_version)
+        _require_non_empty("schema_version", self.schema_version)
+
+
+@dataclass(frozen=True)
+class LocalTrialResult:
+    trial_id: str
+    source_input_id: str | None
+    passed: bool
+    summary: str
+    errors: tuple[str, ...]
+    ingested: bool
+    extraction_valid: bool
+    ai_run_log_written: bool
+    review_package_written: bool
+    blog_draft_package_written: bool
+    simulated_patch_acceptance: bool
+    formal_write_performed: bool
+    provider_called: bool
+    written_paths: tuple[str, ...]
+    patch_id: str | None
+    draft_id: str | None
+    unsupported_claims: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        _require_safe_fragment("trial_id", self.trial_id)
+        _require_optional_str("source_input_id", self.source_input_id)
+        _require_bool("passed", self.passed)
+        _require_non_empty("summary", self.summary)
+        _require_str_tuple("errors", self.errors, allow_empty=True)
+        _require_bool("ingested", self.ingested)
+        _require_bool("extraction_valid", self.extraction_valid)
+        _require_bool("ai_run_log_written", self.ai_run_log_written)
+        _require_bool("review_package_written", self.review_package_written)
+        _require_bool("blog_draft_package_written", self.blog_draft_package_written)
+        _require_bool("simulated_patch_acceptance", self.simulated_patch_acceptance)
+        if self.formal_write_performed is not False:
+            raise LocalTrialError("local trials must not perform formal writes")
+        if self.provider_called is not False:
+            raise LocalTrialError("local trials must not call providers")
+        _require_str_tuple("written_paths", self.written_paths, allow_empty=True)
+        _require_optional_str("patch_id", self.patch_id)
+        _require_optional_str("draft_id", self.draft_id)
+        _require_str_tuple("unsupported_claims", self.unsupported_claims, allow_empty=True)
+
+
+def run_local_trial(
+    spec: LocalTrialSpec,
+    *,
+    root: str | Path,
+    vault_root: str | Path,
+    created_at: str,
+) -> LocalTrialResult:
+    _require_non_empty("created_at", created_at)
+    root_path = Path(root)
+    vault_path = Path(vault_root)
+    errors: list[str] = []
+    written_paths: list[str] = []
+    source_input_id: str | None = None
+    ingested = False
+    extraction_valid = False
+    ai_run_log_written = False
+    review_package_written = False
+    blog_draft_package_written = False
+    simulated_patch_acceptance = False
+    patch_id: str | None = None
+    draft_id: str | None = None
+    unsupported_claims: tuple[str, ...] = ()
+
+    try:
+        from diamonddust.storage.markdown import read_markdown_essay
+
+        essay_path = _essay_path_for(spec.essay_path, root_path)
+        ingested_essay = read_markdown_essay(essay_path, root=root_path)
+        ingested = True
+        source_input_id = ingested_essay.source_id
+    except Exception as exc:
+        errors.append(_stage_error("markdown ingestion", exc))
+        return _trial_result(
+            spec,
+            source_input_id=source_input_id,
+            errors=errors,
+            ingested=ingested,
+            extraction_valid=extraction_valid,
+            ai_run_log_written=ai_run_log_written,
+            review_package_written=review_package_written,
+            blog_draft_package_written=blog_draft_package_written,
+            simulated_patch_acceptance=simulated_patch_acceptance,
+            written_paths=written_paths,
+            patch_id=patch_id,
+            draft_id=draft_id,
+            unsupported_claims=unsupported_claims,
+        )
+
+    metadata = AIRunMetadata(
+        run_id=f"run_{spec.trial_id}_local_trial",
+        task=EXTRACTION_TASK,
+        provider=spec.provider,
+        model=spec.model,
+        prompt_version=spec.prompt_version,
+        schema_version=spec.schema_version,
+        input_hash=ingested_essay.raw_content_hash,
+    )
+    extraction_result = validate_extraction_output(spec.extraction_output, metadata)
+    extraction_valid = extraction_result.is_valid
+
+    try:
+        from diamonddust.storage.ai_run_log import write_ai_run_log_artifact
+
+        run_artifact = write_ai_run_log_artifact(
+            extraction_result.run_log,
+            vault_root=vault_path,
+            created_at=created_at,
+        )
+        written_paths.append(run_artifact.relative_path)
+        ai_run_log_written = True
+    except Exception as exc:
+        errors.append(_stage_error("AI run log persistence", exc))
+        return _trial_result(
+            spec,
+            source_input_id=source_input_id,
+            errors=errors,
+            ingested=ingested,
+            extraction_valid=extraction_valid,
+            ai_run_log_written=ai_run_log_written,
+            review_package_written=review_package_written,
+            blog_draft_package_written=blog_draft_package_written,
+            simulated_patch_acceptance=simulated_patch_acceptance,
+            written_paths=written_paths,
+            patch_id=patch_id,
+            draft_id=draft_id,
+            unsupported_claims=unsupported_claims,
+        )
+
+    errors.extend(extraction_result.errors)
+    declared_source_input_id = _declared_source_input_id(spec.extraction_output)
+    if declared_source_input_id is not None and declared_source_input_id != source_input_id:
+        errors.append(
+            "extraction source_input_id does not match ingested source_id: "
+            f"{declared_source_input_id!r} != {source_input_id!r}"
+        )
+
+    if extraction_result.proposal is None or errors:
+        return _trial_result(
+            spec,
+            source_input_id=source_input_id,
+            errors=errors,
+            ingested=ingested,
+            extraction_valid=extraction_valid,
+            ai_run_log_written=ai_run_log_written,
+            review_package_written=review_package_written,
+            blog_draft_package_written=blog_draft_package_written,
+            simulated_patch_acceptance=simulated_patch_acceptance,
+            written_paths=written_paths,
+            patch_id=patch_id,
+            draft_id=draft_id,
+            unsupported_claims=unsupported_claims,
+        )
+
+    try:
+        from diamonddust.storage.blog_draft import write_blog_draft_package
+        from diamonddust.storage.review_package import write_review_package
+
+        patch = generate_patch_from_extraction(
+            extraction_result.proposal,
+            created_at=created_at,
+        )
+        patch_id = patch.patch_id
+        review_package = write_review_package(patch, vault_root=vault_path)
+        written_paths.extend(review_package.written_paths)
+        review_package_written = True
+
+        review_result = review_patch(patch, PatchReviewDecision.ACCEPTED)
+        simulated_patch_acceptance = True
+        draft_package = generate_blog_draft_from_review(
+            review_result,
+            title=spec.blog_title,
+            mode=spec.blog_mode,
+            audience=spec.audience,
+            reader_problem=spec.reader_problem,
+            draft_id=f"draft_{spec.trial_id}",
+            quality_report_id=f"report_draft_{spec.trial_id}",
+        )
+        draft_export = write_blog_draft_package(draft_package, vault_root=vault_path)
+        written_paths.extend(draft_export.written_paths)
+        blog_draft_package_written = True
+        draft_id = draft_package.draft.id
+        unsupported_claims = tuple(
+            claim.claim_id for claim in draft_package.draft.unsupported_claims
+        )
+    except Exception as exc:
+        errors.append(_stage_error("local trial workflow", exc))
+
+    return _trial_result(
+        spec,
+        source_input_id=source_input_id,
+        errors=errors,
+        ingested=ingested,
+        extraction_valid=extraction_valid,
+        ai_run_log_written=ai_run_log_written,
+        review_package_written=review_package_written,
+        blog_draft_package_written=blog_draft_package_written,
+        simulated_patch_acceptance=simulated_patch_acceptance,
+        written_paths=written_paths,
+        patch_id=patch_id,
+        draft_id=draft_id,
+        unsupported_claims=unsupported_claims,
+    )
+
+
+def _trial_result(
+    spec: LocalTrialSpec,
+    *,
+    source_input_id: str | None,
+    errors: list[str],
+    ingested: bool,
+    extraction_valid: bool,
+    ai_run_log_written: bool,
+    review_package_written: bool,
+    blog_draft_package_written: bool,
+    simulated_patch_acceptance: bool,
+    written_paths: list[str],
+    patch_id: str | None,
+    draft_id: str | None,
+    unsupported_claims: tuple[str, ...],
+) -> LocalTrialResult:
+    passed = (
+        not errors
+        and ingested
+        and extraction_valid
+        and ai_run_log_written
+        and review_package_written
+        and blog_draft_package_written
+        and simulated_patch_acceptance
+    )
+    return LocalTrialResult(
+        trial_id=spec.trial_id,
+        source_input_id=source_input_id,
+        passed=passed,
+        summary=_summary_for(spec.trial_id, passed, written_paths, errors),
+        errors=tuple(errors),
+        ingested=ingested,
+        extraction_valid=extraction_valid,
+        ai_run_log_written=ai_run_log_written,
+        review_package_written=review_package_written,
+        blog_draft_package_written=blog_draft_package_written,
+        simulated_patch_acceptance=simulated_patch_acceptance,
+        formal_write_performed=False,
+        provider_called=False,
+        written_paths=tuple(written_paths),
+        patch_id=patch_id,
+        draft_id=draft_id,
+        unsupported_claims=unsupported_claims,
+    )
+
+
+def _summary_for(
+    trial_id: str,
+    passed: bool,
+    written_paths: list[str],
+    errors: list[str],
+) -> str:
+    status = "passed" if passed else "failed"
+    summary = f"{status}: local trial {trial_id} wrote {len(written_paths)} artifacts"
+    if errors:
+        summary = f"{summary}; {len(errors)} errors"
+    return summary
+
+
+def _essay_path_for(essay_path: str, root: Path) -> Path:
+    path = Path(essay_path)
+    if path.is_absolute():
+        return path
+    return root / path
+
+
+def _declared_source_input_id(extraction_output: object) -> str | None:
+    if not isinstance(extraction_output, dict):
+        return None
+    value = extraction_output.get("source_input_id")
+    return value if isinstance(value, str) else None
+
+
+def _stage_error(stage: str, exc: Exception) -> str:
+    return f"{stage} failed: {exc}"
+
+
+_SAFE_FRAGMENT_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+def _require_safe_fragment(name: str, value: str) -> None:
+    _require_non_empty(name, value)
+    if not _SAFE_FRAGMENT_PATTERN.match(value):
+        raise LocalTrialError(f"{name} contains unsafe path characters")
+
+
+def _require_non_empty(name: str, value: str | None) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise LocalTrialError(f"{name} must be a non-empty string")
+
+
+def _require_optional_str(name: str, value: str | None) -> None:
+    if value is not None:
+        _require_non_empty(name, value)
+
+
+def _require_bool(name: str, value: object) -> None:
+    if not isinstance(value, bool):
+        raise LocalTrialError(f"{name} must be a boolean")
+
+
+def _require_str_tuple(
+    name: str,
+    value: object,
+    *,
+    allow_empty: bool = False,
+) -> None:
+    if not isinstance(value, tuple):
+        raise LocalTrialError(f"{name} must be a tuple")
+    if not allow_empty and not value:
+        raise LocalTrialError(f"{name} must not be empty")
+    if not all(isinstance(item, str) and item.strip() for item in value):
+        raise LocalTrialError(f"{name} must contain non-empty strings")

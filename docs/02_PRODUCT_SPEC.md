@@ -27,6 +27,29 @@
 9. 系统基于已接受内容生成博客草稿
 10. 系统生成质量报告
 
+## Local Trial Flow
+
+Before real provider calls are introduced, the local trial flow accepts:
+
+- one Markdown essay
+- one structured extraction JSON file
+
+The local trial writes inspectable AI working artifacts:
+
+- AI run log
+- review package
+- candidate Markdown notes
+- patch review report
+- blog draft package
+- blog quality report
+
+Rules:
+
+- The local trial must not call an LLM provider.
+- The local trial must not write formal vault files.
+- The local trial may simulate patch acceptance only to generate downstream draft artifacts.
+- Simulated acceptance must not imply user acceptance for formal vault apply.
+
 ## Human Review Points
 
 必须人工确认：

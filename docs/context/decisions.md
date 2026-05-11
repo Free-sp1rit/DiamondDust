@@ -148,6 +148,14 @@ Record durable technical and governance decisions here.
 - Risks: The artifact Markdown shape may need explicit versioning before CLI/UI consumers depend on it, and deterministic draft content is still scaffold-quality prose.
 - Follow-up: Add a local trial harness or CLI that writes review packages, run logs, and draft packages together without formal vault mutation.
 
+### 2026-05-11 — Local trial uses structured extraction JSON before provider integration
+
+- Decision: Add a local trial harness and module-based CLI that accepts one Markdown essay plus structured extraction JSON, then writes AI run logs, review packages, and blog draft packages under AI working directories.
+- Reason: The product owner needs a way to inspect current tool output, while real provider calls, prompt execution, auth, cost, and model policy are not approved yet.
+- Alternatives: Add a real provider call now; generate fake extraction internally; wait until formal vault apply exists before exposing any local trial path.
+- Risks: The trial still requires structured JSON, and simulated patch acceptance for draft generation must not be confused with user approval for formal vault apply.
+- Follow-up: Add artifact schema versioning, product-owner-approved golden essays, and provider adapters only after the review boundary remains stable.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

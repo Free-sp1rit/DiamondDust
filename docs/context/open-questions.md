@@ -34,6 +34,12 @@ Last updated: 2026-05-11
 
 ## AI Pipeline
 
+### 2026-05-11 — Should local trial extraction JSON get a fixture schema file?
+
+- Context: The local trial CLI now accepts structured extraction JSON, but the repository does not yet include a standalone JSON fixture schema or example file for users.
+- Needed decision: Add an example extraction JSON fixture and optional schema documentation before broader product-owner trial runs.
+- Impact: Affects trial ergonomics, validation clarity, and future provider adapter handoff.
+
 ### 2026-05-11 — Should AI run log artifacts get an explicit schema version?
 
 - Context: AI run logs are now persisted under `_ai_runs/`, but the artifact JSON does not yet have a separate artifact schema version.
