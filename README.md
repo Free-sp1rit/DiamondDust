@@ -16,15 +16,15 @@ The current local trial path uses structured extraction JSON instead of calling 
 
 ```bash
 PYTHONPATH=src python3 -m diamonddust.cli local-trial \
-  --trial-id trial_example \
-  --essay 00-inbox/example.md \
-  --extraction-json extraction.json \
+  --trial-id trial_fixture_ab12cd \
+  --essay tests/fixtures/local_trial/trial-essay.md \
+  --extraction-json tests/fixtures/local_trial/extraction.json \
   --root . \
   --vault-root knowledge-vault \
-  --title "Example Draft" \
+  --title "Reviewable Local Trial Artifacts" \
   --mode explanation \
-  --audience "knowledge workers" \
-  --reader-problem "reviewing generated artifacts"
+  --audience "product owner" \
+  --reader-problem "inspecting generated artifacts before formal writes"
 ```
 
 The command writes AI working artifacts only. It does not write formal vault notes or publish content.

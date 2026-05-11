@@ -164,6 +164,14 @@ Record durable technical and governance decisions here.
 - Risks: Future artifact formats may diverge and require per-artifact versioning or tolerant readers for older unversioned artifacts.
 - Follow-up: Add compatibility handling when artifact import/replay is introduced and document any future artifact schema bumps.
 
+### 2026-05-11 — Provide a checked-in local trial fixture pair
+
+- Decision: Add a small Markdown essay fixture and matching structured extraction JSON fixture under `tests/fixtures/local_trial/`.
+- Reason: The product owner needs a ready-to-run local trial without manually authoring extraction JSON before provider integration exists.
+- Alternatives: Keep only synthetic unit-test fixtures; generate extraction JSON dynamically; wait for a provider adapter before adding trial fixtures.
+- Risks: The fixture proves orchestration and artifact output, not real extraction quality or editorial quality.
+- Follow-up: Promote or replace fixtures with product-owner-approved golden essays and add user-facing extraction JSON schema notes.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

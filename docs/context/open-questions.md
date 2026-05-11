@@ -34,10 +34,10 @@ Last updated: 2026-05-11
 
 ## AI Pipeline
 
-### 2026-05-11 — Should local trial extraction JSON get a fixture schema file?
+### 2026-05-11 — Should local trial extraction JSON get standalone schema documentation?
 
-- Context: The local trial CLI now accepts structured extraction JSON, but the repository does not yet include a standalone JSON fixture schema or example file for users.
-- Needed decision: Add an example extraction JSON fixture and optional schema documentation before broader product-owner trial runs.
+- Context: The local trial CLI now has a checked-in example extraction JSON fixture, but the repository does not yet include standalone schema documentation for users authoring their own trial JSON.
+- Needed decision: Add concise user-facing extraction JSON schema notes before broader product-owner trial runs.
 - Impact: Affects trial ergonomics, validation clarity, and future provider adapter handoff.
 
 ### 2026-05-11 — When should artifact versions diverge by artifact type?

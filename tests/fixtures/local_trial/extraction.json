@@ -1,0 +1,93 @@
+{
+  "source_input_id": "raw_essay_local_trial_fixture_ab12cd",
+  "unit_candidates": [
+    {
+      "id": "unit_local_trial_visible_artifacts_ab12cd",
+      "type": "concept",
+      "title": "Visible intermediate artifacts build trust",
+      "content": "Local-first knowledge tools are easier to trust when intermediate artifacts are visible before formal writes.",
+      "status": "seedling",
+      "source_refs": [
+        {
+          "source_id": "raw_essay_local_trial_fixture_ab12cd",
+          "source_path": "tests/fixtures/local_trial/trial-essay.md",
+          "source_span": "lines 6-6",
+          "origin": "user_text",
+          "line_start": 6,
+          "line_end": 6,
+          "content_hash": "sha256:local-trial-source-line-6",
+          "is_approximate": true
+        }
+      ],
+      "relations": [],
+      "confidence": "medium",
+      "created_at": "2026-05-11T00:00:00Z",
+      "updated_at": "2026-05-11T00:00:00Z",
+      "schema_version": "0.1.0"
+    },
+    {
+      "id": "unit_local_trial_review_package_cd34ef",
+      "type": "claim",
+      "title": "Review packages should precede formal vault writes",
+      "content": "A review package should show proposed notes, patch JSON, and a report before anything touches the formal vault.",
+      "status": "seedling",
+      "source_refs": [
+        {
+          "source_id": "raw_essay_local_trial_fixture_ab12cd",
+          "source_path": "tests/fixtures/local_trial/trial-essay.md",
+          "source_span": "lines 8-8",
+          "origin": "user_text",
+          "line_start": 8,
+          "line_end": 8,
+          "content_hash": "sha256:local-trial-source-line-8",
+          "is_approximate": true
+        }
+      ],
+      "relations": [],
+      "confidence": "high",
+      "created_at": "2026-05-11T00:00:00Z",
+      "updated_at": "2026-05-11T00:00:00Z",
+      "schema_version": "0.1.0"
+    },
+    {
+      "id": "unit_local_trial_draft_review_ef56gh",
+      "type": "claim",
+      "title": "Drafts need source unit and unsupported claim visibility",
+      "content": "Draft generation should preserve source unit IDs and unsupported claims for human review before publication.",
+      "status": "seedling",
+      "source_refs": [
+        {
+          "source_id": "raw_essay_local_trial_fixture_ab12cd",
+          "source_path": "tests/fixtures/local_trial/trial-essay.md",
+          "source_span": "lines 10-10",
+          "origin": "user_text",
+          "line_start": 10,
+          "line_end": 10,
+          "content_hash": "sha256:local-trial-source-line-10",
+          "is_approximate": true
+        }
+      ],
+      "relations": [],
+      "confidence": "medium",
+      "created_at": "2026-05-11T00:00:00Z",
+      "updated_at": "2026-05-11T00:00:00Z",
+      "schema_version": "0.1.0"
+    }
+  ],
+  "relation_candidates": [
+    {
+      "source_id": "unit_local_trial_review_package_cd34ef",
+      "relation_type": "supports",
+      "target_id": "unit_local_trial_visible_artifacts_ab12cd",
+      "confidence": "high",
+      "reason": "The review package claim supports the broader concept that visible artifacts build trust."
+    },
+    {
+      "source_id": "unit_local_trial_draft_review_ef56gh",
+      "relation_type": "supports",
+      "target_id": "unit_local_trial_visible_artifacts_ab12cd",
+      "confidence": "medium",
+      "reason": "Draft source visibility is another example of making intermediate artifacts reviewable."
+    }
+  ]
+}

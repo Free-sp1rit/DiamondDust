@@ -185,3 +185,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 89 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add example local trial extraction JSON fixtures, golden essays, CI, and future compatibility handling when artifact import/replay exists.
+
+## 2026-05-11 — Local Trial Fixtures Completed
+
+- Scope: Added a checked-in local trial Markdown essay and matching structured extraction JSON.
+- Outcome: The README local trial command now points to runnable fixtures under `tests/fixtures/local_trial/`, and tests verify the fixture pair validates and writes reviewable AI working artifacts through the CLI.
+- Review: `docs/reviews/milestone-reviews/2026-05-11-local-trial-fixtures.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves product-owner trialability before real provider integration.
+- Validation: 91 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add standalone extraction JSON schema notes, product-owner-approved golden essays, CI, and formal apply/revert safety checks.
