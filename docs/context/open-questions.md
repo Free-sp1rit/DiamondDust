@@ -48,17 +48,17 @@ Last updated: 2026-05-11
 
 ## Patch Review
 
-### 2026-05-10 — When should KnowledgePatch files become durable suggestions?
+### 2026-05-11 — Should raw patch JSON get an explicit artifact schema version?
 
-- Context: Gate 5 generates typed patches and review results, and candidate Markdown export writes rendered notes under `_ai_suggestions/candidate-notes/`, but raw patch files are still not persisted under `_ai_suggestions/patches/`.
-- Needed decision: Add patch persistence before integrating a review UI or real provider outputs.
-- Impact: Affects traceability, replay, auditability, and rollback workflows.
+- Context: Review package persistence now writes raw patch JSON under `_ai_suggestions/patches/`, but the artifact format currently mirrors existing domain schema values without a separate artifact schema version.
+- Needed decision: Add explicit artifact schema versioning before external CLI/UI consumers depend on the JSON shape.
+- Impact: Affects traceability, replay, auditability, and future migration behavior.
 
-### 2026-05-11 — Should review artifacts be written as one package?
+### 2026-05-11 — Should review package writes become transactional?
 
-- Context: Candidate notes and patch review reports can now be rendered separately, while raw patch files are not yet persisted.
-- Needed decision: Decide whether to add a combined writer that emits raw patch, candidate notes, and review report in one operation.
-- Impact: Affects review UX, artifact consistency, replay, and future CLI/UI workflow.
+- Context: Review package persistence writes raw patch JSON, candidate notes, and review report together, but does not yet provide transaction or rollback behavior if one artifact write fails.
+- Needed decision: Decide whether filesystem transaction semantics are needed before real CLI/UI review flows.
+- Impact: Affects review artifact consistency, replay, and failure recovery.
 
 ### 2026-05-10 — When should storage apply/revert behavior be implemented?
 
