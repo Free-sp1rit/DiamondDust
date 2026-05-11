@@ -292,6 +292,24 @@ Rules:
 - Review reports must not mark patches as accepted or rejected.
 - Formal writes still require a validated patch and explicit user acceptance.
 
+## Review Package Persistence
+
+A review package groups the artifacts needed for human patch review.
+
+The package may write:
+
+- raw patch JSON under `_ai_suggestions/patches/<patch_id>.json`
+- candidate Markdown notes under `_ai_suggestions/candidate-notes/<patch_id>/`
+- patch review report under `_ai_reports/patch-reviews/<patch_id>.md`
+
+Rules:
+
+- Review package persistence must validate patch safety before writing artifacts.
+- Review package persistence must write only to AI working directories.
+- Review package persistence must mark `formal_write_allowed: false`.
+- Review package persistence must not record accept/reject decisions.
+- Formal writes still require explicit user acceptance and a separate storage apply step.
+
 ## Schema Versioning
 
 Every persisted formal note must include:

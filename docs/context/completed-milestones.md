@@ -130,3 +130,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 65 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add raw patch persistence and a combined review package writer before formal apply/revert.
+
+## 2026-05-11 — Review Package Persistence Completed
+
+- Scope: Implemented a combined writer for raw patch JSON, candidate Markdown notes, and patch review reports.
+- Outcome: Added a storage adapter that writes review package artifacts under `_ai_suggestions/patches/`, `_ai_suggestions/candidate-notes/`, and `_ai_reports/patch-reviews/` without formal vault mutation.
+- Review: `docs/reviews/milestone-reviews/2026-05-11-review-package-persistence.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves review artifact traceability before formal apply/revert.
+- Validation: 70 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add AI run log and blog draft persistence, then duplicate path/ID checks before formal apply/revert.

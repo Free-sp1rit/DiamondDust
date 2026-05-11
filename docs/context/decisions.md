@@ -124,6 +124,14 @@ Record durable technical and governance decisions here.
 - Risks: Report format may change once durable patch persistence, review UI, and formal apply/revert exist.
 - Follow-up: Add a combined review package writer and raw patch persistence so reports, candidate notes, and patch files can be reviewed together.
 
+### 2026-05-11 — Persist review packages only in AI working directories
+
+- Decision: Persist raw patch JSON, candidate notes, and patch review reports together as a review package, constrained to `_ai_suggestions/` and `_ai_reports/`.
+- Reason: Human review needs a coherent artifact package before formal apply/revert, but the package must not imply acceptance or mutate formal vault files.
+- Alternatives: Persist only raw patch JSON; persist only report and candidate notes; write package artifacts beside formal target paths.
+- Risks: The current package write is not transactional, and raw patch JSON may need explicit versioning once external consumers depend on it.
+- Follow-up: Add AI run log and blog draft persistence, then add duplicate path/ID checks before formal apply/revert.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

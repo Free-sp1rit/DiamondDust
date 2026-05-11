@@ -24,10 +24,19 @@ from diamonddust.storage.review_report import (
     render_patch_review_report,
     write_patch_review_report,
 )
+from diamonddust.storage.review_package import (
+    AI_PATCH_SUGGESTIONS_DIR,
+    PatchJsonArtifact,
+    ReviewPackage,
+    ReviewPackageError,
+    render_patch_json_artifact,
+    write_review_package,
+)
 
 __all__ = [
     "AI_CANDIDATE_NOTES_DIR",
     "AI_PATCH_REVIEW_REPORTS_DIR",
+    "AI_PATCH_SUGGESTIONS_DIR",
     "CandidateMarkdownError",
     "CandidateMarkdownExport",
     "CandidateMarkdownFile",
@@ -36,12 +45,17 @@ __all__ = [
     "IngestedMarkdownEssay",
     "MarkdownIngestionError",
     "PatchReviewReport",
+    "PatchJsonArtifact",
+    "ReviewPackage",
+    "ReviewPackageError",
     "ReviewReportError",
     "compute_content_hash",
     "ingest_markdown_text",
     "read_markdown_essay",
     "render_candidate_markdown",
+    "render_patch_json_artifact",
     "render_patch_review_report",
     "write_candidate_markdown_export",
+    "write_review_package",
     "write_patch_review_report",
 ]
