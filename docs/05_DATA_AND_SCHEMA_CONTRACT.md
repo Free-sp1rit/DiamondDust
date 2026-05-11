@@ -274,6 +274,24 @@ Rules:
 - Candidate exports must not write files to formal vault directories.
 - Formal writes still require a validated patch and explicit user acceptance.
 
+## Review Report Export
+
+Patch review reports are AI working artifacts, not acceptance records and not formal vault writes.
+
+They should be exported under:
+
+```text
+_ai_reports/patch-reviews/<patch_id>.md
+```
+
+Rules:
+
+- Review reports must include patch diff summaries, risks, rollback steps, and review boundaries.
+- Review reports should link candidate Markdown notes when candidate notes exist.
+- Review reports must mark `formal_write: false`.
+- Review reports must not mark patches as accepted or rejected.
+- Formal writes still require a validated patch and explicit user acceptance.
+
 ## Schema Versioning
 
 Every persisted formal note must include:

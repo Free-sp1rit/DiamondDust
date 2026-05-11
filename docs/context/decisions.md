@@ -116,6 +116,14 @@ Record durable technical and governance decisions here.
 - Risks: The current frontmatter renderer is minimal and candidate note format may change when review UI and formal apply/revert are implemented.
 - Follow-up: Add durable patch persistence, review report rendering, duplicate target checks, and formal apply/revert in separate reviewed milestones.
 
+### 2026-05-11 — Export patch review reports only under AI reports
+
+- Decision: Render patch review reports from safe `KnowledgePatch` values and write them only under `_ai_reports/patch-reviews/<patch_id>.md`.
+- Reason: The MVP needs review reports before formal writes, and reports should summarize diff, candidate note paths, risks, and rollback steps without acting as acceptance records.
+- Alternatives: Treat patch acceptance as the review report; defer review reports until a UI exists; write reports beside formal notes.
+- Risks: Report format may change once durable patch persistence, review UI, and formal apply/revert exist.
+- Follow-up: Add a combined review package writer and raw patch persistence so reports, candidate notes, and patch files can be reviewed together.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

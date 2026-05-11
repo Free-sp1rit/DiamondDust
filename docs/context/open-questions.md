@@ -54,6 +54,12 @@ Last updated: 2026-05-11
 - Needed decision: Add patch persistence before integrating a review UI or real provider outputs.
 - Impact: Affects traceability, replay, auditability, and rollback workflows.
 
+### 2026-05-11 — Should review artifacts be written as one package?
+
+- Context: Candidate notes and patch review reports can now be rendered separately, while raw patch files are not yet persisted.
+- Needed decision: Decide whether to add a combined writer that emits raw patch, candidate notes, and review report in one operation.
+- Impact: Affects review UX, artifact consistency, replay, and future CLI/UI workflow.
+
 ### 2026-05-10 — When should storage apply/revert behavior be implemented?
 
 - Context: Gate 5 models accepted patch handoff but does not mutate formal vault files.
