@@ -30,11 +30,15 @@ from diamonddust.storage.candidate_markdown import (
 )
 from diamonddust.storage.formal_vault import (
     FORMAL_VAULT_DIRS,
+    FormalVaultApplyPlan,
+    FormalVaultApplyPlanError,
+    FormalVaultApplyPlanFile,
     FormalVaultConflict,
     FormalVaultConflictError,
     FormalVaultConflictReport,
     FormalVaultConflictType,
     check_formal_vault_conflicts,
+    plan_formal_vault_apply,
 )
 from diamonddust.storage.markdown import (
     FrontmatterValue,
@@ -79,6 +83,9 @@ __all__ = [
     "CandidateMarkdownFile",
     "CandidateMarkdownManifest",
     "FORMAL_VAULT_DIRS",
+    "FormalVaultApplyPlan",
+    "FormalVaultApplyPlanError",
+    "FormalVaultApplyPlanFile",
     "FormalVaultConflict",
     "FormalVaultConflictError",
     "FormalVaultConflictReport",
@@ -94,6 +101,7 @@ __all__ = [
     "compute_content_hash",
     "check_formal_vault_conflicts",
     "ingest_markdown_text",
+    "plan_formal_vault_apply",
     "read_markdown_essay",
     "render_ai_run_log_artifact",
     "render_blog_draft_markdown",

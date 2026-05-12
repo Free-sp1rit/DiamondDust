@@ -79,6 +79,30 @@ Rules:
 - Formal apply/revert behavior remains a separate reviewed milestone.
 - Complex frontmatter parsing may require a richer parser if real vault fixtures need it.
 
+## Formal Apply Dry-Run Plan
+
+A formal apply dry-run plan may be generated only after a patch has passed conflict preflight.
+
+The current dry-run plan records:
+
+- patch ID
+- vault root
+- planned formal note target paths
+- planned formal note content
+- planned content hashes
+- rollback steps
+- the conflict preflight report used by the plan
+
+Rules:
+
+- The plan must not write, modify, or delete formal vault files.
+- The plan must not create missing vault directories.
+- The plan is not user acceptance.
+- The plan is not permission to write formal files.
+- The plan may cover `create_note` files and relations embedded in those created files.
+- Updating existing formal notes for relation-only changes remains future work.
+- Formal apply/revert execution remains a separate reviewed milestone.
+
 ## AI Working Artifact Schema Versioning
 
 Persisted AI working artifacts must include:
