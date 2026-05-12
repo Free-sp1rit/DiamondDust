@@ -218,3 +218,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 99 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add explicit formal apply/revert boundaries, rollback/write-failure tests, product-owner-approved golden essays, and CI in separate reviewed milestones.
+
+## 2026-05-12 — Formal Apply Dry-Run Plan Completed
+
+- Scope: Added non-mutating formal apply dry-run plans for conflict-free patches.
+- Outcome: Added storage adapter planning types that list planned formal note files, content hashes, and rollback steps while preserving the no-write formal vault boundary.
+- Review: `docs/reviews/milestone-reviews/2026-05-12-formal-apply-plan.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening and Gate 5 follow-up; improves formal apply readiness without enabling formal writes.
+- Validation: 105 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add explicit user acceptance handoff, formal apply/revert execution, rollback/write-failure tests, product-owner-approved golden essays, and CI in separate reviewed milestones.

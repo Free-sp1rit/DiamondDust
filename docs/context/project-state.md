@@ -4,7 +4,7 @@ Last updated: 2026-05-12
 
 ## Current Stage
 
-Post-Gate 7 formal vault conflict checks complete with follow-up.
+Post-Gate 7 formal apply dry-run plans complete with follow-up.
 
 ## Current Focus
 
@@ -28,7 +28,7 @@ Each skill is intentionally lightweight and contains only workflow guidance in `
 
 DiamondDust is a local-first semantic knowledge compiler. Its MVP path is to turn Markdown essays into structured `KnowledgeUnit` candidates, candidate `Relation`s, validated `KnowledgePatch` files, review reports, blog drafts, and blog quality reports.
 
-The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence, an application-layer patch review workflow, candidate Markdown export, patch review report, review package storage adapters, a deterministic blog draft workflow, durable blog draft package persistence, artifact schema versioning, a local trial CLI, formal vault conflict preflight checks, a checked-in local trial fixture pair, a user-facing local trial extraction JSON guide, a Gate 7 release readiness harness, five sample essay fixtures, and unit tests. Real provider calls, formal vault patch apply behavior, installed console scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
+The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence, an application-layer patch review workflow, candidate Markdown export, patch review report, review package storage adapters, a deterministic blog draft workflow, durable blog draft package persistence, artifact schema versioning, a local trial CLI, formal vault conflict preflight checks, formal apply dry-run plans, a checked-in local trial fixture pair, a user-facing local trial extraction JSON guide, a Gate 7 release readiness harness, five sample essay fixtures, and unit tests. Real provider calls, formal vault patch apply execution, installed console scripts, CI, and `knowledge-vault/` directories are not present yet. `目录结构.md` describes the intended target structure, not the fully materialized repository.
 
 ## Source-of-Truth Documents
 
@@ -167,6 +167,12 @@ Formal vault conflict checks review:
 - decision: pass with follow-up
 - tests: 99 unit tests passed, compile check passed, diff check passed
 
+Formal apply dry-run plan review:
+
+- `docs/reviews/milestone-reviews/2026-05-12-formal-apply-plan.md`
+- decision: pass with follow-up
+- tests: 105 unit tests passed, compile check passed, diff check passed
+
 ## Immediate Next Development Path
 
 Gate 7 readiness is complete for the current skeleton.
@@ -174,7 +180,7 @@ Gate 7 readiness is complete for the current skeleton.
 Expected next product implementation focus:
 
 - replace or supplement deterministic fixtures with product-owner-approved golden essays
-- add formal vault apply/revert only after rollback/write-failure tests and explicit apply boundaries exist
+- add formal vault apply/revert execution only after rollback/write-failure tests and explicit user acceptance handoff exist
 - add CI and release-quality automation
 - keep provider calls, formal writes, and publishing behind their existing approval and review gates
 

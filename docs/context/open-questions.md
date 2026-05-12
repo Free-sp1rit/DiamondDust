@@ -62,8 +62,8 @@ Last updated: 2026-05-12
 
 ### 2026-05-10 — When should storage apply/revert behavior be implemented?
 
-- Context: Gate 5 models accepted patch handoff but does not mutate formal vault files. Patch persistence and read-only path/ID conflict checks now exist.
-- Needed decision: Implement storage adapter apply/revert only after explicit apply boundaries, rollback behavior, and write-failure tests are designed.
+- Context: Gate 5 models accepted patch handoff but does not mutate formal vault files. Patch persistence, read-only path/ID conflict checks, and dry-run apply plans now exist.
+- Needed decision: Implement storage adapter apply/revert execution only after explicit user acceptance handoff, rollback behavior, and write-failure tests are designed.
 - Impact: Affects formal write safety, rollback guarantees, and Git diff inspection.
 
 ## Blog Draft

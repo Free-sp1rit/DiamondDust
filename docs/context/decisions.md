@@ -188,6 +188,14 @@ Record durable technical and governance decisions here.
 - Risks: The minimal frontmatter ID reader may miss complex YAML forms, and path/ID checks are necessary but not sufficient for future rollback safety.
 - Follow-up: Add explicit apply/revert boundaries, rollback/write-failure tests, and richer frontmatter parsing only when fixtures prove the need.
 
+### 2026-05-12 — Add formal apply dry-run plans before write execution
+
+- Decision: Add a storage adapter dry-run plan that converts a conflict-free `KnowledgePatch` into planned formal note files, content hashes, and rollback steps without writing vault files.
+- Reason: Future formal apply/revert needs an explicit, reviewable execution boundary before mutation is implemented.
+- Alternatives: Implement formal apply immediately; keep only candidate Markdown artifacts; wait until a UI exists.
+- Risks: The planned note renderer may need richer formatting before real apply, and dry-run plans do not prove write atomicity or rollback execution.
+- Follow-up: Add explicit user acceptance handoff, write-failure tests, and revert execution before enabling formal vault mutation.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
