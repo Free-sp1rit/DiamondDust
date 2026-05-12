@@ -172,6 +172,14 @@ Record durable technical and governance decisions here.
 - Risks: The fixture proves orchestration and artifact output, not real extraction quality or editorial quality.
 - Follow-up: Promote or replace fixtures with product-owner-approved golden essays and add user-facing extraction JSON schema notes.
 
+### 2026-05-12 — Document local trial extraction JSON without changing runtime schema
+
+- Decision: Add a standalone guide for the existing local trial extraction JSON input shape and validate the guide's embedded example through the current extraction validator.
+- Reason: Product-owner trial runs need a concise authoring reference before provider integration exists, but this stage should not change runtime schema or introduce a machine-readable schema dependency.
+- Alternatives: Keep only the checked-in fixture; add a JSON Schema document now; implement a provider adapter before documenting hand-authored JSON.
+- Risks: The guide can drift if extraction validation changes, and hand-authored JSON still does not measure real extraction quality.
+- Follow-up: Add machine-readable schema or richer authoring helpers only when external trial users or provider adapters require them.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

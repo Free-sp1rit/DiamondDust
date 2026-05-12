@@ -29,6 +29,8 @@ PYTHONPATH=src python3 -m diamonddust.cli local-trial \
 
 The command writes AI working artifacts only. It does not write formal vault notes or publish content.
 
+See `docs/guides/local-trial-extraction-json.md` for the extraction JSON shape and a validated minimal example.
+
 ## MVP Goal
 
 Given a Markdown essay, DiamondDust should produce:
