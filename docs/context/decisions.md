@@ -180,6 +180,14 @@ Record durable technical and governance decisions here.
 - Risks: The guide can drift if extraction validation changes, and hand-authored JSON still does not measure real extraction quality.
 - Follow-up: Add machine-readable schema or richer authoring helpers only when external trial users or provider adapters require them.
 
+### 2026-05-12 — Add read-only formal vault conflict checks before apply behavior
+
+- Decision: Add a storage adapter preflight that checks `KnowledgePatch` create-note operations for existing formal target paths, existing formal note IDs, and duplicate patch target IDs/paths without writing vault files.
+- Reason: Formal apply/revert needs path and ID safety before mutation can be reviewed, but enabling writes now would cross the formal vault boundary too early.
+- Alternatives: Implement formal apply immediately; keep conflicts as review-report prose only; wait for a full vault index.
+- Risks: The minimal frontmatter ID reader may miss complex YAML forms, and path/ID checks are necessary but not sufficient for future rollback safety.
+- Follow-up: Add explicit apply/revert boundaries, rollback/write-failure tests, and richer frontmatter parsing only when fixtures prove the need.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

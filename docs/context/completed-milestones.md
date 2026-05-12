@@ -207,3 +207,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 93 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add product-owner-approved golden essays, CI, and formal apply/revert safety checks in separate reviewed milestones.
+
+## 2026-05-12 — Formal Vault Conflict Checks Completed
+
+- Scope: Added read-only conflict preflight checks for future formal vault apply behavior.
+- Outcome: Added a storage adapter that reports existing formal target paths, existing formal unit IDs, duplicate patch target paths, and duplicate patch unit IDs without mutating vault files.
+- Review: `docs/reviews/milestone-reviews/2026-05-12-vault-conflict-checks.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening and Gate 5 follow-up; improves formal write safety prerequisites without enabling formal writes.
+- Validation: 99 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add explicit formal apply/revert boundaries, rollback/write-failure tests, product-owner-approved golden essays, and CI in separate reviewed milestones.

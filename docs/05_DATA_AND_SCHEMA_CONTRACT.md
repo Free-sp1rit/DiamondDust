@@ -59,6 +59,26 @@ Rules:
 - AI must not directly overwrite formal knowledge files.
 - Formal writes require a validated KnowledgePatch and user acceptance.
 
+## Formal Vault Apply Preflight
+
+Before any future formal apply behavior writes a `KnowledgePatch` into formal vault directories, the patch must pass a read-only conflict preflight.
+
+The current preflight checks:
+
+- `create_note` target paths do not already exist in the formal vault.
+- proposed unit IDs do not already exist in formal note frontmatter.
+- one patch does not contain duplicate `create_note` target paths.
+- one patch does not contain duplicate created unit IDs.
+- AI working directories are ignored for formal path and ID conflict detection.
+
+Rules:
+
+- The preflight is read-only.
+- The preflight is not user acceptance.
+- A passing preflight is not permission to write formal files.
+- Formal apply/revert behavior remains a separate reviewed milestone.
+- Complex frontmatter parsing may require a richer parser if real vault fixtures need it.
+
 ## AI Working Artifact Schema Versioning
 
 Persisted AI working artifacts must include:
