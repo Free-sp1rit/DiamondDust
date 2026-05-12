@@ -28,6 +28,14 @@ from diamonddust.storage.candidate_markdown import (
     render_candidate_markdown,
     write_candidate_markdown_export,
 )
+from diamonddust.storage.formal_vault import (
+    FORMAL_VAULT_DIRS,
+    FormalVaultConflict,
+    FormalVaultConflictError,
+    FormalVaultConflictReport,
+    FormalVaultConflictType,
+    check_formal_vault_conflicts,
+)
 from diamonddust.storage.markdown import (
     FrontmatterValue,
     IngestedMarkdownEssay,
@@ -70,6 +78,11 @@ __all__ = [
     "CandidateMarkdownExport",
     "CandidateMarkdownFile",
     "CandidateMarkdownManifest",
+    "FORMAL_VAULT_DIRS",
+    "FormalVaultConflict",
+    "FormalVaultConflictError",
+    "FormalVaultConflictReport",
+    "FormalVaultConflictType",
     "FrontmatterValue",
     "IngestedMarkdownEssay",
     "MarkdownIngestionError",
@@ -79,6 +92,7 @@ __all__ = [
     "ReviewPackageError",
     "ReviewReportError",
     "compute_content_hash",
+    "check_formal_vault_conflicts",
     "ingest_markdown_text",
     "read_markdown_essay",
     "render_ai_run_log_artifact",
