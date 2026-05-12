@@ -196,3 +196,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 91 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add standalone extraction JSON schema notes, product-owner-approved golden essays, CI, and formal apply/revert safety checks.
+
+## 2026-05-12 — Local Trial Extraction JSON Notes Completed
+
+- Scope: Added user-facing documentation for the structured extraction JSON input accepted by the local trial CLI.
+- Outcome: Added `docs/guides/local-trial-extraction-json.md`, linked it from README, and added tests that validate the guide's embedded example against the current extraction boundary.
+- Review: `docs/reviews/milestone-reviews/2026-05-12-local-trial-extraction-json-notes.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves local trial usability without changing runtime schema or enabling provider calls.
+- Validation: 93 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add product-owner-approved golden essays, CI, and formal apply/revert safety checks in separate reviewed milestones.

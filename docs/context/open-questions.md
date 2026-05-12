@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-11
+Last updated: 2026-05-12
 
 ## Tooling and Repository Shape
 
@@ -34,11 +34,11 @@ Last updated: 2026-05-11
 
 ## AI Pipeline
 
-### 2026-05-11 — Should local trial extraction JSON get standalone schema documentation?
+### 2026-05-12 — When should extraction JSON get a machine-readable schema?
 
-- Context: The local trial CLI now has a checked-in example extraction JSON fixture, but the repository does not yet include standalone schema documentation for users authoring their own trial JSON.
-- Needed decision: Add concise user-facing extraction JSON schema notes before broader product-owner trial runs.
-- Impact: Affects trial ergonomics, validation clarity, and future provider adapter handoff.
+- Context: The local trial CLI now has a checked-in example extraction JSON fixture and a user-facing guide with a validated embedded example, but no JSON Schema or generated authoring helper exists.
+- Needed decision: Add machine-readable schema only if broader trial usage, provider adapter handoff, or external tooling needs it.
+- Impact: Affects validation clarity, compatibility guarantees, and future schema migration surface.
 
 ### 2026-05-11 — When should artifact versions diverge by artifact type?
 
