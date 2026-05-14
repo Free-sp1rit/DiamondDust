@@ -273,3 +273,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 114 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and `PYTHONPATH=src python3 -m diamonddust local-trial-fixture --root . --vault-root /tmp/diamonddust-fixture-smoke --created-at 2026-05-14T00:00:00Z` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Run a controlled product-owner trial using the shortcut, then decide whether shortcut behavior should be package-data-backed or CI-gated.
+
+## 2026-05-14 — CI Validation Completed
+
+- Scope: Added repository CI for the current Python validation baseline.
+- Outcome: GitHub Actions now runs on pull requests and pushes, validates editable install, runs the full unit suite, compiles `src` and `tests`, checks whitespace, and smoke tests `diamonddust local-trial-fixture` on Python 3.11 and 3.12.
+- Review: `docs/reviews/milestone-reviews/2026-05-14-ci-validation.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 release-quality infrastructure; strengthens PR validation without changing product runtime behavior, schema, provider behavior, or formal vault writes.
+- Validation: 119 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and `PYTHONPATH=src python3 -m diamonddust local-trial-fixture --root . --vault-root /tmp/diamonddust-ci-smoke --created-at 2026-05-14T00:00:00Z` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Confirm the first remote GitHub Actions run after push and decide whether branch protection should require CI before merge.
