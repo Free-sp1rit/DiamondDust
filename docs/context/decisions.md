@@ -244,6 +244,14 @@ Record durable technical and governance decisions here.
 - Risks: Packaged fixture assets can drift from repository fixture assets if parity tests are removed, and the fixture still validates artifact UX rather than real provider extraction quality.
 - Follow-up: Run a controlled installed-CLI product-owner trial, then decide which real or semi-real essays should become golden fixtures.
 
+### 2026-05-14 — Validate CI from a built wheel
+
+- Decision: CI builds a DiamondDust wheel with `pip wheel`, installs that wheel with `pip install --force-reinstall --no-deps`, runs `pip check`, and then executes tests and local trial fixture smoke against the installed package.
+- Reason: The packaged local trial fixture assets must be verified inside installable artifacts, not only editable source checkouts.
+- Alternatives: Keep editable install validation only; add a release publishing workflow immediately; add an external build tool dependency.
+- Risks: The current local Codex shell cannot reproduce wheel build/install because `pip` is unavailable, so remote GitHub Actions remains the source of truth for this gate.
+- Follow-up: Confirm the first remote CI run, then decide later when versioning, artifact upload, and publishing should become release gates.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

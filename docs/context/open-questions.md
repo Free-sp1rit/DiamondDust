@@ -82,11 +82,11 @@ Last updated: 2026-05-14
 
 ## Release Automation
 
-### 2026-05-14 — When should Python package metadata become release-gated?
+### 2026-05-14 — When should release publishing and versioning become gated?
 
-- Context: CI now validates editable install and the `diamonddust local-trial-fixture` smoke path, but no release workflow validates package build artifacts, versioning policy, or distribution metadata.
-- Needed decision: Decide when package build checks, versioning policy, and release metadata should become blocking gates.
-- Impact: Affects future distribution and whether CLI docs can assume installed commands outside editable development installs.
+- Context: CI now validates wheel build/install and the `diamonddust local-trial-fixture` smoke path, but no release workflow uploads build artifacts, checks version tags, or publishes distributions.
+- Needed decision: Decide when versioning policy, artifact upload, and package publishing should become blocking release gates.
+- Impact: Affects future distribution, changelog/version discipline, and whether users can install DiamondDust outside local source checkouts.
 
 ### 2026-05-14 — Should GitHub branch protection require CI before merge?
 

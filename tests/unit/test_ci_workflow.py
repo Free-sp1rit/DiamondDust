@@ -21,7 +21,9 @@ class CIWorkflowTests(unittest.TestCase):
 
     def test_ci_runs_required_validation_gates(self) -> None:
         required_commands = (
-            "python -m pip install -e .",
+            "python -m pip wheel . --no-deps --wheel-dir",
+            "python -m pip install --force-reinstall --no-deps",
+            "python -m pip check",
             "python -m unittest discover -s tests",
             "python -m compileall src tests",
             "git diff --check",

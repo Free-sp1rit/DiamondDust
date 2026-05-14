@@ -295,3 +295,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 121 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and `PYTHONPATH=/home/yimg/code/DiamondDust/src python3 -m diamonddust local-trial-fixture --vault-root /tmp/diamonddust-portable-root-smoke --created-at 2026-05-14T00:00:00Z` passed from `/tmp`.
 - Dependency impact: No production or development dependency was added; package data metadata was added for existing setuptools packaging.
 - Follow-up: Run an installed CLI product-owner trial and select product-owner-approved golden essays.
+
+## 2026-05-14 — Package Build Validation Completed
+
+- Scope: Upgraded CI from editable install validation to wheel build/install validation.
+- Outcome: GitHub Actions now builds a wheel, installs that wheel, runs `pip check`, then runs tests, compile checks, whitespace checks, and the non-repo-root local trial fixture smoke.
+- Review: `docs/reviews/milestone-reviews/2026-05-14-package-build-validation.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 release-quality infrastructure; improves installed package confidence without changing runtime product behavior, schemas, provider behavior, formal writes, or publication.
+- Validation: 121 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed locally; remote CI must confirm wheel build/install because the current Codex shell lacks `pip`.
+- Dependency impact: No production or development dependency was added; uses existing `pip`/setuptools behavior on GitHub-hosted runners.
+- Follow-up: Confirm remote CI success, then later decide when versioning, release artifact upload, and publishing should become gates.
