@@ -3,7 +3,13 @@
 This guide describes the structured extraction JSON file accepted by:
 
 ```bash
-PYTHONPATH=src python3 -m diamonddust.cli local-trial --extraction-json <path>
+diamonddust local-trial --extraction-json <path>
+```
+
+Development fallback without installation:
+
+```bash
+PYTHONPATH=src python3 -m diamonddust local-trial --extraction-json <path>
 ```
 
 The local trial path uses this JSON in place of a provider call. It validates the JSON, writes AI working artifacts, and keeps formal vault files untouched.

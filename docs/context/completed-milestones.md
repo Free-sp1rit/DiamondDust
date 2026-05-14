@@ -251,3 +251,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 111 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Run a controlled product-owner trial and decide which feedback fields should become release criteria or golden fixture expectations.
+
+## 2026-05-14 — CLI Trial Entrypoint Completed
+
+- Scope: Added minimal Python package metadata and standard CLI entrypoints for local trial usage.
+- Outcome: `pyproject.toml` now exposes `diamonddust = "diamonddust.cli:main"`, `python3 -m diamonddust` delegates to the same CLI, and README/guides show the installable command plus development fallback.
+- Review: `docs/reviews/milestone-reviews/2026-05-14-cli-trial-entrypoint.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves product-owner trial ergonomics without changing provider, formal vault, or publication behavior.
+- Validation: 113 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No runtime dependency was added; packaging metadata uses the standard setuptools build backend for editable installs.
+- Follow-up: Add CI/package install checks before treating packaging metadata as a release contract.
