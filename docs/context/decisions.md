@@ -228,6 +228,14 @@ Record durable technical and governance decisions here.
 - Risks: The shortcut is repo-root oriented and proves fixture orchestration, not real provider extraction quality.
 - Follow-up: Use the shortcut for controlled trial feedback, then decide whether fixture command behavior should become package-data-backed or CI-gated.
 
+### 2026-05-14 — Add GitHub Actions as the CI validation baseline
+
+- Decision: Add a GitHub Actions workflow that runs on pull requests and pushes, covering editable install, unit tests, compile checks, whitespace checks, and the `diamonddust local-trial-fixture` smoke path on Python 3.11 and 3.12.
+- Reason: Local trial work is now user-visible enough that PR review should have automated validation instead of relying only on local milestone checks.
+- Alternatives: Keep validation local only; add a shell script without remote CI; add heavier lint/typecheck tooling immediately.
+- Risks: The first remote runner execution still needs to be observed after push, and branch protection must be configured separately if CI should block merges.
+- Follow-up: Confirm the first remote CI run and decide whether GitHub branch protection should require the workflow before merge.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

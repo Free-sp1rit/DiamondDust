@@ -84,12 +84,12 @@ Last updated: 2026-05-14
 
 ### 2026-05-14 — When should Python package metadata become release-gated?
 
-- Context: The repo now has minimal `pyproject.toml` metadata and a `diamonddust` console script for local editable installs, but no CI or release workflow validates packaging installation.
-- Needed decision: Decide when package install checks, versioning policy, and release metadata should become blocking gates.
-- Impact: Affects user trial reliability, future distribution, and whether CLI docs can assume installed commands rather than development fallbacks.
+- Context: CI now validates editable install and the `diamonddust local-trial-fixture` smoke path, but no release workflow validates package build artifacts, versioning policy, or distribution metadata.
+- Needed decision: Decide when package build checks, versioning policy, and release metadata should become blocking gates.
+- Impact: Affects future distribution and whether CLI docs can assume installed commands outside editable development installs.
 
-### 2026-05-10 — When should CI become a required PR gate?
+### 2026-05-14 — Should GitHub branch protection require CI before merge?
 
-- Context: Gate 7 validation is currently local: unit tests, compile check, and diff check.
-- Needed decision: Decide when to add CI and which checks should block PR merge.
+- Context: Repository-file CI now runs install, unit tests, compile checks, whitespace checks, and local trial fixture smoke on pull requests and pushes. GitHub branch protection is not configured by repository files.
+- Needed decision: Decide whether to require the CI check through GitHub branch protection before merging PRs.
 - Impact: Affects review reliability, merge safety, and future contributor workflow.
