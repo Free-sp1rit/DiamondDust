@@ -323,37 +323,45 @@ def _finalize_with_feedback_report(
         AI_LOCAL_TRIAL_REPORTS_DIR,
         LocalTrialFeedbackReportInput,
         write_local_trial_feedback_report,
+        write_local_trial_outcome,
     )
 
     report_path = f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{result.trial_id}.md"
-    written_paths = result.written_paths + (report_path,)
+    outcome_path = f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{result.trial_id}.json"
+    written_paths = result.written_paths + (report_path, outcome_path)
     summary = _summary_for(
         result.trial_id,
         result.passed,
         list(written_paths),
         list(result.errors),
     )
+    report_input = LocalTrialFeedbackReportInput(
+        trial_id=result.trial_id,
+        source_input_id=result.source_input_id,
+        passed=result.passed,
+        summary=summary,
+        errors=result.errors,
+        written_paths=written_paths,
+        patch_id=result.patch_id,
+        draft_id=result.draft_id,
+        unsupported_claims=result.unsupported_claims,
+        formal_write_performed=result.formal_write_performed,
+        provider_called=result.provider_called,
+    )
 
     try:
         write_local_trial_feedback_report(
-            LocalTrialFeedbackReportInput(
-                trial_id=result.trial_id,
-                source_input_id=result.source_input_id,
-                passed=result.passed,
-                summary=summary,
-                errors=result.errors,
-                written_paths=written_paths,
-                patch_id=result.patch_id,
-                draft_id=result.draft_id,
-                unsupported_claims=result.unsupported_claims,
-                formal_write_performed=result.formal_write_performed,
-                provider_called=result.provider_called,
-            ),
+            report_input,
+            vault_root=vault_path,
+            created_at=created_at,
+        )
+        write_local_trial_outcome(
+            report_input,
             vault_root=vault_path,
             created_at=created_at,
         )
     except Exception as exc:
-        errors = result.errors + (_stage_error("local trial feedback report", exc),)
+        errors = result.errors + (_stage_error("local trial feedback package", exc),)
         return replace(
             result,
             passed=False,

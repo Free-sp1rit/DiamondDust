@@ -34,7 +34,7 @@ Last updated: 2026-05-14
 
 ### 2026-05-14 — Which local trial feedback fields should become release criteria?
 
-- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with prompts and a human-fillable feedback capture rubric, but the rubric has not yet been validated by a real product-owner trial.
+- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with prompts and a human-fillable feedback capture rubric, plus `_ai_reports/local-trials/<trial_id>.json` for machine-readable trial outcome summaries. The rubric and JSON shape have not yet been validated by a real product-owner trial.
 - Needed decision: After the first controlled trial, decide which feedback fields should become durable acceptance criteria or test fixtures.
 - Impact: Affects whether the next phase should prioritize golden essays, report quality, formal apply safety, or provider-backed extraction.
 

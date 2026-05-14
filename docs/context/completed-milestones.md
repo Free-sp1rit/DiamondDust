@@ -306,3 +306,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 121 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed locally; remote CI must confirm wheel build/install because the current Codex shell lacks `pip`.
 - Dependency impact: No production or development dependency was added; uses existing `pip`/setuptools behavior on GitHub-hosted runners.
 - Follow-up: Confirm remote CI success, then later decide when versioning, release artifact upload, and publishing should become gates.
+
+## 2026-05-14 — Local Trial Outcome JSON Completed
+
+- Scope: Added a machine-readable local trial outcome artifact beside the Markdown feedback report.
+- Outcome: Local trials now write `_ai_reports/local-trials/<trial_id>.json` for passed and safely failed runs, include it in CLI output, and preserve provider-free/no-formal-write boundaries.
+- Review: `docs/reviews/milestone-reviews/2026-05-14-local-trial-outcome-json.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial hardening; improves controlled product-owner trial summaries without adding provider calls, formal vault writes, external services, or public domain schema changes.
+- Validation: 123 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and non-repo-root local trial fixture smoke passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Run a controlled product-owner trial and decide whether feedback fields should become typed user-input artifacts, release criteria, or golden fixture expectations.

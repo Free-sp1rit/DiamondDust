@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -6,7 +7,9 @@ from diamonddust.storage import (
     LocalTrialFeedbackReportError,
     LocalTrialFeedbackReportInput,
     render_local_trial_feedback_report,
+    render_local_trial_outcome,
     write_local_trial_feedback_report,
+    write_local_trial_outcome,
 )
 
 
@@ -53,6 +56,52 @@ class LocalTrialFeedbackReportTests(unittest.TestCase):
             self.assertEqual(report.relative_path, "_ai_reports/local-trials/trial_report.md")
             self.assertTrue(output_path.exists())
             self.assertIn("# Local Trial Feedback Report", output_path.read_text(encoding="utf-8"))
+
+    def test_render_outcome_keeps_machine_readable_boundaries(self) -> None:
+        outcome = render_local_trial_outcome(
+            _report_input(
+                written_paths=(
+                    "_ai_reports/local-trials/trial_report.md",
+                    "_ai_reports/local-trials/trial_report.json",
+                    "_ai_runs/run_trial.json",
+                ),
+            ),
+            created_at=CREATED_AT,
+        )
+
+        payload = json.loads(outcome.content)
+        self.assertEqual(outcome.relative_path, "_ai_reports/local-trials/trial_report.json")
+        self.assertEqual(payload["artifact_type"], "local_trial_outcome")
+        self.assertEqual(payload["artifact_schema_version"], "0.1.0")
+        self.assertEqual(payload["status"], "passed")
+        self.assertEqual(payload["paths"]["review_start"], "_ai_reports/local-trials/trial_report.md")
+        self.assertEqual(payload["paths"]["json_outcome"], outcome.relative_path)
+        self.assertEqual(payload["artifact_count"], 3)
+        self.assertFalse(payload["boundaries"]["formal_write_performed"])
+        self.assertFalse(payload["boundaries"]["provider_called"])
+        self.assertFalse(payload["boundaries"]["formal_write_approval"])
+        self.assertFalse(payload["boundaries"]["patch_acceptance"])
+        self.assertEqual(payload["feedback_capture"]["status"], "pending_user_input")
+
+    def test_write_outcome_stays_in_ai_reports_directory(self) -> None:
+        with TemporaryDirectory() as tmp:
+            vault_root = Path(tmp)
+            outcome = write_local_trial_outcome(
+                _report_input(
+                    written_paths=(
+                        "_ai_reports/local-trials/trial_report.md",
+                        "_ai_reports/local-trials/trial_report.json",
+                    ),
+                ),
+                vault_root=vault_root,
+                created_at=CREATED_AT,
+            )
+
+            output_path = vault_root / "_ai_reports/local-trials/trial_report.json"
+            self.assertEqual(outcome.relative_path, "_ai_reports/local-trials/trial_report.json")
+            self.assertTrue(output_path.exists())
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["paths"]["markdown_report"], "_ai_reports/local-trials/trial_report.md")
 
     def test_report_rejects_formal_writes(self) -> None:
         with self.assertRaises(LocalTrialFeedbackReportError):

@@ -56,6 +56,10 @@ class LocalTrialHarnessTests(unittest.TestCase):
                 "_ai_reports/local-trials/trial_local_ab12cd.md",
                 result.written_paths,
             )
+            self.assertIn(
+                "_ai_reports/local-trials/trial_local_ab12cd.json",
+                result.written_paths,
+            )
             self.assertTrue(all((vault_root / path).exists() for path in result.written_paths))
             feedback_report = (
                 vault_root / "_ai_reports/local-trials/trial_local_ab12cd.md"
@@ -63,6 +67,19 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertIn("artifact_type: local_trial_feedback_report", feedback_report)
             self.assertIn("formal_write_performed: false", feedback_report)
             self.assertIn("## Artifact Reading Order", feedback_report)
+            outcome = json.loads(
+                (
+                    vault_root / "_ai_reports/local-trials/trial_local_ab12cd.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(outcome["artifact_type"], "local_trial_outcome")
+            self.assertEqual(outcome["status"], "passed")
+            self.assertEqual(outcome["paths"]["review_start"], "_ai_reports/local-trials/trial_local_ab12cd.md")
+            self.assertFalse(outcome["boundaries"]["formal_write_performed"])
+            self.assertFalse(outcome["boundaries"]["provider_called"])
+            self.assertFalse(
+                (vault_root / "40-concepts" / "unit_local_trial_concept_ab12cd.md").exists()
+            )
             self.assertFalse(
                 (vault_root / "70-publications" / "draft_trial_local_ab12cd.md").exists()
             )
@@ -88,10 +105,14 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertFalse(result.review_package_written)
             self.assertFalse(result.blog_draft_package_written)
             self.assertTrue(result.feedback_report_written)
-            self.assertEqual(len(result.written_paths), 2)
+            self.assertEqual(len(result.written_paths), 3)
             self.assertTrue(result.written_paths[0].startswith("_ai_runs/"))
             self.assertIn(
                 "_ai_reports/local-trials/trial_local_ab12cd.md",
+                result.written_paths,
+            )
+            self.assertIn(
+                "_ai_reports/local-trials/trial_local_ab12cd.json",
                 result.written_paths,
             )
             self.assertIn("extraction output must be a structured mapping", result.errors[0])
@@ -100,6 +121,14 @@ class LocalTrialHarnessTests(unittest.TestCase):
             ).read_text(encoding="utf-8")
             self.assertIn("status: \"failed\"", feedback_report)
             self.assertIn("extraction output must be a structured mapping", feedback_report)
+            outcome = json.loads(
+                (
+                    vault_root / "_ai_reports/local-trials/trial_local_ab12cd.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(outcome["status"], "failed")
+            self.assertGreater(outcome["error_count"], 0)
+            self.assertIn("extraction output must be a structured mapping", outcome["errors"][0])
 
     def test_source_id_mismatch_stops_before_review_artifacts(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -131,6 +160,10 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertIn("does not match ingested source_id", result.errors[0])
             self.assertIn(
                 "_ai_reports/local-trials/trial_local_ab12cd.md",
+                result.written_paths,
+            )
+            self.assertIn(
+                "_ai_reports/local-trials/trial_local_ab12cd.json",
                 result.written_paths,
             )
 
@@ -179,6 +212,7 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertIn("formal_write_performed: false", stdout.getvalue())
             self.assertIn("_ai_reports/blog-quality/draft_trial_local_ab12cd.md", stdout.getvalue())
             self.assertIn("_ai_reports/local-trials/trial_local_ab12cd.md", stdout.getvalue())
+            self.assertIn("_ai_reports/local-trials/trial_local_ab12cd.json", stdout.getvalue())
 
 
 def _trial_spec(
