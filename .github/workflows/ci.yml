@@ -43,7 +43,7 @@ jobs:
 
       - name: Smoke test local trial fixture
         run: |
+          cd "${RUNNER_TEMP}"
           diamonddust local-trial-fixture \
-            --root . \
             --vault-root "${RUNNER_TEMP}/diamonddust-local-trial-${{ matrix.python-version }}" \
             --created-at 2026-05-14T00:00:00Z

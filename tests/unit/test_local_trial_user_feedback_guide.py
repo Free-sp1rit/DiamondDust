@@ -15,8 +15,8 @@ class LocalTrialUserFeedbackGuideTests(unittest.TestCase):
         self.assertIn("diamonddust local-trial-fixture", guide)
         self.assertIn("diamonddust local-trial", guide)
         self.assertIn("PYTHONPATH=src python3 -m diamonddust local-trial-fixture", guide)
-        self.assertIn("tests/fixtures/local_trial/trial-essay.md", guide)
-        self.assertIn("tests/fixtures/local_trial/extraction.json", guide)
+        self.assertIn("packaged provider-free fixture assets", guide)
+        self.assertIn("from any working directory", guide)
         self.assertIn(
             "knowledge-vault/_ai_reports/local-trials/trial_fixture_ab12cd.md",
             guide,

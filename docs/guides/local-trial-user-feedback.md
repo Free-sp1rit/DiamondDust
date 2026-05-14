@@ -12,13 +12,15 @@ From the repository root, install locally:
 python3 -m pip install -e .
 ```
 
+Then run from any working directory:
+
 ```bash
 diamonddust local-trial-fixture
 ```
 
-The shortcut uses `tests/fixtures/local_trial/trial-essay.md` and `tests/fixtures/local_trial/extraction.json`.
+The shortcut uses packaged provider-free fixture assets mirrored from the repository's local trial fixture pair.
 
-Development fallback without installation:
+Development fallback from the repository root without installation:
 
 ```bash
 PYTHONPATH=src python3 -m diamonddust local-trial-fixture

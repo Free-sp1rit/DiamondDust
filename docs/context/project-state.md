@@ -4,11 +4,11 @@ Last updated: 2026-05-14
 
 ## Current Stage
 
-Post-Gate 7 CI validation baseline complete with follow-up.
+Post-Gate 7 portable local trial fixture complete with follow-up.
 
 ## Current Focus
 
-Run controlled product-owner local trials with the one-command fixture shortcut under CI-backed validation, then use captured feedback to prioritize golden fixtures and formal vault apply/revert safety.
+Run controlled product-owner local trials with the installable one-command fixture shortcut under CI-backed validation, then use captured feedback to prioritize golden fixtures and formal vault apply/revert safety.
 
 Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2 through Gate 6 planning and implementation are complete.
 
@@ -28,7 +28,7 @@ Each skill is intentionally lightweight and contains only workflow guidance in `
 
 DiamondDust is a local-first semantic knowledge compiler. Its MVP path is to turn Markdown essays into structured `KnowledgeUnit` candidates, candidate `Relation`s, validated `KnowledgePatch` files, review reports, blog drafts, and blog quality reports.
 
-The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence, an application-layer patch review workflow, candidate Markdown export, patch review report, review package storage adapters, a deterministic blog draft workflow, durable blog draft package persistence, artifact schema versioning, a local trial CLI with a `local-trial-fixture` shortcut, feedback reports, and feedback capture fields, minimal Python packaging metadata with a `diamonddust` console script, formal vault conflict preflight checks, formal apply dry-run plans, a checked-in local trial fixture pair, user-facing local trial guides, a Gate 7 release readiness harness, five sample essay fixtures, unit tests, and GitHub Actions CI for package install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls and formal vault patch apply execution are not present yet. Generated `knowledge-vault/` trial output is ignored. `目录结构.md` describes the intended target structure, not the fully materialized repository.
+The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence, an application-layer patch review workflow, candidate Markdown export, patch review report, review package storage adapters, a deterministic blog draft workflow, durable blog draft package persistence, artifact schema versioning, a local trial CLI with packaged `local-trial-fixture` assets, feedback reports, and feedback capture fields, minimal Python packaging metadata with a `diamonddust` console script, formal vault conflict preflight checks, formal apply dry-run plans, a checked-in local trial fixture pair, user-facing local trial guides, a Gate 7 release readiness harness, five sample essay fixtures, unit tests, and GitHub Actions CI for package install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls and formal vault patch apply execution are not present yet. Generated `knowledge-vault/` trial output is ignored. `目录结构.md` describes the intended target structure, not the fully materialized repository.
 
 ## Source-of-Truth Documents
 
@@ -203,14 +203,19 @@ CI validation review:
 - decision: pass with follow-up
 - tests: 119 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed
 
+Portable local trial fixture review:
+
+- `docs/reviews/milestone-reviews/2026-05-14-portable-local-trial-fixture.md`
+- decision: pass with follow-up
+- tests: 121 unit tests passed, compile check passed, diff check passed, non-repo-root fixture smoke passed
+
 ## Immediate Next Development Path
 
 Gate 7 readiness and the current one-command local trial fixture path are complete for the current skeleton.
 
 Expected next product implementation focus:
 
-- confirm the first remote GitHub Actions run on this CI branch
-- run a controlled product-owner trial using `diamonddust local-trial-fixture` and `_ai_reports/local-trials/<trial_id>.md` as the first review artifact
+- run a controlled product-owner trial using installed `diamonddust local-trial-fixture` and `_ai_reports/local-trials/<trial_id>.md` as the first review artifact
 - replace or supplement deterministic fixtures with product-owner-approved golden essays
 - add formal vault apply/revert execution only after rollback/write-failure tests and explicit user acceptance handoff exist
 - decide whether GitHub branch protection should require the CI check before merge

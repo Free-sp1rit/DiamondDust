@@ -236,6 +236,14 @@ Record durable technical and governance decisions here.
 - Risks: The first remote runner execution still needs to be observed after push, and branch protection must be configured separately if CI should block merges.
 - Follow-up: Confirm the first remote CI run and decide whether GitHub branch protection should require the workflow before merge.
 
+### 2026-05-14 — Package the provider-free local trial fixture assets
+
+- Decision: Include the local trial essay and extraction JSON as package data under `diamonddust.fixtures.local_trial`, and load the `local-trial-fixture` shortcut from package resources instead of repository-relative test fixture paths.
+- Reason: Product-owner trial runs should work after editable install from any working directory, not only from the repository root.
+- Alternatives: Keep the shortcut repo-root oriented; require users to pass explicit fixture paths; move all test fixtures into package data.
+- Risks: Packaged fixture assets can drift from repository fixture assets if parity tests are removed, and the fixture still validates artifact UX rather than real provider extraction quality.
+- Follow-up: Run a controlled installed-CLI product-owner trial, then decide which real or semi-real essays should become golden fixtures.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

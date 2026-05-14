@@ -8,7 +8,7 @@ DiamondDust 是一个本地优先的语义知识编译器：它将零散随笔�
 
 The project has completed the Gate 7 MVP release readiness skeleton.
 
-The current implementation includes typed domain schemas, read-only Markdown ingestion, provider-neutral structured extraction validation, AI run log persistence, patch review, candidate Markdown export, patch review report rendering, review package persistence, deterministic blog draft generation, durable blog draft package persistence, a local trial CLI with a fixture shortcut and feedback reports, formal vault conflict preflight checks, formal apply dry-run plans, a five-sample release readiness harness, and GitHub Actions CI for package install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls, formal vault apply/revert execution, publishing, and UI flows remain future work behind the existing review boundaries.
+The current implementation includes typed domain schemas, read-only Markdown ingestion, provider-neutral structured extraction validation, AI run log persistence, patch review, candidate Markdown export, patch review report rendering, review package persistence, deterministic blog draft generation, durable blog draft package persistence, a local trial CLI with packaged fixture assets and feedback reports, formal vault conflict preflight checks, formal apply dry-run plans, a five-sample release readiness harness, and GitHub Actions CI for package install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls, formal vault apply/revert execution, publishing, and UI flows remain future work behind the existing review boundaries.
 
 ## Local Trial
 
@@ -20,11 +20,15 @@ From the repository root, install locally:
 python3 -m pip install -e .
 ```
 
+Then run from any working directory:
+
 ```bash
 diamonddust local-trial-fixture
 ```
 
-Development fallback without installation:
+The fixture shortcut uses packaged provider-free fixture assets and writes output to `knowledge-vault/` unless `--vault-root` is provided.
+
+Development fallback from the repository root without installation:
 
 ```bash
 PYTHONPATH=src python3 -m diamonddust local-trial-fixture
@@ -51,7 +55,7 @@ python -m pip install -e .
 python -m unittest discover -s tests
 python -m compileall src tests
 git diff --check
-diamonddust local-trial-fixture --root . --vault-root <temporary-vault-root>
+diamonddust local-trial-fixture --vault-root <temporary-vault-root>
 ```
 
 Local development should run the same checks before PR review when practical.
