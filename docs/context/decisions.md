@@ -204,6 +204,14 @@ Record durable technical and governance decisions here.
 - Risks: The report format may need adjustment after real trial feedback, and the report must not be mistaken for user acceptance of a patch.
 - Follow-up: Use the report in controlled trial review, then decide whether a richer feedback rubric, JSON summary, or UI surface is warranted.
 
+### 2026-05-14 — Capture local trial feedback in the report artifact
+
+- Decision: Add a human-fillable `Feedback Capture` section to local trial reports and document the safe trial review flow in `docs/guides/local-trial-user-feedback.md`.
+- Reason: Product-owner trials need a durable place to record usability feedback while keeping feedback separate from patch acceptance, formal write approval, and publication approval.
+- Alternatives: Keep feedback in chat only; create a separate feedback file; build a UI before collecting structured feedback.
+- Risks: The rubric may need tuning after real trial use, and report edits are not machine-readable yet.
+- Follow-up: After a controlled trial, decide which feedback fields should become release criteria, golden fixture expectations, or a structured feedback artifact.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

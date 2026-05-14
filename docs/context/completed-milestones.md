@@ -240,3 +240,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 108 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Use the feedback report in a controlled trial, then decide which feedback prompts should become release criteria or golden fixture expectations.
+
+## 2026-05-14 — Local Trial Feedback Capture Completed
+
+- Scope: Added human-fillable feedback capture fields and a user-facing local trial feedback guide.
+- Outcome: Local trial feedback reports now include a `Feedback Capture` section for product-owner trial notes, and README links to `docs/guides/local-trial-user-feedback.md`.
+- Review: `docs/reviews/milestone-reviews/2026-05-14-local-trial-feedback-capture.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves controlled user trial feedback without enabling provider calls, formal vault writes, or publication.
+- Validation: 111 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Run a controlled product-owner trial and decide which feedback fields should become release criteria or golden fixture expectations.

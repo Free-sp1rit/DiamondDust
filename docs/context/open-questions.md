@@ -32,10 +32,10 @@ Last updated: 2026-05-14
 - Needed decision: Reconsider a serializer dependency only if review fixtures need richer frontmatter or round-trip parsing.
 - Impact: Affects candidate note fidelity, dependency posture, and future migration surface.
 
-### 2026-05-14 — Which local trial feedback questions should become release criteria?
+### 2026-05-14 — Which local trial feedback fields should become release criteria?
 
-- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with lightweight feedback prompts, but the prompts are not yet a product-owner-approved rubric.
-- Needed decision: After the first controlled trial, decide which feedback questions should become durable acceptance criteria or test fixtures.
+- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with prompts and a human-fillable feedback capture rubric, but the rubric has not yet been validated by a real product-owner trial.
+- Needed decision: After the first controlled trial, decide which feedback fields should become durable acceptance criteria or test fixtures.
 - Impact: Affects whether the next phase should prioritize golden essays, report quality, formal apply safety, or provider-backed extraction.
 
 ## AI Pipeline
