@@ -252,6 +252,14 @@ Record durable technical and governance decisions here.
 - Risks: The current local Codex shell cannot reproduce wheel build/install because `pip` is unavailable, so remote GitHub Actions remains the source of truth for this gate.
 - Follow-up: Confirm the first remote CI run, then decide later when versioning, artifact upload, and publishing should become release gates.
 
+### 2026-05-14 — Persist machine-readable local trial outcomes
+
+- Decision: Each local trial writes `_ai_reports/local-trials/<trial_id>.json` beside the Markdown feedback report, using the shared AI artifact schema version and explicit no-provider/no-formal-write boundary fields.
+- Reason: Product-owner trial feedback starts from the Markdown report, but lightweight comparison, issue creation, and future aggregation need a structured summary that does not require parsing Markdown.
+- Alternatives: Keep only the Markdown report; add a UI or analytics backend now; treat edited human feedback as structured acceptance data.
+- Risks: The JSON shape may need to evolve after real product-owner trial feedback, and report-package writes are still not transactional.
+- Follow-up: Use the JSON outcome in controlled trial review, then decide whether feedback fields should become typed user-input artifacts or release criteria.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from pathlib import Path, PurePosixPath
 import re
 
@@ -72,6 +73,31 @@ class LocalTrialFeedbackReport:
             raise LocalTrialFeedbackReportError("feedback reports must not call providers")
 
 
+@dataclass(frozen=True)
+class LocalTrialOutcome:
+    trial_id: str
+    relative_path: str
+    content: str
+    passed: bool
+    artifact_count: int
+    error_count: int
+    formal_write_performed: bool
+    provider_called: bool
+
+    def __post_init__(self) -> None:
+        _require_safe_fragment("trial_id", self.trial_id)
+        _require_non_empty("relative_path", self.relative_path)
+        _require_non_empty("content", self.content)
+        if not isinstance(self.passed, bool):
+            raise LocalTrialFeedbackReportError("passed must be a boolean")
+        _require_non_negative_int("artifact_count", self.artifact_count)
+        _require_non_negative_int("error_count", self.error_count)
+        if self.formal_write_performed is not False:
+            raise LocalTrialFeedbackReportError("local trial outcomes must not perform formal writes")
+        if self.provider_called is not False:
+            raise LocalTrialFeedbackReportError("local trial outcomes must not call providers")
+
+
 def render_local_trial_feedback_report(
     report_input: LocalTrialFeedbackReportInput,
     *,
@@ -92,6 +118,32 @@ def render_local_trial_feedback_report(
     )
 
 
+def render_local_trial_outcome(
+    report_input: LocalTrialFeedbackReportInput,
+    *,
+    created_at: str,
+) -> LocalTrialOutcome:
+    _require_non_empty("created_at", created_at)
+    relative_path = f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{report_input.trial_id}.json"
+    markdown_report_path = f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{report_input.trial_id}.md"
+    payload = _outcome_payload(
+        report_input,
+        created_at=created_at,
+        relative_path=relative_path,
+        markdown_report_path=markdown_report_path,
+    )
+    return LocalTrialOutcome(
+        trial_id=report_input.trial_id,
+        relative_path=relative_path,
+        content=json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        passed=report_input.passed,
+        artifact_count=len(report_input.written_paths),
+        error_count=len(report_input.errors),
+        formal_write_performed=False,
+        provider_called=False,
+    )
+
+
 def write_local_trial_feedback_report(
     report_input: LocalTrialFeedbackReportInput,
     *,
@@ -103,6 +155,19 @@ def write_local_trial_feedback_report(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report.content, encoding="utf-8")
     return report
+
+
+def write_local_trial_outcome(
+    report_input: LocalTrialFeedbackReportInput,
+    *,
+    vault_root: str | Path,
+    created_at: str,
+) -> LocalTrialOutcome:
+    outcome = render_local_trial_outcome(report_input, created_at=created_at)
+    output_path = _safe_output_path(Path(vault_root), outcome.relative_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(outcome.content, encoding="utf-8")
+    return outcome
 
 
 def _report_content(report_input: LocalTrialFeedbackReportInput, *, created_at: str) -> str:
@@ -174,6 +239,49 @@ def _report_content(report_input: LocalTrialFeedbackReportInput, *, created_at: 
         "- requested_next_change:",
     ]
     return "\n".join(lines).strip() + "\n"
+
+
+def _outcome_payload(
+    report_input: LocalTrialFeedbackReportInput,
+    *,
+    created_at: str,
+    relative_path: str,
+    markdown_report_path: str,
+) -> dict[str, object]:
+    status = "passed" if report_input.passed else "failed"
+    return {
+        "artifact_type": "local_trial_outcome",
+        "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
+        "artifact_count": len(report_input.written_paths),
+        "boundaries": {
+            "formal_write_approval": False,
+            "formal_write_performed": False,
+            "patch_acceptance": False,
+            "provider_called": False,
+        },
+        "created_at": created_at,
+        "draft_id": report_input.draft_id,
+        "error_count": len(report_input.errors),
+        "errors": list(report_input.errors),
+        "feedback_capture": {
+            "source": markdown_report_path,
+            "status": "pending_user_input",
+        },
+        "passed": report_input.passed,
+        "patch_id": report_input.patch_id,
+        "paths": {
+            "json_outcome": relative_path,
+            "markdown_report": markdown_report_path,
+            "review_start": markdown_report_path,
+        },
+        "source_input_id": report_input.source_input_id,
+        "status": status,
+        "summary": report_input.summary,
+        "trial_id": report_input.trial_id,
+        "unsupported_claim_count": len(report_input.unsupported_claims),
+        "unsupported_claims": list(report_input.unsupported_claims),
+        "written_paths": list(report_input.written_paths),
+    }
 
 
 def _artifact_reading_order(written_paths: tuple[str, ...]) -> list[str]:

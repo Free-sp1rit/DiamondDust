@@ -36,6 +36,14 @@ knowledge-vault/_ai_reports/local-trials/trial_fixture_ab12cd.md
 
 Then follow the artifact reading order listed inside that report.
 
+The same run also writes a machine-readable outcome summary:
+
+```text
+knowledge-vault/_ai_reports/local-trials/trial_fixture_ab12cd.json
+```
+
+Use the Markdown report for human review and the JSON outcome for lightweight comparison, aggregation, or follow-up issue creation.
+
 Expected artifact families:
 
 - `_ai_reports/local-trials/`
@@ -70,6 +78,8 @@ After running the fixture trial, these should remain true:
 - the report says `provider_called: false`
 - the report says `patch_acceptance: false`
 - the report says `formal_write_approval: false`
+- the JSON outcome has `boundaries.formal_write_performed` set to `false`
+- the JSON outcome has `boundaries.provider_called` set to `false`
 
 ## Using Your Own Essay
 

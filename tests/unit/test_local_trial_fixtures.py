@@ -101,6 +101,7 @@ class LocalTrialFixtureTests(unittest.TestCase):
             self.assertIn("_ai_suggestions/blog-drafts/draft_trial_fixture_ab12cd/draft.md", output)
             self.assertIn("_ai_reports/blog-quality/draft_trial_fixture_ab12cd.md", output)
             self.assertIn("_ai_reports/local-trials/trial_fixture_ab12cd.md", output)
+            self.assertIn("_ai_reports/local-trials/trial_fixture_ab12cd.json", output)
             self.assertFalse((vault_root / "70-publications").exists())
 
             for path in _written_paths_from_output(output):
@@ -138,9 +139,13 @@ class LocalTrialFixtureTests(unittest.TestCase):
             self.assertIn("formal_write_performed: false", output)
             self.assertIn("provider_called: false", output)
             self.assertIn("_ai_reports/local-trials/trial_fixture_ab12cd.md", output)
+            self.assertIn("_ai_reports/local-trials/trial_fixture_ab12cd.json", output)
             self.assertFalse((vault_root / "70-publications").exists())
             self.assertTrue(
                 (vault_root / "_ai_reports/local-trials/trial_fixture_ab12cd.md").exists()
+            )
+            self.assertTrue(
+                (vault_root / "_ai_reports/local-trials/trial_fixture_ab12cd.json").exists()
             )
 
     def test_fixture_shortcut_cli_runs_outside_repository_root(self) -> None:
@@ -170,6 +175,9 @@ class LocalTrialFixtureTests(unittest.TestCase):
             self.assertIn("provider_called: false", output)
             self.assertTrue(
                 (vault_root / "_ai_reports/local-trials/trial_fixture_ab12cd.md").exists()
+            )
+            self.assertTrue(
+                (vault_root / "_ai_reports/local-trials/trial_fixture_ab12cd.json").exists()
             )
             self.assertFalse((outside_root / "tests/fixtures/local_trial/trial-essay.md").exists())
 
