@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 import re
 
@@ -59,6 +59,7 @@ class LocalTrialResult:
     ai_run_log_written: bool
     review_package_written: bool
     blog_draft_package_written: bool
+    feedback_report_written: bool
     simulated_patch_acceptance: bool
     formal_write_performed: bool
     provider_called: bool
@@ -78,6 +79,7 @@ class LocalTrialResult:
         _require_bool("ai_run_log_written", self.ai_run_log_written)
         _require_bool("review_package_written", self.review_package_written)
         _require_bool("blog_draft_package_written", self.blog_draft_package_written)
+        _require_bool("feedback_report_written", self.feedback_report_written)
         _require_bool("simulated_patch_acceptance", self.simulated_patch_acceptance)
         if self.formal_write_performed is not False:
             raise LocalTrialError("local trials must not perform formal writes")
@@ -135,6 +137,8 @@ def run_local_trial(
             patch_id=patch_id,
             draft_id=draft_id,
             unsupported_claims=unsupported_claims,
+            vault_path=vault_path,
+            created_at=created_at,
         )
 
     metadata = AIRunMetadata(
@@ -175,6 +179,8 @@ def run_local_trial(
             patch_id=patch_id,
             draft_id=draft_id,
             unsupported_claims=unsupported_claims,
+            vault_path=vault_path,
+            created_at=created_at,
         )
 
     errors.extend(extraction_result.errors)
@@ -200,6 +206,8 @@ def run_local_trial(
             patch_id=patch_id,
             draft_id=draft_id,
             unsupported_claims=unsupported_claims,
+            vault_path=vault_path,
+            created_at=created_at,
         )
 
     try:
@@ -250,6 +258,8 @@ def run_local_trial(
         patch_id=patch_id,
         draft_id=draft_id,
         unsupported_claims=unsupported_claims,
+        vault_path=vault_path,
+        created_at=created_at,
     )
 
 
@@ -268,6 +278,8 @@ def _trial_result(
     patch_id: str | None,
     draft_id: str | None,
     unsupported_claims: tuple[str, ...],
+    vault_path: Path,
+    created_at: str,
 ) -> LocalTrialResult:
     passed = (
         not errors
@@ -278,7 +290,7 @@ def _trial_result(
         and blog_draft_package_written
         and simulated_patch_acceptance
     )
-    return LocalTrialResult(
+    result = LocalTrialResult(
         trial_id=spec.trial_id,
         source_input_id=source_input_id,
         passed=passed,
@@ -289,6 +301,7 @@ def _trial_result(
         ai_run_log_written=ai_run_log_written,
         review_package_written=review_package_written,
         blog_draft_package_written=blog_draft_package_written,
+        feedback_report_written=False,
         simulated_patch_acceptance=simulated_patch_acceptance,
         formal_write_performed=False,
         provider_called=False,
@@ -296,6 +309,68 @@ def _trial_result(
         patch_id=patch_id,
         draft_id=draft_id,
         unsupported_claims=unsupported_claims,
+    )
+    return _finalize_with_feedback_report(result, vault_path=vault_path, created_at=created_at)
+
+
+def _finalize_with_feedback_report(
+    result: LocalTrialResult,
+    *,
+    vault_path: Path,
+    created_at: str,
+) -> LocalTrialResult:
+    from diamonddust.storage.local_trial_report import (
+        AI_LOCAL_TRIAL_REPORTS_DIR,
+        LocalTrialFeedbackReportInput,
+        write_local_trial_feedback_report,
+    )
+
+    report_path = f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{result.trial_id}.md"
+    written_paths = result.written_paths + (report_path,)
+    summary = _summary_for(
+        result.trial_id,
+        result.passed,
+        list(written_paths),
+        list(result.errors),
+    )
+
+    try:
+        write_local_trial_feedback_report(
+            LocalTrialFeedbackReportInput(
+                trial_id=result.trial_id,
+                source_input_id=result.source_input_id,
+                passed=result.passed,
+                summary=summary,
+                errors=result.errors,
+                written_paths=written_paths,
+                patch_id=result.patch_id,
+                draft_id=result.draft_id,
+                unsupported_claims=result.unsupported_claims,
+                formal_write_performed=result.formal_write_performed,
+                provider_called=result.provider_called,
+            ),
+            vault_root=vault_path,
+            created_at=created_at,
+        )
+    except Exception as exc:
+        errors = result.errors + (_stage_error("local trial feedback report", exc),)
+        return replace(
+            result,
+            passed=False,
+            errors=errors,
+            summary=_summary_for(
+                result.trial_id,
+                False,
+                list(result.written_paths),
+                list(errors),
+            ),
+        )
+
+    return replace(
+        result,
+        summary=summary,
+        written_paths=written_paths,
+        feedback_report_written=True,
     )
 
 

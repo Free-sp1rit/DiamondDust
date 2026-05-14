@@ -85,6 +85,7 @@ class LocalTrialFixtureTests(unittest.TestCase):
             self.assertIn("_ai_reports/patch-reviews/", output)
             self.assertIn("_ai_suggestions/blog-drafts/draft_trial_fixture_ab12cd/draft.md", output)
             self.assertIn("_ai_reports/blog-quality/draft_trial_fixture_ab12cd.md", output)
+            self.assertIn("_ai_reports/local-trials/trial_fixture_ab12cd.md", output)
             self.assertFalse((vault_root / "70-publications").exists())
 
             for path in _written_paths_from_output(output):

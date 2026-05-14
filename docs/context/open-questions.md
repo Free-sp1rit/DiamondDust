@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-12
+Last updated: 2026-05-14
 
 ## Tooling and Repository Shape
 
@@ -31,6 +31,12 @@ Last updated: 2026-05-12
 - Context: Candidate Markdown export now uses a minimal standard-library YAML-like renderer.
 - Needed decision: Reconsider a serializer dependency only if review fixtures need richer frontmatter or round-trip parsing.
 - Impact: Affects candidate note fidelity, dependency posture, and future migration surface.
+
+### 2026-05-14 — Which local trial feedback questions should become release criteria?
+
+- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with lightweight feedback prompts, but the prompts are not yet a product-owner-approved rubric.
+- Needed decision: After the first controlled trial, decide which feedback questions should become durable acceptance criteria or test fixtures.
+- Impact: Affects whether the next phase should prioritize golden essays, report quality, formal apply safety, or provider-backed extraction.
 
 ## AI Pipeline
 

@@ -229,3 +229,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 105 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add explicit user acceptance handoff, formal apply/revert execution, rollback/write-failure tests, product-owner-approved golden essays, and CI in separate reviewed milestones.
+
+## 2026-05-14 — Local Trial Feedback Report Completed
+
+- Scope: Added a first-open feedback report artifact for local trial runs.
+- Outcome: Local trials now write `_ai_reports/local-trials/<trial_id>.md` for passed and safely finalized failed runs, include it in CLI output, and preserve provider-free/no-formal-write boundaries.
+- Review: `docs/reviews/milestone-reviews/2026-05-14-local-trial-feedback-report.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves readiness for controlled product-owner feedback before provider calls or formal vault mutation.
+- Validation: 108 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Use the feedback report in a controlled trial, then decide which feedback prompts should become release criteria or golden fixture expectations.
