@@ -51,7 +51,9 @@ CI runs on pull requests and task-branch pushes through GitHub Actions.
 The CI baseline is:
 
 ```bash
-python -m pip install -e .
+python -m pip wheel . --no-deps --wheel-dir <temporary-wheelhouse>
+python -m pip install --force-reinstall --no-deps <built-wheel>
+python -m pip check
 python -m unittest discover -s tests
 python -m compileall src tests
 git diff --check
