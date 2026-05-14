@@ -6,29 +6,22 @@ The local trial path uses structured extraction JSON instead of an LLM provider.
 
 ## Run The Fixture Trial
 
-After a local editable install:
+From the repository root, install locally:
 
 ```bash
 python3 -m pip install -e .
 ```
 
 ```bash
-diamonddust local-trial \
-  --trial-id trial_fixture_ab12cd \
-  --essay tests/fixtures/local_trial/trial-essay.md \
-  --extraction-json tests/fixtures/local_trial/extraction.json \
-  --root . \
-  --vault-root knowledge-vault \
-  --title "Reviewable Local Trial Artifacts" \
-  --mode explanation \
-  --audience "product owner" \
-  --reader-problem "inspecting generated artifacts before formal writes"
+diamonddust local-trial-fixture
 ```
+
+The shortcut uses `tests/fixtures/local_trial/trial-essay.md` and `tests/fixtures/local_trial/extraction.json`.
 
 Development fallback without installation:
 
 ```bash
-PYTHONPATH=src python3 -m diamonddust local-trial --help
+PYTHONPATH=src python3 -m diamonddust local-trial-fixture
 ```
 
 ## Review Order
@@ -78,6 +71,6 @@ After running the fixture trial, these should remain true:
 
 ## Using Your Own Essay
 
-For a custom essay, provide a matching structured extraction JSON file. See `docs/guides/local-trial-extraction-json.md` for the accepted shape.
+For a custom essay, use `diamonddust local-trial` and provide a matching structured extraction JSON file. See `docs/guides/local-trial-extraction-json.md` for the accepted shape.
 
 Custom trials are still provider-free unless a future provider adapter is explicitly added and approved.

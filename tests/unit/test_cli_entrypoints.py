@@ -34,6 +34,7 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("usage: diamonddust", result.stdout)
         self.assertIn("local-trial", result.stdout)
+        self.assertIn("local-trial-fixture", result.stdout)
 
 
 if __name__ == "__main__":

@@ -12,8 +12,9 @@ class LocalTrialUserFeedbackGuideTests(unittest.TestCase):
         guide = GUIDE_PATH.read_text(encoding="utf-8")
 
         self.assertIn("python3 -m pip install -e .", guide)
+        self.assertIn("diamonddust local-trial-fixture", guide)
         self.assertIn("diamonddust local-trial", guide)
-        self.assertIn("PYTHONPATH=src python3 -m diamonddust local-trial --help", guide)
+        self.assertIn("PYTHONPATH=src python3 -m diamonddust local-trial-fixture", guide)
         self.assertIn("tests/fixtures/local_trial/trial-essay.md", guide)
         self.assertIn("tests/fixtures/local_trial/extraction.json", guide)
         self.assertIn(
