@@ -393,6 +393,25 @@ Rules:
 - Blog draft persistence must not write files to `70-publications/`.
 - Publishing still requires separate user approval and a future publication workflow.
 
+## Local Trial Feedback Reports
+
+Local trial feedback reports are AI working/report artifacts, not acceptance records and not formal vault writes.
+
+They should be exported under:
+
+```text
+_ai_reports/local-trials/<trial_id>.md
+```
+
+Rules:
+
+- Local trial feedback reports must include `artifact_schema_version`.
+- Local trial feedback reports must mark `formal_write: false` and `provider_called: false`.
+- Local trial feedback reports should summarize trial status, artifact reading order, errors, unsupported claims, and feedback prompts.
+- Local trial feedback reports may be written for both passed and failed local trials when the vault report path is writable.
+- Local trial feedback reports must not mark a patch as user-accepted and must not write files to formal vault directories.
+- Formal writes still require explicit user acceptance and a separate storage apply step.
+
 ## Schema Versioning
 
 Every persisted formal note must include:

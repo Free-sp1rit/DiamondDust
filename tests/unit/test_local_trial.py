@@ -33,6 +33,7 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertTrue(result.ai_run_log_written)
             self.assertTrue(result.review_package_written)
             self.assertTrue(result.blog_draft_package_written)
+            self.assertTrue(result.feedback_report_written)
             self.assertTrue(result.simulated_patch_acceptance)
             self.assertFalse(result.formal_write_performed)
             self.assertFalse(result.provider_called)
@@ -51,7 +52,17 @@ class LocalTrialHarnessTests(unittest.TestCase):
                 "_ai_reports/blog-quality/draft_trial_local_ab12cd.md",
                 result.written_paths,
             )
+            self.assertIn(
+                "_ai_reports/local-trials/trial_local_ab12cd.md",
+                result.written_paths,
+            )
             self.assertTrue(all((vault_root / path).exists() for path in result.written_paths))
+            feedback_report = (
+                vault_root / "_ai_reports/local-trials/trial_local_ab12cd.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("artifact_type: local_trial_feedback_report", feedback_report)
+            self.assertIn("formal_write_performed: false", feedback_report)
+            self.assertIn("## Artifact Reading Order", feedback_report)
             self.assertFalse(
                 (vault_root / "70-publications" / "draft_trial_local_ab12cd.md").exists()
             )
@@ -76,9 +87,19 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertTrue(result.ai_run_log_written)
             self.assertFalse(result.review_package_written)
             self.assertFalse(result.blog_draft_package_written)
-            self.assertEqual(len(result.written_paths), 1)
+            self.assertTrue(result.feedback_report_written)
+            self.assertEqual(len(result.written_paths), 2)
             self.assertTrue(result.written_paths[0].startswith("_ai_runs/"))
+            self.assertIn(
+                "_ai_reports/local-trials/trial_local_ab12cd.md",
+                result.written_paths,
+            )
             self.assertIn("extraction output must be a structured mapping", result.errors[0])
+            feedback_report = (
+                vault_root / "_ai_reports/local-trials/trial_local_ab12cd.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("status: \"failed\"", feedback_report)
+            self.assertIn("extraction output must be a structured mapping", feedback_report)
 
     def test_source_id_mismatch_stops_before_review_artifacts(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -106,7 +127,12 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertTrue(result.extraction_valid)
             self.assertTrue(result.ai_run_log_written)
             self.assertFalse(result.review_package_written)
+            self.assertTrue(result.feedback_report_written)
             self.assertIn("does not match ingested source_id", result.errors[0])
+            self.assertIn(
+                "_ai_reports/local-trials/trial_local_ab12cd.md",
+                result.written_paths,
+            )
 
     def test_cli_local_trial_smoke(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -152,6 +178,7 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertIn("passed: local trial trial_local_ab12cd", stdout.getvalue())
             self.assertIn("formal_write_performed: false", stdout.getvalue())
             self.assertIn("_ai_reports/blog-quality/draft_trial_local_ab12cd.md", stdout.getvalue())
+            self.assertIn("_ai_reports/local-trials/trial_local_ab12cd.md", stdout.getvalue())
 
 
 def _trial_spec(

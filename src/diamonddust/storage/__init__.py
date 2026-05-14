@@ -40,6 +40,14 @@ from diamonddust.storage.formal_vault import (
     check_formal_vault_conflicts,
     plan_formal_vault_apply,
 )
+from diamonddust.storage.local_trial_report import (
+    AI_LOCAL_TRIAL_REPORTS_DIR,
+    LocalTrialFeedbackReport,
+    LocalTrialFeedbackReportError,
+    LocalTrialFeedbackReportInput,
+    render_local_trial_feedback_report,
+    write_local_trial_feedback_report,
+)
 from diamonddust.storage.markdown import (
     FrontmatterValue,
     IngestedMarkdownEssay,
@@ -68,6 +76,7 @@ __all__ = [
     "AI_CANDIDATE_NOTES_DIR",
     "AI_BLOG_DRAFTS_DIR",
     "AI_BLOG_QUALITY_REPORTS_DIR",
+    "AI_LOCAL_TRIAL_REPORTS_DIR",
     "AI_PATCH_REVIEW_REPORTS_DIR",
     "AI_PATCH_SUGGESTIONS_DIR",
     "AI_RUNS_DIR",
@@ -92,6 +101,9 @@ __all__ = [
     "FormalVaultConflictType",
     "FrontmatterValue",
     "IngestedMarkdownEssay",
+    "LocalTrialFeedbackReport",
+    "LocalTrialFeedbackReportError",
+    "LocalTrialFeedbackReportInput",
     "MarkdownIngestionError",
     "PatchReviewReport",
     "PatchJsonArtifact",
@@ -107,11 +119,13 @@ __all__ = [
     "render_blog_draft_markdown",
     "render_blog_quality_report",
     "render_candidate_markdown",
+    "render_local_trial_feedback_report",
     "render_patch_json_artifact",
     "render_patch_review_report",
     "write_candidate_markdown_export",
     "write_ai_run_log_artifact",
     "write_blog_draft_package",
+    "write_local_trial_feedback_report",
     "write_review_package",
     "write_patch_review_report",
 ]

@@ -196,6 +196,14 @@ Record durable technical and governance decisions here.
 - Risks: The planned note renderer may need richer formatting before real apply, and dry-run plans do not prove write atomicity or rollback execution.
 - Follow-up: Add explicit user acceptance handoff, write-failure tests, and revert execution before enabling formal vault mutation.
 
+### 2026-05-14 — Write local trial feedback reports as the trial entrypoint
+
+- Decision: Each local trial should write a Markdown feedback report under `_ai_reports/local-trials/<trial_id>.md` and include it in CLI output.
+- Reason: Product-owner trials need one starting artifact that explains status, safety boundaries, reading order, errors, unsupported claims, and feedback prompts without adding provider calls or formal vault writes.
+- Alternatives: Keep trial output only as scattered paths; build a UI first; write reports beside formal notes.
+- Risks: The report format may need adjustment after real trial feedback, and the report must not be mistaken for user acceptance of a patch.
+- Follow-up: Use the report in controlled trial review, then decide whether a richer feedback rubric, JSON summary, or UI surface is warranted.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
