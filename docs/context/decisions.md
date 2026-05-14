@@ -220,6 +220,14 @@ Record durable technical and governance decisions here.
 - Risks: Packaging metadata may need expansion for real releases, and editable install behavior depends on local Python packaging tooling.
 - Follow-up: Add CI and release/versioning checks before treating the package metadata as a release contract.
 
+### 2026-05-14 — Add a one-command local trial fixture shortcut
+
+- Decision: Add `diamonddust local-trial-fixture` as a shortcut for the checked-in fixture essay and extraction JSON, defaulting output to `knowledge-vault/`.
+- Reason: Product-owner trial feedback should start from a simple safe command before custom essay extraction JSON is required.
+- Alternatives: Keep only the full `local-trial` command; add a shell script; move fixtures into package data before adding a shortcut.
+- Risks: The shortcut is repo-root oriented and proves fixture orchestration, not real provider extraction quality.
+- Follow-up: Use the shortcut for controlled trial feedback, then decide whether fixture command behavior should become package-data-backed or CI-gated.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

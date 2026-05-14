@@ -262,3 +262,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 113 unit tests passed, `python3 -m compileall src tests` passed, and `git diff --check` passed.
 - Dependency impact: No runtime dependency was added; packaging metadata uses the standard setuptools build backend for editable installs.
 - Follow-up: Add CI/package install checks before treating packaging metadata as a release contract.
+
+## 2026-05-14 — Local Trial Fixture Command Completed
+
+- Scope: Added a one-command fixture shortcut for provider-free local trial runs.
+- Outcome: `diamonddust local-trial-fixture` runs the checked-in trial essay and extraction JSON through the existing local trial path, defaults output to ignored `knowledge-vault/`, and preserves no-provider/no-formal-write boundaries.
+- Review: `docs/reviews/milestone-reviews/2026-05-14-local-trial-fixture-command.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 hardening; improves product-owner trialability before custom essays, provider adapters, or formal vault mutation.
+- Validation: 114 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and `PYTHONPATH=src python3 -m diamonddust local-trial-fixture --root . --vault-root /tmp/diamonddust-fixture-smoke --created-at 2026-05-14T00:00:00Z` passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Run a controlled product-owner trial using the shortcut, then decide whether shortcut behavior should be package-data-backed or CI-gated.

@@ -98,6 +98,36 @@ class LocalTrialFixtureTests(unittest.TestCase):
                     path,
                 )
 
+    def test_fixture_shortcut_cli_writes_reviewable_artifacts(self) -> None:
+        with TemporaryDirectory() as tmp:
+            vault_root = Path(tmp) / "knowledge-vault"
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                exit_code = cli_main(
+                    [
+                        "local-trial-fixture",
+                        "--root",
+                        REPO_ROOT.as_posix(),
+                        "--vault-root",
+                        vault_root.as_posix(),
+                        "--created-at",
+                        CREATED_AT,
+                    ]
+                )
+
+            output = stdout.getvalue()
+            self.assertEqual(exit_code, 0, stderr.getvalue())
+            self.assertIn("passed: local trial trial_fixture_ab12cd", output)
+            self.assertIn("formal_write_performed: false", output)
+            self.assertIn("provider_called: false", output)
+            self.assertIn("_ai_reports/local-trials/trial_fixture_ab12cd.md", output)
+            self.assertFalse((vault_root / "70-publications").exists())
+            self.assertTrue(
+                (vault_root / "_ai_reports/local-trials/trial_fixture_ab12cd.md").exists()
+            )
+
 
 def _load_fixture_extraction() -> dict:
     return json.loads(EXTRACTION_PATH.read_text(encoding="utf-8"))

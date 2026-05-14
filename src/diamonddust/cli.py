@@ -13,11 +13,22 @@ from diamonddust.application import LocalTrialSpec, run_local_trial
 from diamonddust.application.blog_draft import BlogMode
 
 
+FIXTURE_TRIAL_ID = "trial_fixture_ab12cd"
+FIXTURE_ESSAY_PATH = "tests/fixtures/local_trial/trial-essay.md"
+FIXTURE_EXTRACTION_PATH = "tests/fixtures/local_trial/extraction.json"
+FIXTURE_TITLE = "Reviewable Local Trial Artifacts"
+FIXTURE_AUDIENCE = "product owner"
+FIXTURE_READER_PROBLEM = "inspecting generated artifacts before formal writes"
+DEFAULT_VAULT_ROOT = "knowledge-vault"
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     if args.command == "local-trial":
         return _run_local_trial_command(args, stdout=sys.stdout, stderr=sys.stderr)
+    if args.command == "local-trial-fixture":
+        return _run_local_trial_fixture_command(args, stdout=sys.stdout, stderr=sys.stderr)
     parser.print_help()
     return 2
 
@@ -44,7 +55,44 @@ def _build_parser() -> argparse.ArgumentParser:
     local_trial.add_argument("--model", default="structured-json")
     local_trial.add_argument("--prompt-version", default="extract_units.v1")
     local_trial.add_argument("--schema-version", default="0.1.0")
+
+    fixture_trial = subparsers.add_parser(
+        "local-trial-fixture",
+        help="run the checked-in provider-free local trial fixture",
+    )
+    fixture_trial.add_argument("--trial-id", default=FIXTURE_TRIAL_ID)
+    fixture_trial.add_argument("--root", default=".")
+    fixture_trial.add_argument("--vault-root", default=DEFAULT_VAULT_ROOT)
+    fixture_trial.add_argument("--created-at", default=_utc_now())
     return parser
+
+
+def _run_local_trial_fixture_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    return _run_local_trial_command(
+        argparse.Namespace(
+            trial_id=args.trial_id,
+            essay=FIXTURE_ESSAY_PATH,
+            extraction_json=FIXTURE_EXTRACTION_PATH,
+            root=args.root,
+            vault_root=args.vault_root,
+            title=FIXTURE_TITLE,
+            mode=BlogMode.EXPLANATION.value,
+            audience=FIXTURE_AUDIENCE,
+            reader_problem=FIXTURE_READER_PROBLEM,
+            created_at=args.created_at,
+            provider="local-trial",
+            model="structured-json",
+            prompt_version="extract_units.v1",
+            schema_version="0.1.0",
+        ),
+        stdout=stdout,
+        stderr=stderr,
+    )
 
 
 def _run_local_trial_command(

@@ -8,36 +8,29 @@ DiamondDust 是一个本地优先的语义知识编译器：它将零散随笔�
 
 The project has completed the Gate 7 MVP release readiness skeleton.
 
-The current implementation includes typed domain schemas, read-only Markdown ingestion, provider-neutral structured extraction validation, AI run log persistence, patch review, candidate Markdown export, patch review report rendering, review package persistence, deterministic blog draft generation, durable blog draft package persistence, a local trial CLI with feedback reports, formal vault conflict preflight checks, formal apply dry-run plans, and a five-sample release readiness harness. Real provider calls, formal vault apply/revert execution, publishing, and UI flows remain future work behind the existing review boundaries.
+The current implementation includes typed domain schemas, read-only Markdown ingestion, provider-neutral structured extraction validation, AI run log persistence, patch review, candidate Markdown export, patch review report rendering, review package persistence, deterministic blog draft generation, durable blog draft package persistence, a local trial CLI with a fixture shortcut and feedback reports, formal vault conflict preflight checks, formal apply dry-run plans, and a five-sample release readiness harness. Real provider calls, formal vault apply/revert execution, publishing, and UI flows remain future work behind the existing review boundaries.
 
 ## Local Trial
 
 The current local trial path uses structured extraction JSON instead of calling an LLM provider.
 
-For a local editable install:
+From the repository root, install locally:
 
 ```bash
 python3 -m pip install -e .
 ```
 
 ```bash
-diamonddust local-trial \
-  --trial-id trial_fixture_ab12cd \
-  --essay tests/fixtures/local_trial/trial-essay.md \
-  --extraction-json tests/fixtures/local_trial/extraction.json \
-  --root . \
-  --vault-root knowledge-vault \
-  --title "Reviewable Local Trial Artifacts" \
-  --mode explanation \
-  --audience "product owner" \
-  --reader-problem "inspecting generated artifacts before formal writes"
+diamonddust local-trial-fixture
 ```
 
 Development fallback without installation:
 
 ```bash
-PYTHONPATH=src python3 -m diamonddust local-trial --help
+PYTHONPATH=src python3 -m diamonddust local-trial-fixture
 ```
+
+For custom essays, use `diamonddust local-trial` with explicit essay, extraction JSON, title, audience, and vault-root arguments.
 
 The command writes AI working artifacts only. It does not write formal vault notes or publish content.
 
