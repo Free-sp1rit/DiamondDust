@@ -6,8 +6,14 @@ The local trial path uses structured extraction JSON instead of an LLM provider.
 
 ## Run The Fixture Trial
 
+After a local editable install:
+
 ```bash
-PYTHONPATH=src python3 -m diamonddust.cli local-trial \
+python3 -m pip install -e .
+```
+
+```bash
+diamonddust local-trial \
   --trial-id trial_fixture_ab12cd \
   --essay tests/fixtures/local_trial/trial-essay.md \
   --extraction-json tests/fixtures/local_trial/extraction.json \
@@ -17,6 +23,12 @@ PYTHONPATH=src python3 -m diamonddust.cli local-trial \
   --mode explanation \
   --audience "product owner" \
   --reader-problem "inspecting generated artifacts before formal writes"
+```
+
+Development fallback without installation:
+
+```bash
+PYTHONPATH=src python3 -m diamonddust local-trial --help
 ```
 
 ## Review Order

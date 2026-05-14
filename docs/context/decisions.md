@@ -212,6 +212,14 @@ Record durable technical and governance decisions here.
 - Risks: The rubric may need tuning after real trial use, and report edits are not machine-readable yet.
 - Follow-up: After a controlled trial, decide which feedback fields should become release criteria, golden fixture expectations, or a structured feedback artifact.
 
+### 2026-05-14 — Add minimal package metadata for CLI trial entrypoint
+
+- Decision: Add `pyproject.toml`, expose `diamonddust = "diamonddust.cli:main"`, and add `python3 -m diamonddust` as a module entrypoint.
+- Reason: Product-owner trial runs should have a standard command after editable install, while development can still use the module fallback.
+- Alternatives: Keep only `PYTHONPATH=src python3 -m diamonddust.cli`; add a shell wrapper; wait until CI/release packaging exists.
+- Risks: Packaging metadata may need expansion for real releases, and editable install behavior depends on local Python packaging tooling.
+- Follow-up: Add CI and release/versioning checks before treating the package metadata as a release contract.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
