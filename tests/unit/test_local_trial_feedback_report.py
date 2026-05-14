@@ -31,6 +31,10 @@ class LocalTrialFeedbackReportTests(unittest.TestCase):
         self.assertFalse(report.provider_called)
         self.assertIn("artifact_schema_version: \"0.1.0\"", report.content)
         self.assertIn("- formal_write_performed: false", report.content)
+        self.assertIn("## Feedback Capture", report.content)
+        self.assertIn("- trial_verdict: [ ] usable [ ] needs_changes [ ] blocked", report.content)
+        self.assertIn("- formal_write_approval: false", report.content)
+        self.assertIn("- patch_acceptance: false", report.content)
         self.assertLess(
             report.content.index("_ai_reports/local-trials/trial_report.md"),
             report.content.index("_ai_runs/run_trial.json"),
