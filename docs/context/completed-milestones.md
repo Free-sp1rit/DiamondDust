@@ -284,3 +284,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 119 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and `PYTHONPATH=src python3 -m diamonddust local-trial-fixture --root . --vault-root /tmp/diamonddust-ci-smoke --created-at 2026-05-14T00:00:00Z` passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Confirm the first remote GitHub Actions run after push and decide whether branch protection should require CI before merge.
+
+## 2026-05-14 — Portable Local Trial Fixture Completed
+
+- Scope: Made the `local-trial-fixture` shortcut load packaged fixture assets instead of repository-relative test fixture files.
+- Outcome: The fixture essay and extraction JSON are packaged under `diamonddust.fixtures.local_trial`, `diamonddust local-trial-fixture` can run from a non-repository working directory, and tests enforce package/test fixture parity.
+- Review: `docs/reviews/milestone-reviews/2026-05-14-portable-local-trial-fixture.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial usability hardening; improves installed CLI trialability without provider calls, schema changes, formal writes, or publication behavior.
+- Validation: 121 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and `PYTHONPATH=/home/yimg/code/DiamondDust/src python3 -m diamonddust local-trial-fixture --vault-root /tmp/diamonddust-portable-root-smoke --created-at 2026-05-14T00:00:00Z` passed from `/tmp`.
+- Dependency impact: No production or development dependency was added; package data metadata was added for existing setuptools packaging.
+- Follow-up: Run an installed CLI product-owner trial and select product-owner-approved golden essays.

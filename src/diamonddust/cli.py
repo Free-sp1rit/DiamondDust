@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import argparse
 from datetime import UTC, datetime
+from importlib import resources
 import json
 from pathlib import Path
 import sys
+from tempfile import TemporaryDirectory
 from typing import Sequence, TextIO
 
-from diamonddust.application import LocalTrialSpec, run_local_trial
+from diamonddust.application import LocalTrialResult, LocalTrialSpec, run_local_trial
 from diamonddust.application.blog_draft import BlogMode
 
 
 FIXTURE_TRIAL_ID = "trial_fixture_ab12cd"
-FIXTURE_ESSAY_PATH = "tests/fixtures/local_trial/trial-essay.md"
-FIXTURE_EXTRACTION_PATH = "tests/fixtures/local_trial/extraction.json"
+FIXTURE_SOURCE_PATH = "tests/fixtures/local_trial/trial-essay.md"
+FIXTURE_RESOURCE_PACKAGE = "diamonddust.fixtures.local_trial"
+FIXTURE_ESSAY_RESOURCE = "trial-essay.md"
+FIXTURE_EXTRACTION_RESOURCE = "extraction.json"
 FIXTURE_TITLE = "Reviewable Local Trial Artifacts"
 FIXTURE_AUDIENCE = "product owner"
 FIXTURE_READER_PROBLEM = "inspecting generated artifacts before formal writes"
@@ -73,26 +77,38 @@ def _run_local_trial_fixture_command(
     stdout: TextIO,
     stderr: TextIO,
 ) -> int:
-    return _run_local_trial_command(
-        argparse.Namespace(
-            trial_id=args.trial_id,
-            essay=FIXTURE_ESSAY_PATH,
-            extraction_json=FIXTURE_EXTRACTION_PATH,
-            root=args.root,
-            vault_root=args.vault_root,
-            title=FIXTURE_TITLE,
-            mode=BlogMode.EXPLANATION.value,
-            audience=FIXTURE_AUDIENCE,
-            reader_problem=FIXTURE_READER_PROBLEM,
-            created_at=args.created_at,
-            provider="local-trial",
-            model="structured-json",
-            prompt_version="extract_units.v1",
-            schema_version="0.1.0",
-        ),
-        stdout=stdout,
-        stderr=stderr,
-    )
+    try:
+        extraction_output = _load_packaged_fixture_json()
+        with TemporaryDirectory() as tmp:
+            fixture_root = Path(tmp)
+            essay_path = fixture_root / FIXTURE_SOURCE_PATH
+            essay_path.parent.mkdir(parents=True, exist_ok=True)
+            essay_path.write_text(_load_packaged_fixture_text(), encoding="utf-8")
+
+            spec = LocalTrialSpec(
+                trial_id=args.trial_id,
+                essay_path=FIXTURE_SOURCE_PATH,
+                extraction_output=extraction_output,
+                blog_title=FIXTURE_TITLE,
+                blog_mode=BlogMode.EXPLANATION,
+                audience=FIXTURE_AUDIENCE,
+                reader_problem=FIXTURE_READER_PROBLEM,
+                provider="local-trial",
+                model="structured-json",
+                prompt_version="extract_units.v1",
+                schema_version="0.1.0",
+            )
+            result = run_local_trial(
+                spec,
+                root=fixture_root,
+                vault_root=args.vault_root,
+                created_at=args.created_at,
+            )
+    except Exception as exc:
+        print(f"local trial failed before execution: {exc}", file=stderr)
+        return 1
+
+    return _print_local_trial_result(result, stdout=stdout)
 
 
 def _run_local_trial_command(
@@ -126,6 +142,10 @@ def _run_local_trial_command(
         print(f"local trial failed before execution: {exc}", file=stderr)
         return 1
 
+    return _print_local_trial_result(result, stdout=stdout)
+
+
+def _print_local_trial_result(result: LocalTrialResult, *, stdout: TextIO) -> int:
     print(result.summary, file=stdout)
     print(f"source_input_id: {result.source_input_id or 'none'}", file=stdout)
     print(f"patch_id: {result.patch_id or 'none'}", file=stdout)
@@ -153,6 +173,27 @@ def _load_json(path: str) -> object:
         raise ValueError(f"cannot read extraction JSON: {path}") from exc
     except json.JSONDecodeError as exc:
         raise ValueError(f"invalid extraction JSON: {path}") from exc
+
+
+def _load_packaged_fixture_json() -> object:
+    try:
+        raw_json = _fixture_resource(FIXTURE_EXTRACTION_RESOURCE).read_text(encoding="utf-8")
+        return json.loads(raw_json)
+    except OSError as exc:
+        raise ValueError("cannot read packaged local trial extraction JSON") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError("invalid packaged local trial extraction JSON") from exc
+
+
+def _load_packaged_fixture_text() -> str:
+    try:
+        return _fixture_resource(FIXTURE_ESSAY_RESOURCE).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ValueError("cannot read packaged local trial essay") from exc
+
+
+def _fixture_resource(name: str) -> resources.abc.Traversable:
+    return resources.files(FIXTURE_RESOURCE_PACKAGE).joinpath(name)
 
 
 def _utc_now() -> str:

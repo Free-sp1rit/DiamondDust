@@ -15,3 +15,6 @@ diamonddust = "diamonddust.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"diamonddust.fixtures.local_trial" = ["*.md", "*.json"]

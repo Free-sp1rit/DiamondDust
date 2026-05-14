@@ -1,0 +1,1 @@
+"""Packaged DiamondDust fixture assets."""

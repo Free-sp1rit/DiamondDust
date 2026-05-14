@@ -1,7 +1,9 @@
 import contextlib
 import io
 import json
+import os
 import unittest
+from importlib import resources
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -15,9 +17,22 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "local_trial"
 ESSAY_PATH = FIXTURE_DIR / "trial-essay.md"
 EXTRACTION_PATH = FIXTURE_DIR / "extraction.json"
+PACKAGE_FIXTURE_PACKAGE = "diamonddust.fixtures.local_trial"
 
 
 class LocalTrialFixtureTests(unittest.TestCase):
+    def test_packaged_fixture_assets_match_repository_fixtures(self) -> None:
+        package_fixtures = resources.files(PACKAGE_FIXTURE_PACKAGE)
+
+        self.assertEqual(
+            package_fixtures.joinpath("trial-essay.md").read_text(encoding="utf-8"),
+            ESSAY_PATH.read_text(encoding="utf-8"),
+        )
+        self.assertEqual(
+            json.loads(package_fixtures.joinpath("extraction.json").read_text(encoding="utf-8")),
+            _load_fixture_extraction(),
+        )
+
     def test_fixture_extraction_matches_ingested_essay_source_id(self) -> None:
         essay = read_markdown_essay(ESSAY_PATH, root=REPO_ROOT)
         extraction = _load_fixture_extraction()
@@ -128,6 +143,36 @@ class LocalTrialFixtureTests(unittest.TestCase):
                 (vault_root / "_ai_reports/local-trials/trial_fixture_ab12cd.md").exists()
             )
 
+    def test_fixture_shortcut_cli_runs_outside_repository_root(self) -> None:
+        with TemporaryDirectory() as tmp:
+            outside_root = Path(tmp) / "outside"
+            outside_root.mkdir()
+            vault_root = Path(tmp) / "knowledge-vault"
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+
+            with _working_directory(outside_root):
+                with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                    exit_code = cli_main(
+                        [
+                            "local-trial-fixture",
+                            "--vault-root",
+                            vault_root.as_posix(),
+                            "--created-at",
+                            CREATED_AT,
+                        ]
+                    )
+
+            output = stdout.getvalue()
+            self.assertEqual(exit_code, 0, stderr.getvalue())
+            self.assertIn("passed: local trial trial_fixture_ab12cd", output)
+            self.assertIn("formal_write_performed: false", output)
+            self.assertIn("provider_called: false", output)
+            self.assertTrue(
+                (vault_root / "_ai_reports/local-trials/trial_fixture_ab12cd.md").exists()
+            )
+            self.assertFalse((outside_root / "tests/fixtures/local_trial/trial-essay.md").exists())
+
 
 def _load_fixture_extraction() -> dict:
     return json.loads(EXTRACTION_PATH.read_text(encoding="utf-8"))
@@ -139,6 +184,16 @@ def _written_paths_from_output(output: str) -> tuple[str, ...]:
         if line.startswith("- _ai_"):
             paths.append(line.removeprefix("- "))
     return tuple(paths)
+
+
+@contextlib.contextmanager
+def _working_directory(path: Path):
+    previous = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(previous)
 
 
 if __name__ == "__main__":
