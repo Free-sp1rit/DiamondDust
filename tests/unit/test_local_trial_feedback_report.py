@@ -32,12 +32,30 @@ class LocalTrialFeedbackReportTests(unittest.TestCase):
         self.assertEqual(report.relative_path, "_ai_reports/local-trials/trial_report.md")
         self.assertFalse(report.formal_write_performed)
         self.assertFalse(report.provider_called)
+        self.assertIn("# Local Trial Feedback Report", report.content)
         self.assertIn("artifact_schema_version: \"0.1.0\"", report.content)
+        self.assertIn("trial_pipeline_status: \"passed\"", report.content)
+        self.assertIn("product_owner_verdict: \"pending\"", report.content)
+        self.assertNotIn("\nstatus: \"passed\"", report.content)
+        self.assertNotIn("score", report.content.lower())
         self.assertIn("- formal_write_performed: false", report.content)
         self.assertIn("## Feedback Capture", report.content)
-        self.assertIn("- trial_verdict: [ ] usable [ ] needs_changes [ ] blocked", report.content)
+        self.assertIn("- product_owner_verdict:", report.content)
+        self.assertIn("- confidence_notes:", report.content)
         self.assertIn("- formal_write_approval: false", report.content)
         self.assertIn("- patch_acceptance: false", report.content)
+        self.assertIn(
+            "`_ai_reports/local-trials/trial_report.md`: human review entrypoint",
+            report.content,
+        )
+        self.assertIn(
+            "`_ai_runs/run_trial.json`: extraction validation run log",
+            report.content,
+        )
+        self.assertIn(
+            "`_ai_reports/blog-quality/draft_trial.md`: blog draft quality",
+            report.content,
+        )
         self.assertLess(
             report.content.index("_ai_reports/local-trials/trial_report.md"),
             report.content.index("_ai_runs/run_trial.json"),

@@ -34,7 +34,7 @@ Start from:
 knowledge-vault/_ai_reports/local-trials/trial_fixture_ab12cd.md
 ```
 
-Then follow the artifact reading order listed inside that report.
+Then follow the artifact reading order listed inside that report. Each listed artifact includes a one-line purpose note.
 
 The same run also writes a machine-readable outcome summary:
 
@@ -58,8 +58,8 @@ Expected artifact families:
 
 Use the `Feedback Capture` section in the local trial report to record:
 
-- whether the trial is usable, needs changes, or is blocked
-- whether the report was opened first
+- your product-owner verdict as structured free text
+- whether the report was opened first, if relevant
 - which artifacts were inspected
 - extraction quality concerns
 - review package clarity concerns
@@ -69,11 +69,15 @@ Use the `Feedback Capture` section in the local trial report to record:
 
 The feedback capture section is product feedback only. It is not patch acceptance, formal write approval, or publication approval.
 
+Do not add numeric scores until the trial rubric has been calibrated against real product-owner feedback.
+
 ## Safety Checks
 
 After running the fixture trial, these should remain true:
 
 - no files are written to formal vault directories such as `40-concepts/`, `50-synthesis/`, or `70-publications/`
+- the report says `trial_pipeline_status: "passed"` or `trial_pipeline_status: "failed"`
+- the report says `product_owner_verdict: "pending"` before product-owner review
 - the report says `formal_write: false`
 - the report says `provider_called: false`
 - the report says `patch_acceptance: false`

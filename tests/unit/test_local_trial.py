@@ -65,8 +65,12 @@ class LocalTrialHarnessTests(unittest.TestCase):
                 vault_root / "_ai_reports/local-trials/trial_local_ab12cd.md"
             ).read_text(encoding="utf-8")
             self.assertIn("artifact_type: local_trial_feedback_report", feedback_report)
+            self.assertIn("trial_pipeline_status: \"passed\"", feedback_report)
+            self.assertIn("product_owner_verdict: \"pending\"", feedback_report)
             self.assertIn("formal_write_performed: false", feedback_report)
             self.assertIn("## Artifact Reading Order", feedback_report)
+            self.assertIn("human review entrypoint", feedback_report)
+            self.assertIn("raw KnowledgePatch proposal", feedback_report)
             outcome = json.loads(
                 (
                     vault_root / "_ai_reports/local-trials/trial_local_ab12cd.json"
@@ -119,7 +123,8 @@ class LocalTrialHarnessTests(unittest.TestCase):
             feedback_report = (
                 vault_root / "_ai_reports/local-trials/trial_local_ab12cd.md"
             ).read_text(encoding="utf-8")
-            self.assertIn("status: \"failed\"", feedback_report)
+            self.assertIn("trial_pipeline_status: \"failed\"", feedback_report)
+            self.assertIn("product_owner_verdict: \"pending\"", feedback_report)
             self.assertIn("extraction output must be a structured mapping", feedback_report)
             outcome = json.loads(
                 (

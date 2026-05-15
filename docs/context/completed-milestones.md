@@ -317,3 +317,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 123 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and non-repo-root local trial fixture smoke passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Run a controlled product-owner trial and decide whether feedback fields should become typed user-input artifacts, release criteria, or golden fixture expectations.
+
+## 2026-05-15 — Local Trial Report Verdict Status Completed
+
+- Scope: Applied product-owner trial feedback to clarify local trial report status semantics and artifact reading order.
+- Outcome: Local trial feedback reports now use `trial_pipeline_status`, include `product_owner_verdict: pending`, explain each artifact in the reading order, and keep feedback capture as structured free text without numeric scoring.
+- Review: `docs/reviews/milestone-reviews/2026-05-15-local-trial-report-verdict-status.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial usability hardening; improves trial review clarity without implying full MVP readiness, real AI extraction quality, patch acceptance, formal writes, or publication approval.
+- Validation: 123 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and non-repo-root local trial fixture smoke passed.
+- Dependency impact: No production or development dependency was added; `.venv/` and `*.egg-info/` are now ignored to keep local trial install artifacts out of Git status.
+- Follow-up: Decide separately whether JSON outcome should add `trial_pipeline_status` and `product_owner_verdict` in a compatibility-safe artifact update.
