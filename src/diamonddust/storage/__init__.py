@@ -14,6 +14,7 @@ from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 from diamonddust.storage.blog_draft import (
     AI_BLOG_DRAFTS_DIR,
     AI_BLOG_QUALITY_REPORTS_DIR,
+    BlogDraftArtifactContext,
     BlogDraftMarkdownArtifact,
     BlogDraftPackageExport,
     BlogDraftPersistenceError,
@@ -24,11 +25,13 @@ from diamonddust.storage.blog_draft import (
 )
 from diamonddust.storage.candidate_markdown import (
     AI_CANDIDATE_NOTES_DIR,
+    CandidateMarkdownExportContext,
     CandidateMarkdownError,
     CandidateMarkdownExport,
     CandidateMarkdownFile,
     CandidateMarkdownManifest,
     render_candidate_markdown,
+    render_candidate_manifest_content,
     write_candidate_markdown_export,
 )
 from diamonddust.storage.formal_vault import (
@@ -93,10 +96,12 @@ __all__ = [
     "AIRunLogPersistenceError",
     "ARTIFACT_SCHEMA_VERSION",
     "BlogDraftMarkdownArtifact",
+    "BlogDraftArtifactContext",
     "BlogDraftPackageExport",
     "BlogDraftPersistenceError",
     "BlogQualityReportArtifact",
     "CandidateMarkdownError",
+    "CandidateMarkdownExportContext",
     "CandidateMarkdownExport",
     "CandidateMarkdownFile",
     "CandidateMarkdownManifest",
@@ -129,6 +134,7 @@ __all__ = [
     "render_blog_draft_markdown",
     "render_blog_quality_report",
     "render_candidate_markdown",
+    "render_candidate_manifest_content",
     "render_local_trial_feedback_report",
     "render_local_trial_outcome",
     "render_patch_json_artifact",

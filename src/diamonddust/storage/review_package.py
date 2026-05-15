@@ -19,8 +19,10 @@ from diamonddust.domain import (
 )
 from diamonddust.storage.candidate_markdown import (
     CandidateMarkdownError,
+    CandidateMarkdownExportContext,
     CandidateMarkdownExport,
     render_candidate_markdown,
+    render_candidate_manifest_content,
 )
 from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 from diamonddust.storage.review_report import (
@@ -98,9 +100,10 @@ def write_review_package(
     patch: KnowledgePatch,
     *,
     vault_root: str | Path,
+    candidate_context: CandidateMarkdownExportContext | None = None,
 ) -> ReviewPackage:
     patch_artifact = render_patch_json_artifact(patch)
-    candidate_export = _candidate_export_for(patch)
+    candidate_export = _candidate_export_for(patch, context=candidate_context)
     review_report = render_patch_review_report(patch, candidate_export=candidate_export)
     root = Path(vault_root)
     written_paths: list[str] = []
@@ -112,7 +115,7 @@ def write_review_package(
         for file in candidate_export.files:
             _write_text(root, file.relative_path, file.content)
             written_paths.append(file.relative_path)
-        manifest_content = _candidate_manifest_content(candidate_export)
+        manifest_content = render_candidate_manifest_content(candidate_export.manifest)
         _write_text(root, candidate_export.manifest_relative_path, manifest_content)
         written_paths.append(candidate_export.manifest_relative_path)
 
@@ -129,9 +132,13 @@ def write_review_package(
     )
 
 
-def _candidate_export_for(patch: KnowledgePatch) -> CandidateMarkdownExport | None:
+def _candidate_export_for(
+    patch: KnowledgePatch,
+    *,
+    context: CandidateMarkdownExportContext | None = None,
+) -> CandidateMarkdownExport | None:
     try:
-        return render_candidate_markdown(patch)
+        return render_candidate_markdown(patch, context=context)
     except CandidateMarkdownError as exc:
         if str(exc) == "candidate Markdown export requires create_note operations":
             return None
@@ -226,37 +233,6 @@ def _frontmatter_update_mapping(update: FrontmatterUpdate) -> dict[str, Any]:
 def _set_optional(data: dict[str, Any], key: str, value: Any | None) -> None:
     if value is not None:
         data[key] = value
-
-
-def _candidate_manifest_content(candidate_export: CandidateMarkdownExport) -> str:
-    manifest = candidate_export.manifest
-    lines = [
-        "# Candidate Markdown Export",
-        "",
-        f"Artifact schema version: `{ARTIFACT_SCHEMA_VERSION}`",
-        "",
-        f"Patch: `{manifest.patch_id}`",
-        "",
-        "## Source Inputs",
-        *[f"- `{source_input_id}`" for source_input_id in manifest.source_input_ids],
-        "",
-        "## Candidate Files",
-        *[
-            f"- `{file.relative_path}` -> `{file.target_path}`"
-            for file in manifest.files
-        ],
-        "",
-        "## Relations",
-        f"- relation operations: {manifest.relation_count}",
-        "",
-        "## Risks",
-        *[f"- {risk}" for risk in manifest.risks],
-        "",
-        "## Review Boundary",
-        "- formal_write: false",
-        "- requires_user_review: true",
-    ]
-    return "\n".join(lines).strip() + "\n"
 
 
 def _write_text(root: Path, relative_path: str, content: str) -> None:

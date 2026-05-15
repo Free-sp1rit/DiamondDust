@@ -40,9 +40,12 @@ class BlogDraftWorkflowTests(unittest.TestCase):
         self.assertEqual(package.draft.quality_report_id, package.quality_report.id)
         self.assertEqual(package.quality_report.target_id, package.draft.id)
         self.assertEqual(package.quality_report.validation_status, BlogQualityStatus.PASSED)
-        self.assertEqual(len(package.draft.claim_inventory), 1)
+        self.assertEqual(len(package.draft.claim_inventory), 2)
+        self.assertEqual(package.draft.claim_inventory[0].role, "supporting_concept")
+        self.assertEqual(package.draft.claim_inventory[1].role, "claim")
         self.assertEqual(package.draft.unsupported_claims, ())
         self.assertIn("## Claim Inventory", package.draft.content)
+        self.assertIn("supporting concept; supported", package.draft.content)
         self.assertIn("## Source Units", package.draft.content)
         self.assertEqual(
             set(package.draft.source_unit_ids),
@@ -74,7 +77,9 @@ class BlogDraftWorkflowTests(unittest.TestCase):
             reader_problem="checking claims before publication",
         )
 
-        claim = package.draft.claim_inventory[0]
+        claim = next(
+            item for item in package.draft.claim_inventory if item.role == "claim"
+        )
 
         self.assertEqual(claim.claim_id, "unit_20260510_blog_claim_cd34ef")
         self.assertFalse(claim.unsupported)

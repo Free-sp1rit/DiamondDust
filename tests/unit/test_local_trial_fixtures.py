@@ -129,6 +129,28 @@ class LocalTrialFixtureTests(unittest.TestCase):
             self.assertEqual(
                 run_log["source_input_id"], "raw_essay_local_trial_fixture_ab12cd"
             )
+            manifest = (
+                vault_root
+                / "_ai_suggestions/candidate-notes"
+                / "patch_raw_essay_local_trial_fixture_ab12cd_c2043bdc1b02"
+                / "manifest.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("## Candidate Preview Boundary", manifest)
+            self.assertIn("## Patch Operation Source of Truth", manifest)
+            self.assertIn("## Fixture SourceRef Scope", manifest)
+            draft = (
+                vault_root
+                / "_ai_suggestions/blog-drafts/draft_trial_fixture_ab12cd/draft.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("requires_user_review: true", draft)
+            self.assertIn('draft_scope: "provider_free_fixture"', draft)
+            self.assertIn("real_ai_generation_validated: false", draft)
+            self.assertIn(
+                "unit_local_trial_visible_artifacts_ab12cd: "
+                "Visible intermediate artifacts build trust "
+                "(supporting concept; supported)",
+                draft,
+            )
 
     def test_fixture_shortcut_cli_writes_reviewable_artifacts(self) -> None:
         with TemporaryDirectory() as tmp:

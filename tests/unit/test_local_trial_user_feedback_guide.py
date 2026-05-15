@@ -35,6 +35,10 @@ class LocalTrialUserFeedbackGuideTests(unittest.TestCase):
         self.assertIn("fixture_driven: true", guide)
         self.assertIn("prompt_used: false", guide)
         self.assertIn("metrics_scope", guide)
+        self.assertIn("raw KnowledgePatch JSON is the operation source of truth", guide)
+        self.assertIn("requires_user_review: true", guide)
+        self.assertIn("draft_scope: \"provider_free_fixture\"", guide)
+        self.assertIn("real_ai_generation_validated: false", guide)
         self.assertIn("patch_acceptance: false", guide)
         self.assertIn("formal_write_approval: false", guide)
 

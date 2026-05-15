@@ -32,6 +32,7 @@ class BlogDraftMarkdownArtifact:
     unsupported_claim_count: int
     formal_write_allowed: bool
     publication_ready: bool
+    requires_user_review: bool
 
     def __post_init__(self) -> None:
         _require_non_empty("draft_id", self.draft_id)
@@ -46,6 +47,8 @@ class BlogDraftMarkdownArtifact:
             raise BlogDraftPersistenceError("blog drafts must not allow formal writes")
         if self.publication_ready is not False:
             raise BlogDraftPersistenceError("blog drafts must not be publication ready")
+        if self.requires_user_review is not True:
+            raise BlogDraftPersistenceError("blog drafts require user review")
 
 
 @dataclass(frozen=True)
@@ -99,10 +102,26 @@ class BlogDraftPackageExport:
             raise BlogDraftPersistenceError("blog package exports must not be publication ready")
 
 
+@dataclass(frozen=True)
+class BlogDraftArtifactContext:
+    draft_scope: str | None = None
+    real_ai_generation_validated: bool | None = None
+
+    def __post_init__(self) -> None:
+        _require_optional_str("draft_scope", self.draft_scope)
+        _require_optional_bool(
+            "real_ai_generation_validated",
+            self.real_ai_generation_validated,
+        )
+
+
 def render_blog_draft_markdown(
     package: BlogDraftPackage,
+    *,
+    context: BlogDraftArtifactContext | None = None,
 ) -> BlogDraftMarkdownArtifact:
     _validate_package_ids(package)
+    _require_optional_context(context)
     draft = package.draft
     relative_path = f"{AI_BLOG_DRAFTS_DIR}/{draft.id}/draft.md"
     content = "\n".join(
@@ -117,6 +136,8 @@ def render_blog_draft_markdown(
             f"reader_problem: {_json_string(draft.reader_problem)}",
             "formal_write: false",
             "publication_ready: false",
+            "requires_user_review: true",
+            *_context_frontmatter(context),
             "source_unit_ids:",
             *_frontmatter_list(draft.source_unit_ids),
             "unsupported_claims:",
@@ -135,6 +156,7 @@ def render_blog_draft_markdown(
         unsupported_claim_count=len(draft.unsupported_claims),
         formal_write_allowed=False,
         publication_ready=False,
+        requires_user_review=True,
     )
 
 
@@ -162,8 +184,9 @@ def write_blog_draft_package(
     package: BlogDraftPackage,
     *,
     vault_root: str | Path,
+    context: BlogDraftArtifactContext | None = None,
 ) -> BlogDraftPackageExport:
-    draft_artifact = render_blog_draft_markdown(package)
+    draft_artifact = render_blog_draft_markdown(package, context=context)
     quality_report_artifact = render_blog_quality_report(package)
     root = Path(vault_root)
     written_paths: list[str] = []
@@ -239,6 +262,7 @@ def _claim_inventory_lines(claim_inventory: tuple[ClaimInventoryItem, ...]) -> l
     return [
         (
             f"- `{item.claim_id}`: {item.title}; "
+            f"role={_role_label(item.role)}; "
             f"source_unit=`{item.source_unit_id}`; "
             f"unsupported={_bool_text(item.unsupported)}"
         )
@@ -311,13 +335,51 @@ def _json_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
+def _context_frontmatter(context: BlogDraftArtifactContext | None) -> list[str]:
+    if context is None:
+        return []
+    lines: list[str] = []
+    if context.draft_scope is not None:
+        lines.append(f"draft_scope: {_json_string(context.draft_scope)}")
+    if context.real_ai_generation_validated is not None:
+        lines.append(
+            "real_ai_generation_validated: "
+            f"{_bool_text(context.real_ai_generation_validated)}"
+        )
+    return lines
+
+
 def _bool_text(value: bool) -> str:
     return "true" if value else "false"
+
+
+def _role_label(role: str) -> str:
+    return role.replace("_", " ")
 
 
 def _require_non_empty(name: str, value: str | None) -> None:
     if not isinstance(value, str) or not value.strip():
         raise BlogDraftPersistenceError(f"{name} must be a non-empty string")
+
+
+def _require_optional_str(name: str, value: str | None) -> None:
+    if value is not None:
+        _require_non_empty(name, value)
+
+
+def _require_bool(name: str, value: object) -> None:
+    if not isinstance(value, bool):
+        raise BlogDraftPersistenceError(f"{name} must be a boolean")
+
+
+def _require_optional_bool(name: str, value: bool | None) -> None:
+    if value is not None:
+        _require_bool(name, value)
+
+
+def _require_optional_context(context: BlogDraftArtifactContext | None) -> None:
+    if context is not None and not isinstance(context, BlogDraftArtifactContext):
+        raise BlogDraftPersistenceError("context must be a BlogDraftArtifactContext")
 
 
 def _require_non_negative_int(name: str, value: object) -> None:

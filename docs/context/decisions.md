@@ -284,6 +284,14 @@ Record durable technical and governance decisions here.
 - Risks: Older generated run logs lack the new fields until regenerated, and future replay tooling may need compatibility handling for earlier artifacts.
 - Follow-up: Introduce a separate extraction output artifact only if replay/debug/user feedback requires it; keep raw provider output out of run logs until retention policy is approved.
 
+### 2026-05-15 — Harden `_ai_suggestions` preview semantics
+
+- Decision: Candidate manifests now state preview boundaries and raw KnowledgePatch source-of-truth behavior, local trial manifests can add fixture SourceRef scope through typed context, and local trial blog drafts can add provider-free fixture draft scope through typed context.
+- Reason: `_ai_suggestions/` artifacts are user-visible previews and must not be mistaken for formal vault notes, accepted knowledge, real parser/source-span validation, real AI draft quality validation, or publication-ready output.
+- Alternatives: Hand-edit generated trial artifacts only; add trial/stage metadata to every candidate note; add new extraction/path-audit artifacts now.
+- Risks: Older generated manifests and drafts lack the new fields until regenerated, and Claim Inventory now needs role labels because it may include supporting concepts as well as claims.
+- Follow-up: Revisit the Claim Inventory name/shape only if product-owner feedback shows that mixed claim/supporting concept entries are confusing.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

@@ -350,3 +350,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 125 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with run log scope fields.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Introduce a separate extraction output artifact only if replay/debug/product-owner feedback requires it.
+
+## 2026-05-15 — AI Suggestions Artifact Semantics Completed
+
+- Scope: Applied accepted `_ai_suggestions/` module audit feedback to candidate manifests and blog drafts.
+- Outcome: Candidate manifests now include candidate preview boundary and raw KnowledgePatch source-of-truth sections, local trial manifests include fixture SourceRef scope, blog draft frontmatter marks review/provider-free fixture scope, and blog draft Claim Inventory includes supporting concepts with role labels.
+- Review: `docs/reviews/milestone-reviews/2026-05-15-ai-suggestions-artifact-semantics.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial artifact hardening; improves preview/review semantics without provider calls, formal vault writes, patch acceptance, publication, extraction artifacts, artifact groups, or path audit artifacts.
+- Validation: 128 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with `_ai_suggestions/` semantic updates.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Revisit Claim Inventory naming only if supporting concept entries prove confusing in product-owner feedback.

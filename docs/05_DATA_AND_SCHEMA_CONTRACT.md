@@ -333,6 +333,9 @@ Rules:
 - Candidate exports must preserve source references where available.
 - Candidate exports must include `artifact_schema_version`.
 - Candidate exports must include patch metadata and mark `formal_write: false`.
+- Candidate manifests must state that candidate notes are previews under `_ai_suggestions/`, not formal vault notes or accepted knowledge.
+- Candidate manifests must state that raw KnowledgePatch JSON is the source of truth for patch operations.
+- Local trial candidate manifests may include a fixture SourceRef scope note when source references are fixture-level and do not validate real parser source-span accuracy.
 - Candidate exports must not write files to formal vault directories.
 - Formal writes still require a validated patch and explicit user acceptance.
 
@@ -389,7 +392,9 @@ Rules:
 - Blog draft artifacts must preserve source unit IDs and unsupported claim IDs.
 - Blog quality reports must preserve validation status, risks, unsupported claims, evidence coverage, and suggested actions.
 - Blog draft package artifacts must include `artifact_schema_version`.
-- Blog draft artifacts must mark `formal_write: false` and `publication_ready: false`.
+- Blog draft artifacts must mark `formal_write: false`, `publication_ready: false`, and `requires_user_review: true`.
+- Local trial blog drafts may include `draft_scope` and `real_ai_generation_validated` markers to prevent provider-free fixture drafts from being mistaken for real AI generation quality validation.
+- Blog draft Claim Inventory may include supporting concepts as well as claims, but entries must expose a role so supporting context is not mistaken for an asserted claim.
 - Blog draft persistence must not write files to `70-publications/`.
 - Publishing still requires separate user approval and a future publication workflow.
 

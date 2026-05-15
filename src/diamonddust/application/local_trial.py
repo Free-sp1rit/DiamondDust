@@ -215,7 +215,11 @@ def run_local_trial(
         )
 
     try:
-        from diamonddust.storage.blog_draft import write_blog_draft_package
+        from diamonddust.storage.blog_draft import (
+            BlogDraftArtifactContext,
+            write_blog_draft_package,
+        )
+        from diamonddust.storage.candidate_markdown import CandidateMarkdownExportContext
         from diamonddust.storage.review_package import write_review_package
 
         patch = generate_patch_from_extraction(
@@ -223,7 +227,13 @@ def run_local_trial(
             created_at=created_at,
         )
         patch_id = patch.patch_id
-        review_package = write_review_package(patch, vault_root=vault_path)
+        review_package = write_review_package(
+            patch,
+            vault_root=vault_path,
+            candidate_context=CandidateMarkdownExportContext(
+                fixture_source_ref_scope=True,
+            ),
+        )
         written_paths.extend(review_package.written_paths)
         review_package_written = True
 
@@ -238,7 +248,14 @@ def run_local_trial(
             draft_id=f"draft_{spec.trial_id}",
             quality_report_id=f"report_draft_{spec.trial_id}",
         )
-        draft_export = write_blog_draft_package(draft_package, vault_root=vault_path)
+        draft_export = write_blog_draft_package(
+            draft_package,
+            vault_root=vault_path,
+            context=BlogDraftArtifactContext(
+                draft_scope="provider_free_fixture",
+                real_ai_generation_validated=False,
+            ),
+        )
         written_paths.extend(draft_export.written_paths)
         blog_draft_package_written = True
         draft_id = draft_package.draft.id

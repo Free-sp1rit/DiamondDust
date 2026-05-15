@@ -15,6 +15,7 @@ from diamonddust.domain import SourceOrigin, SourceRef
 from diamonddust.storage import (
     AI_BLOG_DRAFTS_DIR,
     AI_BLOG_QUALITY_REPORTS_DIR,
+    BlogDraftArtifactContext,
     BlogDraftPersistenceError,
     render_blog_draft_markdown,
     render_blog_quality_report,
@@ -39,7 +40,23 @@ class BlogDraftPersistenceTests(unittest.TestCase):
         self.assertIn("artifact_type: blog_draft", artifact.content)
         self.assertIn("formal_write: false", artifact.content)
         self.assertIn("publication_ready: false", artifact.content)
+        self.assertIn("requires_user_review: true", artifact.content)
         self.assertIn(package.draft.content.strip(), artifact.content)
+
+    def test_renders_blog_draft_markdown_with_scope_context(self) -> None:
+        package = _blog_package()
+
+        artifact = render_blog_draft_markdown(
+            package,
+            context=BlogDraftArtifactContext(
+                draft_scope="provider_free_fixture",
+                real_ai_generation_validated=False,
+            ),
+        )
+
+        self.assertIn('draft_scope: "provider_free_fixture"', artifact.content)
+        self.assertIn("real_ai_generation_validated: false", artifact.content)
+        self.assertTrue(artifact.requires_user_review)
 
     def test_renders_quality_report_with_unsupported_claims(self) -> None:
         package = _blog_package(unsupported=True)
@@ -57,6 +74,7 @@ class BlogDraftPersistenceTests(unittest.TestCase):
         self.assertIn("# Blog Quality Report", artifact.content)
         self.assertIn("publication_ready: false", artifact.content)
         self.assertIn("unit_blog_claim_ab12cd", artifact.content)
+        self.assertIn("role=claim", artifact.content)
         self.assertIn("unsupported=true", artifact.content)
 
     def test_writes_blog_package_without_formal_publication_mutation(self) -> None:
