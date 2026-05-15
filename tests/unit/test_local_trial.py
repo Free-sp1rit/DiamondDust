@@ -159,6 +159,33 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertIn('draft_scope: "provider_free_fixture"', draft)
             self.assertIn("real_ai_generation_validated: false", draft)
             self.assertIn("supporting concept; supported", draft)
+            quality_report = (
+                vault_root / "_ai_reports/blog-quality/draft_trial_local_ab12cd.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("artifact_type: blog_quality_report", quality_report)
+            self.assertIn('trial_id: "trial_local_ab12cd"', quality_report)
+            self.assertIn('report_scope: "provider_free_fixture"', quality_report)
+            self.assertIn("real_ai_generation_validated: false", quality_report)
+            self.assertIn('quality_status: "passed"', quality_report)
+            self.assertIn('product_owner_verdict: "pending"', quality_report)
+            self.assertIn("- quality_status: passed", quality_report)
+            self.assertIn("- product_owner_verdict: pending", quality_report)
+            self.assertIn(
+                "0 unsupported claims reported in this fixture-driven local trial",
+                quality_report,
+            )
+            self.assertIn(
+                "not real AI generation quality",
+                quality_report,
+            )
+            self.assertIn(
+                "- none detected in this fixture-driven local trial",
+                quality_report,
+            )
+            self.assertIn(
+                "- Do not publish without a separate publication approval flow.",
+                quality_report,
+            )
             self.assertFalse(
                 (vault_root / "40-concepts" / "unit_local_trial_concept_ab12cd.md").exists()
             )

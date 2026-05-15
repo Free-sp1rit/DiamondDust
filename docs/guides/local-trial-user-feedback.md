@@ -48,6 +48,8 @@ The Markdown report and JSON outcome should agree on `trial_pipeline_status` and
 
 The AI run log should also make the same provider-free fixture scope visible. For the fixture shortcut, `_ai_runs/run_trial_fixture_ab12cd_local_trial.json` should include `run_scope: "provider_free_fixture"`, `real_provider_call: false`, `fixture_driven: true`, `prompt_used: false`, non-applicable cost/latency `metrics_scope`, and lineage pointers back to the source input and downstream trial report/outcome.
 
+The blog quality report should also make publication and quality scope explicit. For the fixture shortcut, `_ai_reports/blog-quality/draft_trial_fixture_ab12cd.md` should include `artifact_type: blog_quality_report`, `quality_status`, `product_owner_verdict: "pending"`, `report_scope: "provider_free_fixture"`, `real_ai_generation_validated: false`, `publication_ready: false`, and `requires_user_review: true`. Its fixture-driven risks should not be treated as real AI generation quality validation or publication approval.
+
 Expected artifact families:
 
 - `_ai_reports/local-trials/`
@@ -95,6 +97,8 @@ After running the fixture trial, these should remain true:
 - the patch review report uses `Review Decision Prompt` as guidance only and does not record formal patch acceptance
 - the blog draft frontmatter says `requires_user_review: true`, `draft_scope: "provider_free_fixture"`, and `real_ai_generation_validated: false`
 - the blog draft Claim Inventory includes supporting concepts with an explicit supporting concept role
+- the blog quality report says `quality_status`, `product_owner_verdict: "pending"`, `report_scope: "provider_free_fixture"`, `real_ai_generation_validated: false`, `publication_ready: false`, and `requires_user_review: true`
+- the blog quality report says unsupported-claim detection is scoped to the fixture-driven local trial and does not claim publication approval
 - the report says `patch_acceptance: false`
 - the report says `formal_write_approval: false`
 - the JSON outcome has `boundaries.formal_write_performed` set to `false`

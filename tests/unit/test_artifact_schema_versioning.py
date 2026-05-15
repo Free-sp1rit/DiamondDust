@@ -93,7 +93,7 @@ class ArtifactSchemaVersioningTests(unittest.TestCase):
             draft_artifact.content,
         )
         self.assertIn(
-            f"Artifact schema version: `{ARTIFACT_SCHEMA_VERSION}`",
+            f"artifact_schema_version: \"{ARTIFACT_SCHEMA_VERSION}\"",
             quality_report.content,
         )
 

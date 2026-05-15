@@ -300,6 +300,14 @@ Record durable technical and governance decisions here.
 - Risks: Older generated review reports lack the new metadata until regenerated, and a separate typed decision artifact is still needed before formal apply execution can be safely implemented.
 - Follow-up: Design patch decision artifacts separately before implementing formal vault apply.
 
+### 2026-05-16 — Clarify blog quality report semantics
+
+- Decision: Blog quality reports now use frontmatter and `quality_status` wording for report validation, while local trial quality reports add provider-free fixture scope, pending product-owner verdict, real-AI-generation limits, fixture-specific risks, and publication approval boundaries through typed context.
+- Reason: A passed fixture-driven quality report must not imply publication readiness, real AI generation quality validation, product-owner acceptance, or formal vault writes.
+- Alternatives: Hand-edit only the generated trial report; keep body-only reports; add a numeric publication score immediately.
+- Risks: Older generated blog quality reports lack the new frontmatter until regenerated, and future artifact import/replay may need compatibility handling for body-only reports.
+- Follow-up: Calibrate publication and editorial quality criteria only after real product-owner trial feedback.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

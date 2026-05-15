@@ -17,6 +17,7 @@ from diamonddust.storage import (
     AI_BLOG_QUALITY_REPORTS_DIR,
     BlogDraftArtifactContext,
     BlogDraftPersistenceError,
+    BlogQualityReportContext,
     render_blog_draft_markdown,
     render_blog_quality_report,
     write_blog_draft_package,
@@ -72,10 +73,58 @@ class BlogDraftPersistenceTests(unittest.TestCase):
             f"{AI_BLOG_QUALITY_REPORTS_DIR}/{package.draft.id}.md",
         )
         self.assertIn("# Blog Quality Report", artifact.content)
+        self.assertIn("artifact_type: blog_quality_report", artifact.content)
+        self.assertIn("quality_status: \"warning\"", artifact.content)
         self.assertIn("publication_ready: false", artifact.content)
+        self.assertIn("requires_user_review: true", artifact.content)
+        self.assertIn("- quality_status: warning", artifact.content)
         self.assertIn("unit_blog_claim_ab12cd", artifact.content)
         self.assertIn("role=claim", artifact.content)
         self.assertIn("unsupported=true", artifact.content)
+
+    def test_renders_fixture_quality_report_with_trial_scope(self) -> None:
+        package = _blog_package()
+
+        artifact = render_blog_quality_report(
+            package,
+            context=BlogQualityReportContext(
+                trial_id="trial_blog_fixture_ab12cd",
+                report_scope="provider_free_fixture",
+                real_ai_generation_validated=False,
+                product_owner_verdict="pending",
+                created_at="2026-05-11T00:00:00Z",
+                fixture_driven=True,
+            ),
+        )
+
+        self.assertEqual(artifact.risk_count, 4)
+        self.assertTrue(artifact.requires_user_review)
+        self.assertIn("artifact_type: blog_quality_report", artifact.content)
+        self.assertIn('trial_id: "trial_blog_fixture_ab12cd"', artifact.content)
+        self.assertIn('report_scope: "provider_free_fixture"', artifact.content)
+        self.assertIn("real_ai_generation_validated: false", artifact.content)
+        self.assertIn('quality_status: "passed"', artifact.content)
+        self.assertIn('product_owner_verdict: "pending"', artifact.content)
+        self.assertIn('created_at: "2026-05-11T00:00:00Z"', artifact.content)
+        self.assertIn("- quality_status: passed", artifact.content)
+        self.assertIn("- product_owner_verdict: pending", artifact.content)
+        self.assertIn(
+            "- quality_summary: 2 source units covered; 0 unsupported claims "
+            "reported in this fixture-driven local trial",
+            artifact.content,
+        )
+        self.assertIn(
+            "not real AI generation quality",
+            artifact.content,
+        )
+        self.assertIn(
+            "- none detected in this fixture-driven local trial",
+            artifact.content,
+        )
+        self.assertIn(
+            "- Do not publish without a separate publication approval flow.",
+            artifact.content,
+        )
 
     def test_writes_blog_package_without_formal_publication_mutation(self) -> None:
         package = _blog_package()

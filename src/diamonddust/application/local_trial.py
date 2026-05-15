@@ -217,6 +217,7 @@ def run_local_trial(
     try:
         from diamonddust.storage.blog_draft import (
             BlogDraftArtifactContext,
+            BlogQualityReportContext,
             write_blog_draft_package,
         )
         from diamonddust.storage.candidate_markdown import CandidateMarkdownExportContext
@@ -260,6 +261,14 @@ def run_local_trial(
             context=BlogDraftArtifactContext(
                 draft_scope="provider_free_fixture",
                 real_ai_generation_validated=False,
+            ),
+            quality_context=BlogQualityReportContext(
+                trial_id=spec.trial_id,
+                report_scope="provider_free_fixture",
+                real_ai_generation_validated=False,
+                product_owner_verdict="pending",
+                created_at=created_at,
+                fixture_driven=True,
             ),
         )
         written_paths.extend(draft_export.written_paths)

@@ -396,7 +396,11 @@ Rules:
 - Blog quality reports must preserve validation status, risks, unsupported claims, evidence coverage, and suggested actions.
 - Blog draft package artifacts must include `artifact_schema_version`.
 - Blog draft artifacts must mark `formal_write: false`, `publication_ready: false`, and `requires_user_review: true`.
+- Blog quality report artifacts must mark `formal_write: false`, `publication_ready: false`, and `requires_user_review: true`.
+- Blog quality report `quality_status` describes report validation only; it is not publication approval, product-owner acceptance, or a publication readiness score.
 - Local trial blog drafts may include `draft_scope` and `real_ai_generation_validated` markers to prevent provider-free fixture drafts from being mistaken for real AI generation quality validation.
+- Local trial blog quality reports may include `trial_id`, `report_scope: provider_free_fixture`, `real_ai_generation_validated: false`, and `product_owner_verdict: pending` markers.
+- Fixture-driven blog quality reports must make unsupported-claim detection and source-span accuracy limits explicit.
 - Blog draft Claim Inventory may include supporting concepts as well as claims, but entries must expose a role so supporting context is not mistaken for an asserted claim.
 - Blog draft persistence must not write files to `70-publications/`.
 - Publishing still requires separate user approval and a future publication workflow.
