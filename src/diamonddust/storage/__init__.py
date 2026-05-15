@@ -68,6 +68,7 @@ from diamonddust.storage.markdown import (
 from diamonddust.storage.review_report import (
     AI_PATCH_REVIEW_REPORTS_DIR,
     PatchReviewReport,
+    PatchReviewReportContext,
     ReviewReportError,
     render_patch_review_report,
     write_patch_review_report,
@@ -121,6 +122,7 @@ __all__ = [
     "LocalTrialOutcome",
     "MarkdownIngestionError",
     "PatchReviewReport",
+    "PatchReviewReportContext",
     "PatchJsonArtifact",
     "ReviewPackage",
     "ReviewPackageError",

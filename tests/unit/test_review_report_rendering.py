@@ -7,6 +7,7 @@ from diamonddust.application import generate_patch_from_extraction
 from diamonddust.domain import KnowledgePatch, PatchOperation, PatchOperationType
 from diamonddust.storage import (
     AI_PATCH_REVIEW_REPORTS_DIR,
+    PatchReviewReportContext,
     ReviewReportError,
     render_candidate_markdown,
     render_patch_review_report,
@@ -31,15 +32,29 @@ class ReviewReportRenderingTests(unittest.TestCase):
         self.assertFalse(report.formal_write_allowed)
         self.assertTrue(report.requires_user_review)
         self.assertIn("# Patch Review Report", report.content)
+        self.assertTrue(report.content.startswith("---\n"))
+        self.assertIn("artifact_type: patch_review_report", report.content)
+        self.assertIn(f'patch_id: "{patch.patch_id}"', report.content)
+        self.assertIn("source_input_ids:", report.content)
+        self.assertIn("formal_write: false", report.content)
         self.assertIn("formal_write: false", report.content)
         self.assertIn("requires_user_review: true", report.content)
+        self.assertIn("patch_acceptance: false", report.content)
+        self.assertIn('decision_status: "pending"', report.content)
         self.assertIn("## Patch Diff", report.content)
         self.assertIn("create note", report.content)
         self.assertIn("add relation", report.content)
+        self.assertIn("## Suggested Review Order", report.content)
+        self.assertIn("Inspect the raw KnowledgePatch JSON", report.content)
         self.assertIn("## Candidate Notes", report.content)
         self.assertIn("_ai_suggestions/candidate-notes/", report.content)
         self.assertIn("## Rollback Plan", report.content)
+        self.assertIn("preview-level only", report.content)
         self.assertIn("delete created note", report.content)
+        self.assertIn("## Review Decision Prompt", report.content)
+        self.assertIn("does not record formal patch acceptance", report.content)
+        self.assertIn("recommend accept in a separate decision flow", report.content)
+        self.assertNotIn("## Review Decision\n", report.content)
 
     def test_uses_explicit_candidate_export_when_provided(self) -> None:
         patch = _valid_patch()
@@ -49,6 +64,24 @@ class ReviewReportRenderingTests(unittest.TestCase):
 
         self.assertEqual(report.candidate_file_count, candidate_export.manifest.file_count)
         self.assertIn(candidate_export.files[0].relative_path, report.content)
+
+    def test_local_trial_context_adds_fixture_review_scope(self) -> None:
+        patch = _valid_patch()
+
+        report = render_patch_review_report(
+            patch,
+            context=PatchReviewReportContext(
+                trial_id="trial_report_ab12cd",
+                review_scope="provider_free_fixture",
+                fixture_driven=True,
+            ),
+        )
+
+        self.assertIn('trial_id: "trial_report_ab12cd"', report.content)
+        self.assertIn('review_scope: "provider_free_fixture"', report.content)
+        self.assertIn("fixture-driven previews", report.content)
+        self.assertIn("real LLM extraction quality", report.content)
+        self.assertIn("real parser source-span accuracy", report.content)
 
     def test_rejects_candidate_export_for_different_patch(self) -> None:
         patch = _valid_patch()

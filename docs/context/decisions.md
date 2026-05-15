@@ -292,6 +292,14 @@ Record durable technical and governance decisions here.
 - Risks: Older generated manifests and drafts lack the new fields until regenerated, and Claim Inventory now needs role labels because it may include supporting concepts as well as claims.
 - Follow-up: Revisit the Claim Inventory name/shape only if product-owner feedback shows that mixed claim/supporting concept entries are confusing.
 
+### 2026-05-15 — Keep patch review reports as non-binding review prompts
+
+- Decision: Patch review reports now include artifact frontmatter, pending decision metadata, suggested review order, preview-level rollback notes, and a `Review Decision Prompt` that explicitly does not record formal acceptance.
+- Reason: Patch review reports are pre-acceptance AI report artifacts; they should guide human review without becoming a patch decision artifact or permission to apply formal vault writes.
+- Alternatives: Keep body-only reports; record accept/reject directly in the report; create a patch decision artifact in this task.
+- Risks: Older generated review reports lack the new metadata until regenerated, and a separate typed decision artifact is still needed before formal apply execution can be safely implemented.
+- Follow-up: Design patch decision artifacts separately before implementing formal vault apply.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
