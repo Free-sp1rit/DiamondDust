@@ -414,6 +414,25 @@ Rules:
 - Feedback capture fields are product feedback only, not patch acceptance, formal write approval, or publication approval.
 - Formal writes still require explicit user acceptance and a separate storage apply step.
 
+## Local Trial Outcome JSON
+
+Local trial outcome JSON files are machine-readable AI report artifacts for the same trial represented by the Markdown feedback report.
+
+They should be exported under:
+
+```text
+_ai_reports/local-trials/<trial_id>.json
+```
+
+Rules:
+
+- Local trial outcome JSON must include `artifact_type: local_trial_outcome` and `artifact_schema_version`.
+- Local trial outcome JSON must use `trial_pipeline_passed`, `trial_pipeline_status`, `product_owner_verdict`, and `pipeline_summary` instead of ambiguous top-level `passed`, `status`, or `summary`.
+- Local trial outcome JSON must keep `product_owner_verdict: pending` until product-owner feedback is explicitly captured.
+- Local trial outcome JSON must include no-provider and no-formal-write boundary fields.
+- Local trial outcome JSON should include `stage_label`, `stage_scope`, `not_validated`, and `quality_scope` to prevent fixture-driven runs from being mistaken for real LLM quality validation, formal apply validation, user acceptance, publication approval, or full MVP completion.
+- Local trial outcome JSON must not record patch acceptance, formal vault apply, provider calls, or publication approval.
+
 ## Schema Versioning
 
 Every persisted formal note must include:
@@ -485,12 +504,26 @@ Optional:
 - `latency`
 - `knowledge_base_snapshot_hash`
 - `cache_key`
+- `trial_id`
+- `stage_label`
+- `run_scope`
+- `real_provider_call`
+- `fixture_driven`
+- `prompt_used`
+- `metrics_scope`
+- `source_input_id`
+- `output_artifacts`
+- `not_validated`
 
 Rules:
 
 - AI run artifacts may record both passed and failed validation runs.
 - AI run artifacts must not persist raw model output.
 - AI run artifacts must stay under `_ai_runs/`.
+- Provider-free local trial run artifacts should mark `run_scope: provider_free_fixture`, `real_provider_call: false`, `fixture_driven: true`, and `prompt_used: false` while preserving the task contract `prompt_version`.
+- When provider metrics are not produced, local trial run artifacts should keep `cost` and `latency` unset and include `metrics_scope` explaining that cost and latency are not applicable.
+- Local trial run artifacts should preserve `source_input_id`, point `output_artifacts` at the generated downstream trial report/outcome artifacts, and list run-specific `not_validated` limits such as real LLM extraction quality, real parser source-span accuracy, provider latency, and provider cost.
+- Run log `output_artifacts` must point only to AI working artifacts, not formal vault paths.
 
 ## Formal Write Rule
 

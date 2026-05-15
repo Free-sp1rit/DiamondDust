@@ -28,7 +28,7 @@ Good. The wording changes are concentrated in the local trial report renderer an
 
 ## Coupling Assessment
 
-Acceptable. Markdown report frontmatter now uses `trial_pipeline_status` and `product_owner_verdict`. The JSON outcome still includes `status`; changing that machine-readable artifact should be handled separately as an artifact compatibility decision rather than silently bundled into a Markdown report wording change.
+Acceptable. Markdown report frontmatter now uses `trial_pipeline_status` and `product_owner_verdict`. A follow-up task on the same branch evaluates and aligns matching JSON outcome semantics.
 
 ## Data and Schema Safety
 
@@ -57,7 +57,7 @@ No production or development dependency was added. `.gitignore` now excludes loc
 ## Risks
 
 - Older generated reports still use `status` until regenerated.
-- JSON outcome status naming remains a separate compatibility question.
+- JSON outcome compatibility is addressed by the follow-up local trial outcome semantic consistency review.
 - Feedback capture may need typed fields later after real trial feedback calibrates the rubric.
 
 ## Required Changes Before Continuing
@@ -66,7 +66,7 @@ None.
 
 ## Optional Improvements
 
-- Decide whether JSON outcome should add `trial_pipeline_status` and `product_owner_verdict` in a compatibility-safe artifact update.
+- Use the follow-up local trial outcome semantic consistency task to keep Markdown and JSON trial artifacts aligned.
 - Consider a typed feedback artifact only after the product-owner rubric stabilizes.
 
 ## Escalation Requests

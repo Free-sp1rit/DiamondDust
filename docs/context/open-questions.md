@@ -34,7 +34,7 @@ Last updated: 2026-05-15
 
 ### 2026-05-14 — Which local trial feedback fields should become release criteria?
 
-- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with prompts, `trial_pipeline_status`, pending `product_owner_verdict`, and structured free-text feedback capture, plus `_ai_reports/local-trials/<trial_id>.json` for machine-readable trial outcome summaries. The rubric and JSON shape have not yet been validated by a real product-owner trial.
+- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with prompts, `trial_pipeline_status`, pending `product_owner_verdict`, and structured free-text feedback capture, plus `_ai_reports/local-trials/<trial_id>.json` with matching pipeline/verdict semantics and explicit quality-scope limits. The rubric and outcome shape have not yet been validated by repeated real product-owner trials.
 - Needed decision: After the first controlled trial, decide which feedback fields should become durable acceptance criteria or test fixtures.
 - Impact: Affects whether the next phase should prioritize golden essays, report quality, formal apply safety, or provider-backed extraction.
 
@@ -45,6 +45,12 @@ Last updated: 2026-05-15
 - Impact: Affects future aggregation, release criteria, and whether feedback capture should stay in Markdown or become a separate JSON artifact.
 
 ## AI Pipeline
+
+### 2026-05-15 — Should extraction outputs become separate durable artifacts?
+
+- Context: Local trial AI run logs now point `output_artifacts` at the downstream local trial Markdown report and JSON outcome because no separate extraction output artifact exists. Run logs intentionally do not persist raw model/provider output.
+- Needed decision: Introduce a typed extraction output artifact only if replay, debugging, provider integration, or product-owner feedback requires it.
+- Impact: Affects artifact lineage clarity, raw output retention policy, privacy posture, and whether future run logs can point at extraction artifacts instead of downstream trial reports.
 
 ### 2026-05-12 — When should extraction JSON get a machine-readable schema?
 

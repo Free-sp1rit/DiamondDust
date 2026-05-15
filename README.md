@@ -40,7 +40,9 @@ The command writes AI working artifacts only. It does not write formal vault not
 
 Start review from `_ai_reports/local-trials/<trial-id>.md`. That report lists the trial pipeline status, pending product-owner verdict, safety boundary, artifact reading order with purpose notes, errors, unsupported claims, and feedback prompts.
 
-For machine-readable summaries, each run also writes `_ai_reports/local-trials/<trial-id>.json` with pipeline status, artifact paths, errors, unsupported claim counts, and explicit no-provider/no-formal-write boundaries.
+For machine-readable summaries, each run also writes `_ai_reports/local-trials/<trial-id>.json` with trial pipeline status, pending product-owner verdict, artifact paths, errors, unsupported claim counts, quality-scope limits, and explicit no-provider/no-formal-write boundaries.
+
+The matching `_ai_runs/<run-id>.json` records extraction validation hashes plus provider-free fixture scope, non-applicable cost/latency metrics, and lineage pointers to the downstream local trial report/outcome.
 
 See `docs/guides/local-trial-user-feedback.md` for the safe local trial review flow and feedback capture rubric.
 

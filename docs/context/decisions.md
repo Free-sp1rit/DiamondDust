@@ -262,19 +262,27 @@ Record durable technical and governance decisions here.
 
 ### 2026-05-15 — Separate local trial pipeline status from product-owner verdict
 
-- Decision: Local trial feedback report frontmatter uses `trial_pipeline_status` for run success and `product_owner_verdict: pending` for product-owner acceptance state.
+- Decision: Local trial feedback reports and local trial outcome JSON use `trial_pipeline_status` for run success and `product_owner_verdict: pending` for product-owner acceptance state.
 - Reason: A passed provider-free pipeline run must not imply product-owner acceptance, full MVP readiness, real AI extraction quality, formal patch acceptance, or publication approval.
-- Alternatives: Keep `status: passed`; add numeric scoring immediately; treat the JSON outcome as the only structured status source.
-- Risks: Older generated reports still contain `status` until regenerated, and future tooling may need compatibility handling if it parses report frontmatter.
+- Alternatives: Keep ambiguous `status`/`passed` fields; add numeric scoring immediately; treat Markdown and JSON trial artifacts as semantically independent.
+- Risks: Older generated reports and JSON outcomes retain ambiguous fields until regenerated, and future tooling may need compatibility handling if it parses older artifacts.
 - Follow-up: Keep feedback capture as structured free text until the rubric is calibrated by real product-owner trial feedback.
 
-### 2026-05-15 — Evaluate trial feedback before changing project behavior
+### 2026-05-15 — Apply temporary trial feedback evaluation for outcome semantics
 
-- Decision: Trial feedback should be evaluated against long-term project development and maintainability before being accepted into code, docs, or artifact behavior.
-- Reason: Product-owner trial feedback is high-value evidence, but it should not automatically override architecture, schema compatibility, safety boundaries, or future maintainability.
-- Alternatives: Automatically implement all trial feedback; reject trial feedback unless it is already in formal docs.
-- Risks: Evaluation adds small process overhead and requires clearly explaining when feedback is deferred.
-- Follow-up: Keep this as an operating practice; update governance docs only if the product owner wants it made a formal rule.
+- Decision: For the current local trial feedback task only, product-owner feedback was evaluated against artifact semantics, maintainability, architecture boundaries, and review safety before changing code and docs.
+- Reason: The product owner explicitly made this a temporary task-local principle, not a long-term governance rule.
+- Alternatives: Automatically implement all trial feedback; write the temporary principle into governance docs without separate approval.
+- Risks: Similar future tasks need explicit instruction or a separate governance approval if this behavior should become permanent.
+- Follow-up: Do not treat this as a standing governance policy unless separately approved.
+
+### 2026-05-15 — Add local trial run log scope through typed artifact context
+
+- Decision: Local trial AI run logs use a typed storage-layer artifact context to add `trial_id`, `stage_label`, `run_scope`, `real_provider_call`, `fixture_driven`, `prompt_used`, `metrics_scope`, `source_input_id`, `output_artifacts`, and run-specific `not_validated` fields.
+- Reason: Provider-free fixture runs must not be mistaken for real provider calls or real LLM quality validation, but generic AI run logs should stay provider-neutral and should not require local trial fields.
+- Alternatives: Add local trial fields directly to the domain `AIRunLog`; leave fixture scope only in the Markdown report/JSON outcome; change `prompt_version` to a fixture-specific value.
+- Risks: Older generated run logs lack the new fields until regenerated, and future replay tooling may need compatibility handling for earlier artifacts.
+- Follow-up: Introduce a separate extraction output artifact only if replay/debug/user feedback requires it; keep raw provider output out of run logs until retention policy is approved.
 
 ## Template
 

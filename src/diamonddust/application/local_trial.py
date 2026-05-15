@@ -160,6 +160,10 @@ def run_local_trial(
             extraction_result.run_log,
             vault_root=vault_path,
             created_at=created_at,
+            context=_local_trial_run_log_context(
+                spec,
+                source_input_id=source_input_id,
+            ),
         )
         written_paths.append(run_artifact.relative_path)
         ai_run_log_written = True
@@ -393,6 +397,47 @@ def _summary_for(
     if errors:
         summary = f"{summary}; {len(errors)} errors"
     return summary
+
+
+def _local_trial_run_log_context(spec: LocalTrialSpec, *, source_input_id: str | None):
+    from diamonddust.storage.ai_run_log import (
+        AIRunLogArtifactContext,
+        AIRunMetricsScope,
+        AIRunOutputArtifact,
+    )
+    from diamonddust.storage.local_trial_report import AI_LOCAL_TRIAL_REPORTS_DIR
+
+    _require_non_empty("source_input_id", source_input_id)
+    return AIRunLogArtifactContext(
+        trial_id=spec.trial_id,
+        stage_label="local_trial_artifact_pipeline",
+        run_scope="provider_free_fixture",
+        real_provider_call=False,
+        fixture_driven=True,
+        prompt_used=False,
+        metrics_scope=AIRunMetricsScope(
+            cost_applicable=False,
+            latency_applicable=False,
+            reason="provider_free_local_trial",
+        ),
+        source_input_id=source_input_id,
+        output_artifacts=(
+            AIRunOutputArtifact(
+                artifact_type="local_trial_feedback_report",
+                path=f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{spec.trial_id}.md",
+            ),
+            AIRunOutputArtifact(
+                artifact_type="local_trial_outcome",
+                path=f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{spec.trial_id}.json",
+            ),
+        ),
+        not_validated=(
+            "real_llm_extraction_quality",
+            "source_span_accuracy_from_real_parser",
+            "provider_latency",
+            "provider_cost",
+        ),
+    )
 
 
 def _essay_path_for(essay_path: str, root: Path) -> Path:

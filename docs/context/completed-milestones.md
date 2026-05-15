@@ -321,10 +321,32 @@ Record completed development milestones and links to reviews here.
 ## 2026-05-15 — Local Trial Report Verdict Status Completed
 
 - Scope: Applied product-owner trial feedback to clarify local trial report status semantics and artifact reading order.
-- Outcome: Local trial feedback reports now use `trial_pipeline_status`, include `product_owner_verdict: pending`, explain each artifact in the reading order, and keep feedback capture as structured free text without numeric scoring.
+- Outcome: Local trial feedback reports now use `trial_pipeline_status`, include `product_owner_verdict: pending`, explain each artifact in the reading order, and keep feedback capture as structured free text without numeric scoring. Matching JSON outcome semantics are handled by the follow-up local trial outcome semantic consistency milestone.
 - Review: `docs/reviews/milestone-reviews/2026-05-15-local-trial-report-verdict-status.md`.
 - Review decision: pass with follow-up.
 - Gate impact: Post-Gate 7 local trial usability hardening; improves trial review clarity without implying full MVP readiness, real AI extraction quality, patch acceptance, formal writes, or publication approval.
 - Validation: 123 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and non-repo-root local trial fixture smoke passed.
 - Dependency impact: No production or development dependency was added; `.venv/` and `*.egg-info/` are now ignored to keep local trial install artifacts out of Git status.
-- Follow-up: Decide separately whether JSON outcome should add `trial_pipeline_status` and `product_owner_verdict` in a compatibility-safe artifact update.
+- Follow-up: Keep feedback capture as structured free text until real product-owner feedback calibrates the rubric.
+
+## 2026-05-15 — Local Trial Outcome Semantic Consistency Completed
+
+- Scope: Aligned machine-readable local trial outcome JSON with Markdown feedback report semantics.
+- Outcome: Local trial outcome JSON now uses `trial_pipeline_passed`, `trial_pipeline_status`, `product_owner_verdict`, and `pipeline_summary`, removes ambiguous top-level `passed`, `status`, and `summary`, and adds stage/scope plus `not_validated` and `quality_scope` limits.
+- Review: `docs/reviews/milestone-reviews/2026-05-15-local-trial-outcome-semantic-consistency.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial artifact hardening; improves machine-readable safety semantics without provider calls, formal vault writes, patch acceptance, publication, or full MVP completion claims.
+- Validation: 123 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with matching Markdown/JSON semantics.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add compatibility handling only if older local trial outcome JSON import/replay becomes a supported workflow.
+
+## 2026-05-15 — Local Trial Run Log Scope Completed
+
+- Scope: Applied product-owner trial feedback to clarify provider-free fixture scope in AI run logs.
+- Outcome: Local trial AI run logs now include `trial_id`, `stage_label`, `run_scope`, `real_provider_call`, `fixture_driven`, `prompt_used`, `metrics_scope`, `source_input_id`, `output_artifacts`, and run-specific `not_validated` fields while generic run logs remain provider-neutral.
+- Review: `docs/reviews/milestone-reviews/2026-05-15-local-trial-run-log-scope.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial artifact hardening; improves run log semantics without provider calls, formal vault writes, patch acceptance, publication, or full MVP completion claims.
+- Validation: 125 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with run log scope fields.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Introduce a separate extraction output artifact only if replay/debug/product-owner feedback requires it.
