@@ -90,6 +90,9 @@ After running the fixture trial, these should remain true:
 - the AI run log says `run_scope: "provider_free_fixture"`
 - the AI run log says `real_provider_call: false`, `fixture_driven: true`, and `prompt_used: false`
 - the AI run log keeps `cost` and `latency` unset and explains metric non-applicability under `metrics_scope`
+- the candidate notes manifest states that candidate notes are previews, raw KnowledgePatch JSON is the operation source of truth, and fixture SourceRefs do not validate real parser source-span accuracy
+- the blog draft frontmatter says `requires_user_review: true`, `draft_scope: "provider_free_fixture"`, and `real_ai_generation_validated: false`
+- the blog draft Claim Inventory includes supporting concepts with an explicit supporting concept role
 - the report says `patch_acceptance: false`
 - the report says `formal_write_approval: false`
 - the JSON outcome has `boundaries.formal_write_performed` set to `false`

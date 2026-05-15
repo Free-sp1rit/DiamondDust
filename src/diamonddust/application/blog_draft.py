@@ -10,6 +10,8 @@ import re
 from diamonddust.application.patch_review import PatchReviewDecision, PatchReviewResult
 from diamonddust.domain import KnowledgeUnit, PatchOperationType, SourceRef, UnitType
 
+_CLAIM_INVENTORY_ROLES = {"claim", "supporting_concept"}
+
 
 class BlogMode(StrEnum):
     EXPLANATION = "explanation"
@@ -37,6 +39,7 @@ class ClaimInventoryItem:
     source_unit_id: str
     source_refs: tuple[SourceRef, ...]
     unsupported: bool
+    role: str = "claim"
 
     def __post_init__(self) -> None:
         _require_non_empty("claim_id", self.claim_id)
@@ -45,6 +48,9 @@ class ClaimInventoryItem:
         _require_tuple("source_refs", self.source_refs, SourceRef)
         if not isinstance(self.unsupported, bool):
             raise BlogDraftError("unsupported must be a boolean")
+        _require_non_empty("role", self.role)
+        if self.role not in _CLAIM_INVENTORY_ROLES:
+            raise BlogDraftError("claim inventory role is not allowed")
 
 
 @dataclass(frozen=True)
@@ -153,7 +159,9 @@ def generate_blog_draft_from_review(
     quality_report_id = quality_report_id or f"report_{draft_id}"
     source_unit_ids = tuple(unit.id for unit in units)
     claim_inventory = _claim_inventory_for(units)
-    unsupported_claims = tuple(item for item in claim_inventory if item.unsupported)
+    unsupported_claims = tuple(
+        item for item in claim_inventory if item.role == "claim" and item.unsupported
+    )
     outline = _outline_for(units)
     content = _content_for(
         title=title,
@@ -205,6 +213,18 @@ def _claim_inventory_for(units: tuple[KnowledgeUnit, ...]) -> tuple[ClaimInvento
                     source_unit_id=unit.id,
                     source_refs=unit.source_refs,
                     unsupported=unit.unsupported or not unit.source_refs,
+                    role="claim",
+                )
+            )
+        elif unit.type == UnitType.CONCEPT:
+            items.append(
+                ClaimInventoryItem(
+                    claim_id=unit.id,
+                    title=unit.title,
+                    source_unit_id=unit.id,
+                    source_refs=unit.source_refs,
+                    unsupported=unit.unsupported or not unit.source_refs,
+                    role="supporting_concept",
                 )
             )
     return tuple(items)
@@ -270,7 +290,8 @@ def _claim_inventory_lines(claim_inventory: tuple[ClaimInventoryItem, ...]) -> l
     return [
         (
             f"- {item.claim_id}: {item.title} "
-            f"({'unsupported' if item.unsupported else 'supported'})"
+            f"({_role_label(item.role)}; "
+            f"{'unsupported' if item.unsupported else 'supported'})"
         )
         for item in claim_inventory
     ]
@@ -374,6 +395,8 @@ def _validate_unsupported_claim_boundaries(
     for item in unsupported_claims:
         if item.claim_id not in claim_ids:
             raise BlogDraftError("unsupported claims must be present in claim inventory")
+        if item.role != "claim":
+            raise BlogDraftError("unsupported claims must have claim role")
         if not item.unsupported:
             raise BlogDraftError("unsupported claims must be explicitly marked")
 
@@ -397,3 +420,7 @@ def _require_str_tuple(name: str, value: object, allow_empty: bool = False) -> N
         raise BlogDraftError(f"{name} must not be empty")
     if not all(isinstance(item, str) and item.strip() for item in value):
         raise BlogDraftError(f"{name} must contain non-empty strings")
+
+
+def _role_label(role: str) -> str:
+    return role.replace("_", " ")

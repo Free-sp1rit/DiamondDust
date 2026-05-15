@@ -7,8 +7,10 @@ from diamonddust.application import PatchReviewError, generate_patch_from_extrac
 from diamonddust.domain import KnowledgePatch, PatchOperation, PatchOperationType
 from diamonddust.storage import (
     AI_CANDIDATE_NOTES_DIR,
+    CandidateMarkdownExportContext,
     CandidateMarkdownError,
     render_candidate_markdown,
+    render_candidate_manifest_content,
     write_candidate_markdown_export,
 )
 
@@ -41,6 +43,12 @@ class CandidateMarkdownExportTests(unittest.TestCase):
         self.assertIn("source_refs:", export.files[0].content)
         self.assertIn("raw_essay_20260511_candidate_ab12cd", export.files[0].content)
         self.assertIn("# Candidate Markdown", export.files[0].content)
+        manifest_content = render_candidate_manifest_content(export.manifest)
+        self.assertIn("## Candidate Preview Boundary", manifest_content)
+        self.assertIn("They are not formal vault notes.", manifest_content)
+        self.assertIn("## Patch Operation Source of Truth", manifest_content)
+        self.assertIn("raw KnowledgePatch JSON is the source of truth", manifest_content)
+        self.assertNotIn("## Fixture SourceRef Scope", manifest_content)
 
     def test_candidate_note_includes_patch_relation_for_source_unit(self) -> None:
         export = render_candidate_markdown(_valid_patch())
@@ -73,6 +81,19 @@ class CandidateMarkdownExportTests(unittest.TestCase):
                 )
             )
             self.assertIn("Candidate Markdown Export", manifest_path.read_text())
+
+    def test_fixture_source_ref_scope_can_be_added_to_manifest(self) -> None:
+        export = render_candidate_markdown(
+            _valid_patch(),
+            context=CandidateMarkdownExportContext(fixture_source_ref_scope=True),
+        )
+
+        manifest_content = render_candidate_manifest_content(export.manifest)
+
+        self.assertIn("## Fixture SourceRef Scope", manifest_content)
+        self.assertIn("fixture-level source references", manifest_content)
+        self.assertIn("synthetic placeholders", manifest_content)
+        self.assertIn("real parser source-span accuracy", manifest_content)
 
     def test_unsafe_patch_id_cannot_be_used_for_export_path(self) -> None:
         patch = KnowledgePatch(

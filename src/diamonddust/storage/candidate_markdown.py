@@ -48,6 +48,7 @@ class CandidateMarkdownManifest:
     relation_count: int
     risks: tuple[str, ...]
     requires_user_review: bool
+    fixture_source_ref_scope: bool = False
 
     def __post_init__(self) -> None:
         _require_non_empty("patch_id", self.patch_id)
@@ -59,6 +60,7 @@ class CandidateMarkdownManifest:
         _require_str_tuple("risks", self.risks, allow_empty=True)
         if self.requires_user_review is not True:
             raise CandidateMarkdownError("candidate Markdown exports require user review")
+        _require_bool("fixture_source_ref_scope", self.fixture_source_ref_scope)
 
     @property
     def file_count(self) -> int:
@@ -79,9 +81,22 @@ class CandidateMarkdownExport:
         return self.manifest.files
 
 
-def render_candidate_markdown(patch: KnowledgePatch) -> CandidateMarkdownExport:
+@dataclass(frozen=True)
+class CandidateMarkdownExportContext:
+    fixture_source_ref_scope: bool = False
+
+    def __post_init__(self) -> None:
+        _require_bool("fixture_source_ref_scope", self.fixture_source_ref_scope)
+
+
+def render_candidate_markdown(
+    patch: KnowledgePatch,
+    *,
+    context: CandidateMarkdownExportContext | None = None,
+) -> CandidateMarkdownExport:
     validate_patch_review_safety(patch)
     _validate_safe_path_fragment("patch_id", patch.patch_id)
+    _require_optional_context(context)
     candidate_root = f"{AI_CANDIDATE_NOTES_DIR}/{patch.patch_id}"
     relation_operations = tuple(
         operation.relation
@@ -117,6 +132,9 @@ def render_candidate_markdown(patch: KnowledgePatch) -> CandidateMarkdownExport:
         relation_count=len(relation_operations),
         risks=patch.risks,
         requires_user_review=patch.requires_user_review,
+        fixture_source_ref_scope=(
+            False if context is None else context.fixture_source_ref_scope
+        ),
     )
     return CandidateMarkdownExport(
         manifest=manifest,
@@ -128,8 +146,9 @@ def write_candidate_markdown_export(
     patch: KnowledgePatch,
     *,
     vault_root: str | Path,
+    context: CandidateMarkdownExportContext | None = None,
 ) -> CandidateMarkdownExport:
-    export = render_candidate_markdown(patch)
+    export = render_candidate_markdown(patch, context=context)
     root = Path(vault_root)
     manifest_path = _safe_output_path(root, export.manifest_relative_path)
 
@@ -139,8 +158,15 @@ def write_candidate_markdown_export(
         output_path.write_text(file.content, encoding="utf-8")
 
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_path.write_text(_manifest_content(export.manifest), encoding="utf-8")
+    manifest_path.write_text(
+        render_candidate_manifest_content(export.manifest),
+        encoding="utf-8",
+    )
     return export
+
+
+def render_candidate_manifest_content(manifest: CandidateMarkdownManifest) -> str:
+    return _manifest_content(manifest)
 
 
 def _candidate_file_for(
@@ -280,7 +306,26 @@ def _manifest_content(manifest: CandidateMarkdownManifest) -> str:
         "## Review Boundary",
         "- formal_write: false",
         "- requires_user_review: true",
+        "",
+        "## Candidate Preview Boundary",
+        "These candidate notes are patch previews generated under `_ai_suggestions/`.",
+        "They are not formal vault notes.",
+        "They must not be treated as accepted knowledge until a separate patch acceptance and formal apply flow is completed.",
+        "",
+        "## Patch Operation Source of Truth",
+        "The raw KnowledgePatch JSON is the source of truth for patch operations.",
+        "Candidate notes represent the preview state after create_note and add_relation operations are rendered as Markdown.",
     ]
+    if manifest.fixture_source_ref_scope:
+        lines.extend(
+            [
+                "",
+                "## Fixture SourceRef Scope",
+                "This local trial uses fixture-level source references.",
+                "`content_hash` values are synthetic placeholders.",
+                "`is_approximate: true` means the spans are suitable for local trial review but do not yet validate real parser source-span accuracy.",
+            ]
+        )
     return "\n".join(lines).strip() + "\n"
 
 
@@ -350,3 +395,15 @@ def _require_str_tuple(name: str, value: object, allow_empty: bool = False) -> N
         raise CandidateMarkdownError(f"{name} must not be empty")
     if not all(isinstance(item, str) and item.strip() for item in value):
         raise CandidateMarkdownError(f"{name} must contain non-empty strings")
+
+
+def _require_bool(name: str, value: object) -> None:
+    if not isinstance(value, bool):
+        raise CandidateMarkdownError(f"{name} must be a boolean")
+
+
+def _require_optional_context(context: CandidateMarkdownExportContext | None) -> None:
+    if context is not None and not isinstance(context, CandidateMarkdownExportContext):
+        raise CandidateMarkdownError(
+            "context must be a CandidateMarkdownExportContext"
+        )

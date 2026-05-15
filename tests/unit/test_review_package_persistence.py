@@ -10,6 +10,7 @@ from diamonddust.storage import (
     AI_CANDIDATE_NOTES_DIR,
     AI_PATCH_REVIEW_REPORTS_DIR,
     AI_PATCH_SUGGESTIONS_DIR,
+    CandidateMarkdownExportContext,
     ReviewPackageError,
     render_patch_json_artifact,
     write_review_package,
@@ -82,6 +83,29 @@ class ReviewPackagePersistenceTests(unittest.TestCase):
                     (vault_root / AI_CANDIDATE_NOTES_DIR).resolve()
                 )
             )
+            manifest_content = candidate_manifest_path.read_text(encoding="utf-8")
+            self.assertIn("## Candidate Preview Boundary", manifest_content)
+            self.assertIn("## Patch Operation Source of Truth", manifest_content)
+            self.assertNotIn("## Fixture SourceRef Scope", manifest_content)
+
+    def test_review_package_can_render_fixture_source_ref_scope(self) -> None:
+        patch = _valid_patch()
+        with TemporaryDirectory() as tmp:
+            vault_root = Path(tmp)
+
+            package = write_review_package(
+                patch,
+                vault_root=vault_root,
+                candidate_context=CandidateMarkdownExportContext(
+                    fixture_source_ref_scope=True,
+                ),
+            )
+
+            manifest_path = vault_root / package.candidate_export.manifest_relative_path
+            manifest_content = manifest_path.read_text(encoding="utf-8")
+
+        self.assertIn("## Fixture SourceRef Scope", manifest_content)
+        self.assertIn("fixture-level source references", manifest_content)
 
     def test_package_report_links_written_candidate_note_paths(self) -> None:
         patch = _valid_patch()

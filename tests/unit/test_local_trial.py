@@ -131,6 +131,23 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertEqual(outcome["paths"]["review_start"], "_ai_reports/local-trials/trial_local_ab12cd.md")
             self.assertFalse(outcome["boundaries"]["formal_write_performed"])
             self.assertFalse(outcome["boundaries"]["provider_called"])
+            manifest = (
+                vault_root
+                / "_ai_suggestions/candidate-notes"
+                / result.patch_id
+                / "manifest.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("## Candidate Preview Boundary", manifest)
+            self.assertIn("## Patch Operation Source of Truth", manifest)
+            self.assertIn("## Fixture SourceRef Scope", manifest)
+            draft = (
+                vault_root
+                / "_ai_suggestions/blog-drafts/draft_trial_local_ab12cd/draft.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("requires_user_review: true", draft)
+            self.assertIn('draft_scope: "provider_free_fixture"', draft)
+            self.assertIn("real_ai_generation_validated: false", draft)
+            self.assertIn("supporting concept; supported", draft)
             self.assertFalse(
                 (vault_root / "40-concepts" / "unit_local_trial_concept_ab12cd.md").exists()
             )
