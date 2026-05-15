@@ -339,3 +339,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 123 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with matching Markdown/JSON semantics.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add compatibility handling only if older local trial outcome JSON import/replay becomes a supported workflow.
+
+## 2026-05-15 — Local Trial Run Log Scope Completed
+
+- Scope: Applied product-owner trial feedback to clarify provider-free fixture scope in AI run logs.
+- Outcome: Local trial AI run logs now include `trial_id`, `stage_label`, `run_scope`, `real_provider_call`, `fixture_driven`, `prompt_used`, `metrics_scope`, `source_input_id`, `output_artifacts`, and run-specific `not_validated` fields while generic run logs remain provider-neutral.
+- Review: `docs/reviews/milestone-reviews/2026-05-15-local-trial-run-log-scope.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial artifact hardening; improves run log semantics without provider calls, formal vault writes, patch acceptance, publication, or full MVP completion claims.
+- Validation: 125 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with run log scope fields.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Introduce a separate extraction output artifact only if replay/debug/product-owner feedback requires it.

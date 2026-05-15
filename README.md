@@ -42,6 +42,8 @@ Start review from `_ai_reports/local-trials/<trial-id>.md`. That report lists th
 
 For machine-readable summaries, each run also writes `_ai_reports/local-trials/<trial-id>.json` with trial pipeline status, pending product-owner verdict, artifact paths, errors, unsupported claim counts, quality-scope limits, and explicit no-provider/no-formal-write boundaries.
 
+The matching `_ai_runs/<run-id>.json` records extraction validation hashes plus provider-free fixture scope, non-applicable cost/latency metrics, and lineage pointers to the downstream local trial report/outcome.
+
 See `docs/guides/local-trial-user-feedback.md` for the safe local trial review flow and feedback capture rubric.
 
 See `docs/guides/local-trial-extraction-json.md` for the extraction JSON shape and a validated minimal example.

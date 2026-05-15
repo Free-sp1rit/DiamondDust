@@ -6,6 +6,9 @@ from tempfile import TemporaryDirectory
 from diamonddust.ai import AIRunMetadata, AIValidationStatus, validate_extraction_output
 from diamonddust.storage import (
     AI_RUNS_DIR,
+    AIRunLogArtifactContext,
+    AIRunMetricsScope,
+    AIRunOutputArtifact,
     AIRunLogPersistenceError,
     render_ai_run_log_artifact,
     write_ai_run_log_artifact,
@@ -37,6 +40,10 @@ class AIRunLogPersistenceTests(unittest.TestCase):
         self.assertEqual(data["validation_status"], "passed")
         self.assertEqual(data["created_at"], CREATED_AT)
         self.assertNotIn("raw_output", data)
+        self.assertNotIn("run_scope", data)
+        self.assertNotIn("real_provider_call", data)
+        self.assertNotIn("fixture_driven", data)
+        self.assertNotIn("metrics_scope", data)
 
     def test_renders_failed_run_log_artifact(self) -> None:
         result = validate_extraction_output("free form output", _metadata())
@@ -65,6 +72,68 @@ class AIRunLogPersistenceTests(unittest.TestCase):
         self.assertEqual(data["latency"], 2.5)
         self.assertEqual(data["knowledge_base_snapshot_hash"], "sha256:kb")
         self.assertEqual(data["cache_key"], "cache_extract_units_abc123")
+
+    def test_optional_artifact_context_is_preserved(self) -> None:
+        result = validate_extraction_output(_valid_output(), _metadata())
+
+        artifact = render_ai_run_log_artifact(
+            result.run_log,
+            created_at=CREATED_AT,
+            context=AIRunLogArtifactContext(
+                trial_id="trial_ai_run_ab12cd",
+                stage_label="local_trial_artifact_pipeline",
+                run_scope="provider_free_fixture",
+                real_provider_call=False,
+                fixture_driven=True,
+                prompt_used=False,
+                metrics_scope=AIRunMetricsScope(
+                    cost_applicable=False,
+                    latency_applicable=False,
+                    reason="provider_free_local_trial",
+                ),
+                source_input_id="raw_essay_20260511_ai_run_ab12cd",
+                output_artifacts=(
+                    AIRunOutputArtifact(
+                        artifact_type="local_trial_feedback_report",
+                        path="_ai_reports/local-trials/trial_ai_run_ab12cd.md",
+                    ),
+                ),
+                not_validated=(
+                    "real_llm_extraction_quality",
+                    "provider_latency",
+                    "provider_cost",
+                ),
+            ),
+        )
+        data = json.loads(artifact.content)
+
+        self.assertEqual(data["trial_id"], "trial_ai_run_ab12cd")
+        self.assertEqual(data["stage_label"], "local_trial_artifact_pipeline")
+        self.assertEqual(data["run_scope"], "provider_free_fixture")
+        self.assertFalse(data["real_provider_call"])
+        self.assertTrue(data["fixture_driven"])
+        self.assertFalse(data["prompt_used"])
+        self.assertEqual(
+            data["metrics_scope"],
+            {
+                "cost_applicable": False,
+                "latency_applicable": False,
+                "reason": "provider_free_local_trial",
+            },
+        )
+        self.assertEqual(data["source_input_id"], "raw_essay_20260511_ai_run_ab12cd")
+        self.assertEqual(
+            data["output_artifacts"],
+            [
+                {
+                    "artifact_type": "local_trial_feedback_report",
+                    "path": "_ai_reports/local-trials/trial_ai_run_ab12cd.md",
+                }
+            ],
+        )
+        self.assertIn("real_llm_extraction_quality", data["not_validated"])
+        self.assertIn("provider_latency", data["not_validated"])
+        self.assertIn("provider_cost", data["not_validated"])
 
     def test_writes_run_log_only_under_ai_runs(self) -> None:
         result = validate_extraction_output(_valid_output(), _metadata())
@@ -95,6 +164,13 @@ class AIRunLogPersistenceTests(unittest.TestCase):
 
         with self.assertRaises(AIRunLogPersistenceError):
             render_ai_run_log_artifact(run_log, created_at=CREATED_AT)
+
+    def test_output_artifact_paths_must_stay_in_ai_working_areas(self) -> None:
+        with self.assertRaises(AIRunLogPersistenceError):
+            AIRunOutputArtifact(
+                artifact_type="formal_note",
+                path="40-concepts/unit_ai_run_ab12cd.md",
+            )
 
     def test_created_at_is_required(self) -> None:
         result = validate_extraction_output(_valid_output(), _metadata())

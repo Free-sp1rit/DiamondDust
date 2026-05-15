@@ -30,6 +30,11 @@ class LocalTrialUserFeedbackGuideTests(unittest.TestCase):
         self.assertIn("must not write formal vault notes", guide)
         self.assertIn("formal_write: false", guide)
         self.assertIn("provider_called: false", guide)
+        self.assertIn("run_scope: \"provider_free_fixture\"", guide)
+        self.assertIn("real_provider_call: false", guide)
+        self.assertIn("fixture_driven: true", guide)
+        self.assertIn("prompt_used: false", guide)
+        self.assertIn("metrics_scope", guide)
         self.assertIn("patch_acceptance: false", guide)
         self.assertIn("formal_write_approval: false", guide)
 

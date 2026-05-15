@@ -504,12 +504,26 @@ Optional:
 - `latency`
 - `knowledge_base_snapshot_hash`
 - `cache_key`
+- `trial_id`
+- `stage_label`
+- `run_scope`
+- `real_provider_call`
+- `fixture_driven`
+- `prompt_used`
+- `metrics_scope`
+- `source_input_id`
+- `output_artifacts`
+- `not_validated`
 
 Rules:
 
 - AI run artifacts may record both passed and failed validation runs.
 - AI run artifacts must not persist raw model output.
 - AI run artifacts must stay under `_ai_runs/`.
+- Provider-free local trial run artifacts should mark `run_scope: provider_free_fixture`, `real_provider_call: false`, `fixture_driven: true`, and `prompt_used: false` while preserving the task contract `prompt_version`.
+- When provider metrics are not produced, local trial run artifacts should keep `cost` and `latency` unset and include `metrics_scope` explaining that cost and latency are not applicable.
+- Local trial run artifacts should preserve `source_input_id`, point `output_artifacts` at the generated downstream trial report/outcome artifacts, and list run-specific `not_validated` limits such as real LLM extraction quality, real parser source-span accuracy, provider latency, and provider cost.
+- Run log `output_artifacts` must point only to AI working artifacts, not formal vault paths.
 
 ## Formal Write Rule
 

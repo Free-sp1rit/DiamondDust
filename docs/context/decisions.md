@@ -276,6 +276,14 @@ Record durable technical and governance decisions here.
 - Risks: Similar future tasks need explicit instruction or a separate governance approval if this behavior should become permanent.
 - Follow-up: Do not treat this as a standing governance policy unless separately approved.
 
+### 2026-05-15 — Add local trial run log scope through typed artifact context
+
+- Decision: Local trial AI run logs use a typed storage-layer artifact context to add `trial_id`, `stage_label`, `run_scope`, `real_provider_call`, `fixture_driven`, `prompt_used`, `metrics_scope`, `source_input_id`, `output_artifacts`, and run-specific `not_validated` fields.
+- Reason: Provider-free fixture runs must not be mistaken for real provider calls or real LLM quality validation, but generic AI run logs should stay provider-neutral and should not require local trial fields.
+- Alternatives: Add local trial fields directly to the domain `AIRunLog`; leave fixture scope only in the Markdown report/JSON outcome; change `prompt_version` to a fixture-specific value.
+- Risks: Older generated run logs lack the new fields until regenerated, and future replay tooling may need compatibility handling for earlier artifacts.
+- Follow-up: Introduce a separate extraction output artifact only if replay/debug/user feedback requires it; keep raw provider output out of run logs until retention policy is approved.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

@@ -51,7 +51,7 @@ class LocalTrialFeedbackReportTests(unittest.TestCase):
             report.content,
         )
         self.assertIn(
-            "`_ai_runs/run_trial.json`: extraction validation run log",
+            "`_ai_runs/run_trial.json`: provider-free extraction validation run log",
             report.content,
         )
         self.assertIn(

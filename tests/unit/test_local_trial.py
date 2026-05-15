@@ -61,6 +61,45 @@ class LocalTrialHarnessTests(unittest.TestCase):
                 result.written_paths,
             )
             self.assertTrue(all((vault_root / path).exists() for path in result.written_paths))
+            run_log = json.loads(
+                (
+                    vault_root / "_ai_runs/run_trial_local_ab12cd_local_trial.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(run_log["artifact_type"], "ai_run_log")
+            self.assertEqual(run_log["trial_id"], "trial_local_ab12cd")
+            self.assertEqual(run_log["stage_label"], "local_trial_artifact_pipeline")
+            self.assertEqual(run_log["run_scope"], "provider_free_fixture")
+            self.assertFalse(run_log["real_provider_call"])
+            self.assertTrue(run_log["fixture_driven"])
+            self.assertFalse(run_log["prompt_used"])
+            self.assertEqual(run_log["prompt_version"], "extract_units.v1")
+            self.assertEqual(run_log["source_input_id"], SOURCE_ID)
+            self.assertFalse(run_log["metrics_scope"]["cost_applicable"])
+            self.assertFalse(run_log["metrics_scope"]["latency_applicable"])
+            self.assertEqual(
+                run_log["metrics_scope"]["reason"], "provider_free_local_trial"
+            )
+            self.assertIn("real_llm_extraction_quality", run_log["not_validated"])
+            self.assertIn(
+                "source_span_accuracy_from_real_parser",
+                run_log["not_validated"],
+            )
+            self.assertIn("provider_latency", run_log["not_validated"])
+            self.assertIn("provider_cost", run_log["not_validated"])
+            self.assertEqual(
+                run_log["output_artifacts"],
+                [
+                    {
+                        "artifact_type": "local_trial_feedback_report",
+                        "path": "_ai_reports/local-trials/trial_local_ab12cd.md",
+                    },
+                    {
+                        "artifact_type": "local_trial_outcome",
+                        "path": "_ai_reports/local-trials/trial_local_ab12cd.json",
+                    },
+                ],
+            )
             feedback_report = (
                 vault_root / "_ai_reports/local-trials/trial_local_ab12cd.md"
             ).read_text(encoding="utf-8")
@@ -131,6 +170,18 @@ class LocalTrialHarnessTests(unittest.TestCase):
                 result.written_paths,
             )
             self.assertIn("extraction output must be a structured mapping", result.errors[0])
+            run_log = json.loads(
+                (
+                    vault_root / "_ai_runs/run_trial_local_ab12cd_local_trial.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(run_log["validation_status"], "failed")
+            self.assertEqual(run_log["trial_id"], "trial_local_ab12cd")
+            self.assertEqual(run_log["run_scope"], "provider_free_fixture")
+            self.assertFalse(run_log["real_provider_call"])
+            self.assertTrue(run_log["fixture_driven"])
+            self.assertFalse(run_log["metrics_scope"]["cost_applicable"])
+            self.assertFalse(run_log["metrics_scope"]["latency_applicable"])
             feedback_report = (
                 vault_root / "_ai_reports/local-trials/trial_local_ab12cd.md"
             ).read_text(encoding="utf-8")

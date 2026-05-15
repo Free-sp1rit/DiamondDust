@@ -113,6 +113,22 @@ class LocalTrialFixtureTests(unittest.TestCase):
                     ),
                     path,
                 )
+            run_log = json.loads(
+                (
+                    vault_root / "_ai_runs/run_trial_fixture_ab12cd_local_trial.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(run_log["trial_id"], "trial_fixture_ab12cd")
+            self.assertEqual(run_log["stage_label"], "local_trial_artifact_pipeline")
+            self.assertEqual(run_log["run_scope"], "provider_free_fixture")
+            self.assertFalse(run_log["real_provider_call"])
+            self.assertTrue(run_log["fixture_driven"])
+            self.assertFalse(run_log["prompt_used"])
+            self.assertFalse(run_log["metrics_scope"]["cost_applicable"])
+            self.assertFalse(run_log["metrics_scope"]["latency_applicable"])
+            self.assertEqual(
+                run_log["source_input_id"], "raw_essay_local_trial_fixture_ab12cd"
+            )
 
     def test_fixture_shortcut_cli_writes_reviewable_artifacts(self) -> None:
         with TemporaryDirectory() as tmp:

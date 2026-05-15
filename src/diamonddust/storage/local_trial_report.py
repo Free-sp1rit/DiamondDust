@@ -337,7 +337,7 @@ def _artifact_purpose(path: str) -> str:
     if path.startswith("_ai_reports/local-trials/") and path.endswith(".json"):
         return "machine-readable trial pipeline outcome summary"
     if path.startswith("_ai_runs/"):
-        return "extraction validation run log and trace hashes"
+        return "provider-free extraction validation run log with scope and trace hashes"
     if path.startswith("_ai_suggestions/patches/"):
         return "raw KnowledgePatch proposal for review before formal writes"
     if path.startswith("_ai_suggestions/candidate-notes/") and path.endswith("/manifest.md"):

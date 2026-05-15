@@ -46,6 +46,12 @@ Last updated: 2026-05-15
 
 ## AI Pipeline
 
+### 2026-05-15 — Should extraction outputs become separate durable artifacts?
+
+- Context: Local trial AI run logs now point `output_artifacts` at the downstream local trial Markdown report and JSON outcome because no separate extraction output artifact exists. Run logs intentionally do not persist raw model/provider output.
+- Needed decision: Introduce a typed extraction output artifact only if replay, debugging, provider integration, or product-owner feedback requires it.
+- Impact: Affects artifact lineage clarity, raw output retention policy, privacy posture, and whether future run logs can point at extraction artifacts instead of downstream trial reports.
+
 ### 2026-05-12 — When should extraction JSON get a machine-readable schema?
 
 - Context: The local trial CLI now has a checked-in example extraction JSON fixture and a user-facing guide with a validated embedded example, but no JSON Schema or generated authoring helper exists.
