@@ -11,6 +11,9 @@ from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 
 
 AI_LOCAL_TRIAL_REPORTS_DIR = "_ai_reports/local-trials"
+LOCAL_TRIAL_STAGE_LABEL = "local_trial_artifact_pipeline"
+LOCAL_TRIAL_STAGE_SCOPE = "provider_free_mvp_skeleton"
+LOCAL_TRIAL_PRODUCT_OWNER_VERDICT = "pending"
 
 
 class LocalTrialFeedbackReportError(ValueError):
@@ -178,7 +181,7 @@ def _report_content(report_input: LocalTrialFeedbackReportInput, *, created_at: 
         f"artifact_schema_version: {_yaml_scalar(ARTIFACT_SCHEMA_VERSION)}",
         f"trial_id: {_yaml_scalar(report_input.trial_id)}",
         f"trial_pipeline_status: {_yaml_scalar(status)}",
-        'product_owner_verdict: "pending"',
+        f"product_owner_verdict: {_yaml_scalar(LOCAL_TRIAL_PRODUCT_OWNER_VERDICT)}",
         "formal_write: false",
         "provider_called: false",
         f"created_at: {_yaml_scalar(created_at)}",
@@ -188,7 +191,7 @@ def _report_content(report_input: LocalTrialFeedbackReportInput, *, created_at: 
         "",
         "## Summary",
         f"- trial_pipeline_status: {status}",
-        "- product_owner_verdict: pending",
+        f"- product_owner_verdict: {LOCAL_TRIAL_PRODUCT_OWNER_VERDICT}",
         f"- pipeline_summary: {_pipeline_summary(report_input.summary)}",
         f"- source_input_id: {_inline_or_none(report_input.source_input_id)}",
         f"- patch_id: {_inline_or_none(report_input.patch_id)}",
@@ -282,15 +285,15 @@ def _outcome_payload(
             "markdown_report": markdown_report_path,
             "review_start": markdown_report_path,
         },
-        "product_owner_verdict": "pending",
+        "product_owner_verdict": LOCAL_TRIAL_PRODUCT_OWNER_VERDICT,
         "quality_scope": {
             "fixture_driven_trial": True,
             "real_llm_quality_validated": False,
             "unsupported_claim_detection_validated": False,
         },
         "source_input_id": report_input.source_input_id,
-        "stage_label": "local_trial_artifact_pipeline",
-        "stage_scope": "provider_free_mvp_skeleton",
+        "stage_label": LOCAL_TRIAL_STAGE_LABEL,
+        "stage_scope": LOCAL_TRIAL_STAGE_SCOPE,
         "trial_id": report_input.trial_id,
         "trial_pipeline_passed": report_input.passed,
         "trial_pipeline_status": trial_pipeline_status,

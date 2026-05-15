@@ -95,6 +95,22 @@ class CandidateMarkdownExportTests(unittest.TestCase):
         self.assertIn("synthetic placeholders", manifest_content)
         self.assertIn("real parser source-span accuracy", manifest_content)
 
+    def test_manifest_renders_empty_risks_explicitly(self) -> None:
+        valid_patch = _valid_patch()
+        patch = KnowledgePatch(
+            patch_id="patch_candidate_no_risks",
+            created_at=CREATED_AT,
+            source_input_ids=valid_patch.source_input_ids,
+            operations=valid_patch.operations,
+            risks=(),
+            requires_user_review=True,
+        )
+
+        export = render_candidate_markdown(patch)
+        manifest_content = render_candidate_manifest_content(export.manifest)
+
+        self.assertIn("## Risks\n- none", manifest_content)
+
     def test_unsafe_patch_id_cannot_be_used_for_export_path(self) -> None:
         patch = KnowledgePatch(
             patch_id="../escape",

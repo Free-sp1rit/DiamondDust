@@ -34,7 +34,7 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertTrue(result.review_package_written)
             self.assertTrue(result.blog_draft_package_written)
             self.assertTrue(result.feedback_report_written)
-            self.assertTrue(result.simulated_patch_acceptance)
+            self.assertTrue(result.draft_generation_handoff_completed)
             self.assertFalse(result.formal_write_performed)
             self.assertFalse(result.provider_called)
             self.assertEqual(result.source_input_id, SOURCE_ID)

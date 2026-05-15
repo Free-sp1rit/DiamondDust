@@ -383,3 +383,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 131 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and local trial fixture smoke passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Calibrate publication/editorial quality criteria only after real product-owner trial feedback.
+
+## 2026-05-16 — Trial Feedback Cleanup Audit Completed
+
+- Scope: Audited trial feedback implementation changes from `1bc6712` through current `origin/main`.
+- Outcome: Removed ambiguous simulated patch-acceptance terminology from the local trial runtime flow, aligned blog quality report artifact object naming with persisted `quality_status`, centralized local trial semantic constants where they cross artifact families, and made empty candidate manifest risks explicit.
+- Review: `docs/reviews/milestone-reviews/2026-05-16-trial-feedback-cleanup-audit.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 cleanup; improves readiness for real provider planning without changing persisted artifact boundaries or enabling provider calls, formal writes, patch decisions, publication, or scoring.
+- Validation: 132 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and local trial fixture smoke passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Keep real provider execution context separate from provider-free fixture context during provider integration planning.
