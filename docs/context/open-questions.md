@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-14
+Last updated: 2026-05-15
 
 ## Tooling and Repository Shape
 
@@ -34,9 +34,15 @@ Last updated: 2026-05-14
 
 ### 2026-05-14 — Which local trial feedback fields should become release criteria?
 
-- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with prompts and a human-fillable feedback capture rubric, plus `_ai_reports/local-trials/<trial_id>.json` for machine-readable trial outcome summaries. The rubric and JSON shape have not yet been validated by a real product-owner trial.
+- Context: Local trial runs now write `_ai_reports/local-trials/<trial_id>.md` with prompts, `trial_pipeline_status`, pending `product_owner_verdict`, and structured free-text feedback capture, plus `_ai_reports/local-trials/<trial_id>.json` for machine-readable trial outcome summaries. The rubric and JSON shape have not yet been validated by a real product-owner trial.
 - Needed decision: After the first controlled trial, decide which feedback fields should become durable acceptance criteria or test fixtures.
 - Impact: Affects whether the next phase should prioritize golden essays, report quality, formal apply safety, or provider-backed extraction.
+
+### 2026-05-15 — When should local trial feedback become a typed artifact?
+
+- Context: Product-owner feedback is intentionally structured free text for now, and numeric scoring is deferred until the rubric is calibrated.
+- Needed decision: Decide whether to add a typed feedback artifact only after enough real trial feedback exists to stabilize field names and allowed values.
+- Impact: Affects future aggregation, release criteria, and whether feedback capture should stay in Markdown or become a separate JSON artifact.
 
 ## AI Pipeline
 

@@ -38,9 +38,9 @@ For custom essays, use `diamonddust local-trial` with explicit essay, extraction
 
 The command writes AI working artifacts only. It does not write formal vault notes or publish content.
 
-Start review from `_ai_reports/local-trials/<trial-id>.md`. That report lists the trial status, safety boundary, artifact reading order, errors, unsupported claims, and feedback prompts.
+Start review from `_ai_reports/local-trials/<trial-id>.md`. That report lists the trial pipeline status, pending product-owner verdict, safety boundary, artifact reading order with purpose notes, errors, unsupported claims, and feedback prompts.
 
-For machine-readable summaries, each run also writes `_ai_reports/local-trials/<trial-id>.json` with status, artifact paths, errors, unsupported claim counts, and explicit no-provider/no-formal-write boundaries.
+For machine-readable summaries, each run also writes `_ai_reports/local-trials/<trial-id>.json` with pipeline status, artifact paths, errors, unsupported claim counts, and explicit no-provider/no-formal-write boundaries.
 
 See `docs/guides/local-trial-user-feedback.md` for the safe local trial review flow and feedback capture rubric.
 

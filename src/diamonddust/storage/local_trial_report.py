@@ -177,7 +177,8 @@ def _report_content(report_input: LocalTrialFeedbackReportInput, *, created_at: 
         "artifact_type: local_trial_feedback_report",
         f"artifact_schema_version: {_yaml_scalar(ARTIFACT_SCHEMA_VERSION)}",
         f"trial_id: {_yaml_scalar(report_input.trial_id)}",
-        f"status: {_yaml_scalar(status)}",
+        f"trial_pipeline_status: {_yaml_scalar(status)}",
+        'product_owner_verdict: "pending"',
         "formal_write: false",
         "provider_called: false",
         f"created_at: {_yaml_scalar(created_at)}",
@@ -186,7 +187,8 @@ def _report_content(report_input: LocalTrialFeedbackReportInput, *, created_at: 
         "# Local Trial Feedback Report",
         "",
         "## Summary",
-        f"- status: {status}",
+        f"- trial_pipeline_status: {status}",
+        "- product_owner_verdict: pending",
         f"- {report_input.summary}",
         f"- source_input_id: {_inline_or_none(report_input.source_input_id)}",
         f"- patch_id: {_inline_or_none(report_input.patch_id)}",
@@ -215,9 +217,9 @@ def _report_content(report_input: LocalTrialFeedbackReportInput, *, created_at: 
         "- What would make this local trial feel ready for a real essay?",
         "",
         "## Feedback Capture",
-        "- trial_verdict: [ ] usable [ ] needs_changes [ ] blocked",
-        "- confidence: [ ] high [ ] medium [ ] low",
-        "- report_opened_first: [ ] yes [ ] no",
+        "- product_owner_verdict:",
+        "- confidence_notes:",
+        "- report_opened_first:",
         "- formal_write_approval: false",
         "- patch_acceptance: false",
         "",
@@ -305,7 +307,29 @@ def _artifact_reading_order(written_paths: tuple[str, ...]) -> list[str]:
                 ordered.append(path)
                 remaining.remove(path)
     ordered.extend(remaining)
-    return [f"- `{path}`" for path in ordered]
+    return [f"- `{path}`: {_artifact_purpose(path)}" for path in ordered]
+
+
+def _artifact_purpose(path: str) -> str:
+    if path.startswith("_ai_reports/local-trials/") and path.endswith(".md"):
+        return "human review entrypoint and structured feedback capture"
+    if path.startswith("_ai_reports/local-trials/") and path.endswith(".json"):
+        return "machine-readable trial pipeline outcome summary"
+    if path.startswith("_ai_runs/"):
+        return "extraction validation run log and trace hashes"
+    if path.startswith("_ai_suggestions/patches/"):
+        return "raw KnowledgePatch proposal for review before formal writes"
+    if path.startswith("_ai_suggestions/candidate-notes/") and path.endswith("/manifest.md"):
+        return "candidate note manifest and target path index"
+    if path.startswith("_ai_suggestions/candidate-notes/"):
+        return "candidate Markdown note proposed by the patch"
+    if path.startswith("_ai_reports/patch-reviews/"):
+        return "patch review report with risks, diff summary, and rollback outline"
+    if path.startswith("_ai_suggestions/blog-drafts/"):
+        return "provider-free blog draft for review before publication"
+    if path.startswith("_ai_reports/blog-quality/"):
+        return "blog draft quality and evidence coverage report"
+    return "additional local trial artifact"
 
 
 def _list_or_none(values: tuple[str, ...]) -> list[str]:

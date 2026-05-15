@@ -407,7 +407,8 @@ Rules:
 
 - Local trial feedback reports must include `artifact_schema_version`.
 - Local trial feedback reports must mark `formal_write: false` and `provider_called: false`.
-- Local trial feedback reports should summarize trial status, artifact reading order, errors, unsupported claims, feedback prompts, and feedback capture fields.
+- Local trial feedback reports should summarize `trial_pipeline_status`, `product_owner_verdict`, artifact reading order, errors, unsupported claims, feedback prompts, and feedback capture fields.
+- Local trial feedback reports must keep pipeline success separate from product-owner acceptance.
 - Local trial feedback reports may be written for both passed and failed local trials when the vault report path is writable.
 - Local trial feedback reports must not mark a patch as user-accepted and must not write files to formal vault directories.
 - Feedback capture fields are product feedback only, not patch acceptance, formal write approval, or publication approval.

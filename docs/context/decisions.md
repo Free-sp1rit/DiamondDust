@@ -260,6 +260,22 @@ Record durable technical and governance decisions here.
 - Risks: The JSON shape may need to evolve after real product-owner trial feedback, and report-package writes are still not transactional.
 - Follow-up: Use the JSON outcome in controlled trial review, then decide whether feedback fields should become typed user-input artifacts or release criteria.
 
+### 2026-05-15 — Separate local trial pipeline status from product-owner verdict
+
+- Decision: Local trial feedback report frontmatter uses `trial_pipeline_status` for run success and `product_owner_verdict: pending` for product-owner acceptance state.
+- Reason: A passed provider-free pipeline run must not imply product-owner acceptance, full MVP readiness, real AI extraction quality, formal patch acceptance, or publication approval.
+- Alternatives: Keep `status: passed`; add numeric scoring immediately; treat the JSON outcome as the only structured status source.
+- Risks: Older generated reports still contain `status` until regenerated, and future tooling may need compatibility handling if it parses report frontmatter.
+- Follow-up: Keep feedback capture as structured free text until the rubric is calibrated by real product-owner trial feedback.
+
+### 2026-05-15 — Evaluate trial feedback before changing project behavior
+
+- Decision: Trial feedback should be evaluated against long-term project development and maintainability before being accepted into code, docs, or artifact behavior.
+- Reason: Product-owner trial feedback is high-value evidence, but it should not automatically override architecture, schema compatibility, safety boundaries, or future maintainability.
+- Alternatives: Automatically implement all trial feedback; reject trial feedback unless it is already in formal docs.
+- Risks: Evaluation adds small process overhead and requires clearly explaining when feedback is deferred.
+- Follow-up: Keep this as an operating practice; update governance docs only if the product owner wants it made a formal rule.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
