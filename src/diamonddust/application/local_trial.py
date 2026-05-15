@@ -220,6 +220,7 @@ def run_local_trial(
             write_blog_draft_package,
         )
         from diamonddust.storage.candidate_markdown import CandidateMarkdownExportContext
+        from diamonddust.storage.review_report import PatchReviewReportContext
         from diamonddust.storage.review_package import write_review_package
 
         patch = generate_patch_from_extraction(
@@ -232,6 +233,11 @@ def run_local_trial(
             vault_root=vault_path,
             candidate_context=CandidateMarkdownExportContext(
                 fixture_source_ref_scope=True,
+            ),
+            review_report_context=PatchReviewReportContext(
+                trial_id=spec.trial_id,
+                review_scope="provider_free_fixture",
+                fixture_driven=True,
             ),
         )
         written_paths.extend(review_package.written_paths)

@@ -4,11 +4,11 @@ Last updated: 2026-05-15
 
 ## Current Stage
 
-Post-Gate 7 `_ai_suggestions` artifact semantic hardening complete with follow-up.
+Post-Gate 7 patch review report semantic hardening complete with follow-up.
 
 ## Current Focus
 
-Continue controlled local trials from aligned Markdown, JSON outcome, AI run log, candidate preview, and blog draft artifacts that separate pipeline status from product-owner verdict and avoid implying real provider calls, real LLM quality, formal apply, user acceptance, publication quality, or full MVP completion.
+Continue controlled local trials from aligned Markdown, JSON outcome, AI run log, candidate preview, patch review report, and blog draft artifacts that separate pipeline status from product-owner verdict and avoid implying real provider calls, real LLM quality, formal apply, user acceptance, publication quality, or full MVP completion.
 
 Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2 through Gate 6 planning and implementation are complete.
 
@@ -28,7 +28,7 @@ Each skill is intentionally lightweight and contains only workflow guidance in `
 
 DiamondDust is a local-first semantic knowledge compiler. Its MVP path is to turn Markdown essays into structured `KnowledgeUnit` candidates, candidate `Relation`s, validated `KnowledgePatch` files, review reports, blog drafts, and blog quality reports.
 
-The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence with provider-free local trial scope context, an application-layer patch review workflow, candidate Markdown export with explicit preview/source-of-truth boundaries, patch review report, review package storage adapters, a deterministic blog draft workflow with review/scope frontmatter and supporting concept inventory, durable blog draft package persistence, artifact schema versioning, a local trial CLI with packaged `local-trial-fixture` assets, feedback reports and machine-readable outcome JSON artifacts that separate `trial_pipeline_status` from `product_owner_verdict`, explicit local trial quality-scope limits, and feedback capture fields, minimal Python packaging metadata with a `diamonddust` console script, formal vault conflict preflight checks, formal apply dry-run plans, a checked-in local trial fixture pair, user-facing local trial guides, a Gate 7 release readiness harness, five sample essay fixtures, unit tests, and GitHub Actions CI for wheel build/install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls and formal vault patch apply execution are not present yet. Generated `knowledge-vault/` trial output is ignored. `目录结构.md` describes the intended target structure, not the fully materialized repository.
+The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence with provider-free local trial scope context, an application-layer patch review workflow, candidate Markdown export with explicit preview/source-of-truth boundaries, patch review reports with pending decision metadata and non-binding decision prompts, review package storage adapters, a deterministic blog draft workflow with review/scope frontmatter and supporting concept inventory, durable blog draft package persistence, artifact schema versioning, a local trial CLI with packaged `local-trial-fixture` assets, feedback reports and machine-readable outcome JSON artifacts that separate `trial_pipeline_status` from `product_owner_verdict`, explicit local trial quality-scope limits, and feedback capture fields, minimal Python packaging metadata with a `diamonddust` console script, formal vault conflict preflight checks, formal apply dry-run plans, a checked-in local trial fixture pair, user-facing local trial guides, a Gate 7 release readiness harness, five sample essay fixtures, unit tests, and GitHub Actions CI for wheel build/install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls and formal vault patch apply execution are not present yet. Generated `knowledge-vault/` trial output is ignored. `目录结构.md` describes the intended target structure, not the fully materialized repository.
 
 ## Source-of-Truth Documents
 
@@ -233,9 +233,15 @@ AI suggestions artifact semantics review:
 - decision: pass with follow-up
 - tests: 128 unit tests passed, compile check passed, diff check passed, non-repo-root fixture smoke passed
 
+Patch review report semantics review:
+
+- `docs/reviews/milestone-reviews/2026-05-15-patch-review-report-semantics.md`
+- decision: pass with follow-up
+- tests: 130 unit tests passed, compile check passed, diff check passed, non-repo-root fixture smoke passed
+
 ## Immediate Next Development Path
 
-Gate 7 readiness and the current one-command local trial fixture path are complete for the current skeleton. Trial runs now produce a human-first Markdown report and machine-readable JSON outcome under `_ai_reports/local-trials/`, AI run logs that explicitly mark provider-free fixture scope under `_ai_runs/`, and `_ai_suggestions/` preview artifacts with clearer preview/review/source-of-truth boundaries.
+Gate 7 readiness and the current one-command local trial fixture path are complete for the current skeleton. Trial runs now produce a human-first Markdown report and machine-readable JSON outcome under `_ai_reports/local-trials/`, AI run logs that explicitly mark provider-free fixture scope under `_ai_runs/`, `_ai_suggestions/` preview artifacts with clearer preview/review/source-of-truth boundaries, and patch review reports with pending decision metadata that do not record formal acceptance.
 
 Expected next product implementation focus:
 

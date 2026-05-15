@@ -26,6 +26,7 @@ from diamonddust.storage.candidate_markdown import (
 )
 from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 from diamonddust.storage.review_report import (
+    PatchReviewReportContext,
     PatchReviewReport,
     render_patch_review_report,
 )
@@ -101,10 +102,15 @@ def write_review_package(
     *,
     vault_root: str | Path,
     candidate_context: CandidateMarkdownExportContext | None = None,
+    review_report_context: PatchReviewReportContext | None = None,
 ) -> ReviewPackage:
     patch_artifact = render_patch_json_artifact(patch)
     candidate_export = _candidate_export_for(patch, context=candidate_context)
-    review_report = render_patch_review_report(patch, candidate_export=candidate_export)
+    review_report = render_patch_review_report(
+        patch,
+        candidate_export=candidate_export,
+        context=review_report_context,
+    )
     root = Path(vault_root)
     written_paths: list[str] = []
 

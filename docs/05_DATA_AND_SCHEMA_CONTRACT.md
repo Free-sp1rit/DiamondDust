@@ -353,9 +353,12 @@ Rules:
 
 - Review reports must include patch diff summaries, risks, rollback steps, and review boundaries.
 - Review reports should link candidate Markdown notes when candidate notes exist.
-- Review reports must include `artifact_schema_version`.
+- Review reports must include `artifact_type: patch_review_report` and `artifact_schema_version`.
 - Review reports must mark `formal_write: false`.
+- Review reports must mark `patch_acceptance: false` and `decision_status: pending` until a separate patch decision artifact exists.
+- Review reports should include suggested review order, preview-level rollback notes, and a review decision prompt that does not record formal acceptance.
 - Review reports must not mark patches as accepted or rejected.
+- Local trial review reports may include `trial_id` and `review_scope: provider_free_fixture` plus fixture-specific risks for real LLM quality and parser source-span accuracy.
 - Formal writes still require a validated patch and explicit user acceptance.
 
 ## Review Package Persistence

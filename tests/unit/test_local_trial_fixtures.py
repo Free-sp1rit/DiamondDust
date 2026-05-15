@@ -138,6 +138,18 @@ class LocalTrialFixtureTests(unittest.TestCase):
             self.assertIn("## Candidate Preview Boundary", manifest)
             self.assertIn("## Patch Operation Source of Truth", manifest)
             self.assertIn("## Fixture SourceRef Scope", manifest)
+            patch_review = (
+                vault_root
+                / "_ai_reports/patch-reviews/patch_raw_essay_local_trial_fixture_ab12cd_c2043bdc1b02.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("artifact_type: patch_review_report", patch_review)
+            self.assertIn('trial_id: "trial_fixture_ab12cd"', patch_review)
+            self.assertIn('review_scope: "provider_free_fixture"', patch_review)
+            self.assertIn("patch_acceptance: false", patch_review)
+            self.assertIn('decision_status: "pending"', patch_review)
+            self.assertIn("Candidate notes are fixture-driven previews", patch_review)
+            self.assertIn("## Suggested Review Order", patch_review)
+            self.assertIn("## Review Decision Prompt", patch_review)
             draft = (
                 vault_root
                 / "_ai_suggestions/blog-drafts/draft_trial_fixture_ab12cd/draft.md"

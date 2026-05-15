@@ -361,3 +361,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 128 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with `_ai_suggestions/` semantic updates.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Revisit Claim Inventory naming only if supporting concept entries prove confusing in product-owner feedback.
+
+## 2026-05-15 — Patch Review Report Semantics Completed
+
+- Scope: Applied accepted `_ai_reports/patch-reviews/` module audit feedback to patch review reports.
+- Outcome: Patch review reports now include YAML frontmatter with pending decision metadata, local trial review scope context, expanded risks, suggested review order, preview-level rollback note, and a non-binding Review Decision Prompt.
+- Review: `docs/reviews/milestone-reviews/2026-05-15-patch-review-report-semantics.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial artifact hardening; improves patch review semantics without provider calls, formal vault writes, real patch decision artifacts, accept/reject recording, publication, or scoring.
+- Validation: 130 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with patch review report semantic updates.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Design a separate patch decision artifact before formal apply execution.

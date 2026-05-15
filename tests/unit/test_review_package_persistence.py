@@ -11,6 +11,7 @@ from diamonddust.storage import (
     AI_PATCH_REVIEW_REPORTS_DIR,
     AI_PATCH_SUGGESTIONS_DIR,
     CandidateMarkdownExportContext,
+    PatchReviewReportContext,
     ReviewPackageError,
     render_patch_json_artifact,
     write_review_package,
@@ -87,6 +88,8 @@ class ReviewPackagePersistenceTests(unittest.TestCase):
             self.assertIn("## Candidate Preview Boundary", manifest_content)
             self.assertIn("## Patch Operation Source of Truth", manifest_content)
             self.assertNotIn("## Fixture SourceRef Scope", manifest_content)
+            self.assertIn("artifact_type: patch_review_report", package.review_report.content)
+            self.assertIn("## Review Decision Prompt", package.review_report.content)
 
     def test_review_package_can_render_fixture_source_ref_scope(self) -> None:
         patch = _valid_patch()
@@ -106,6 +109,29 @@ class ReviewPackagePersistenceTests(unittest.TestCase):
 
         self.assertIn("## Fixture SourceRef Scope", manifest_content)
         self.assertIn("fixture-level source references", manifest_content)
+
+    def test_review_package_can_render_fixture_review_report_scope(self) -> None:
+        patch = _valid_patch()
+        with TemporaryDirectory() as tmp:
+            vault_root = Path(tmp)
+
+            package = write_review_package(
+                patch,
+                vault_root=vault_root,
+                review_report_context=PatchReviewReportContext(
+                    trial_id="trial_package_ab12cd",
+                    review_scope="provider_free_fixture",
+                    fixture_driven=True,
+                ),
+            )
+
+            report_content = (vault_root / package.review_report.relative_path).read_text(
+                encoding="utf-8"
+            )
+
+        self.assertIn('trial_id: "trial_package_ab12cd"', report_content)
+        self.assertIn('review_scope: "provider_free_fixture"', report_content)
+        self.assertIn("Candidate notes are fixture-driven previews", report_content)
 
     def test_package_report_links_written_candidate_note_paths(self) -> None:
         patch = _valid_patch()
