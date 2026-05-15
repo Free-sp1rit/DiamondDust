@@ -62,6 +62,7 @@ class BlogQualityReportArtifact:
     unsupported_claim_count: int
     formal_write_allowed: bool
     publication_ready: bool
+    requires_user_review: bool
 
     def __post_init__(self) -> None:
         _require_non_empty("report_id", self.report_id)
@@ -78,6 +79,8 @@ class BlogQualityReportArtifact:
             raise BlogDraftPersistenceError("quality reports must not allow formal writes")
         if self.publication_ready is not False:
             raise BlogDraftPersistenceError("quality reports must not be publication ready")
+        if self.requires_user_review is not True:
+            raise BlogDraftPersistenceError("quality reports require user review")
 
 
 @dataclass(frozen=True)
@@ -115,13 +118,34 @@ class BlogDraftArtifactContext:
         )
 
 
+@dataclass(frozen=True)
+class BlogQualityReportContext:
+    trial_id: str | None = None
+    report_scope: str | None = None
+    real_ai_generation_validated: bool | None = None
+    product_owner_verdict: str | None = None
+    created_at: str | None = None
+    fixture_driven: bool = False
+
+    def __post_init__(self) -> None:
+        _require_optional_str("trial_id", self.trial_id)
+        _require_optional_str("report_scope", self.report_scope)
+        _require_optional_bool(
+            "real_ai_generation_validated",
+            self.real_ai_generation_validated,
+        )
+        _require_optional_str("product_owner_verdict", self.product_owner_verdict)
+        _require_optional_str("created_at", self.created_at)
+        _require_bool("fixture_driven", self.fixture_driven)
+
+
 def render_blog_draft_markdown(
     package: BlogDraftPackage,
     *,
     context: BlogDraftArtifactContext | None = None,
 ) -> BlogDraftMarkdownArtifact:
     _validate_package_ids(package)
-    _require_optional_context(context)
+    _require_optional_draft_context(context)
     draft = package.draft
     relative_path = f"{AI_BLOG_DRAFTS_DIR}/{draft.id}/draft.md"
     content = "\n".join(
@@ -162,21 +186,26 @@ def render_blog_draft_markdown(
 
 def render_blog_quality_report(
     package: BlogDraftPackage,
+    *,
+    context: BlogQualityReportContext | None = None,
 ) -> BlogQualityReportArtifact:
     _validate_package_ids(package)
+    _require_optional_quality_context(context)
     report = package.quality_report
     relative_path = f"{AI_BLOG_QUALITY_REPORTS_DIR}/{package.draft.id}.md"
-    content = _quality_report_content(package)
+    content = _quality_report_content(package, context=context)
+    risks = _quality_risks(report.risks, context)
     return BlogQualityReportArtifact(
         report_id=report.id,
         draft_id=package.draft.id,
         relative_path=relative_path,
         content=content,
         validation_status=report.validation_status.value,
-        risk_count=len(report.risks),
+        risk_count=len(risks),
         unsupported_claim_count=len(report.unsupported_claims),
         formal_write_allowed=False,
         publication_ready=False,
+        requires_user_review=True,
     )
 
 
@@ -185,9 +214,13 @@ def write_blog_draft_package(
     *,
     vault_root: str | Path,
     context: BlogDraftArtifactContext | None = None,
+    quality_context: BlogQualityReportContext | None = None,
 ) -> BlogDraftPackageExport:
     draft_artifact = render_blog_draft_markdown(package, context=context)
-    quality_report_artifact = render_blog_quality_report(package)
+    quality_report_artifact = render_blog_quality_report(
+        package,
+        context=quality_context,
+    )
     root = Path(vault_root)
     written_paths: list[str] = []
 
@@ -207,12 +240,29 @@ def write_blog_draft_package(
     )
 
 
-def _quality_report_content(package: BlogDraftPackage) -> str:
+def _quality_report_content(
+    package: BlogDraftPackage,
+    *,
+    context: BlogQualityReportContext | None,
+) -> str:
     report = package.quality_report
+    quality_status = report.validation_status.value
     lines = [
-        "# Blog Quality Report",
+        "---",
+        "artifact_type: blog_quality_report",
+        f"artifact_schema_version: {_json_string(ARTIFACT_SCHEMA_VERSION)}",
+        f"draft_id: {_json_string(package.draft.id)}",
+        f"quality_report_id: {_json_string(report.id)}",
+        *_quality_context_frontmatter_before_boundary(context),
+        "formal_write: false",
+        "publication_ready: false",
+        "requires_user_review: true",
+        *_quality_context_frontmatter_after_boundary(context),
+        f"quality_status: {_json_string(quality_status)}",
+        *_quality_context_frontmatter_verdict(context),
+        "---",
         "",
-        f"Artifact schema version: `{ARTIFACT_SCHEMA_VERSION}`",
+        "# Blog Quality Report",
         "",
         f"Draft: `{package.draft.id}`",
         f"Report: `{report.id}`",
@@ -220,17 +270,19 @@ def _quality_report_content(package: BlogDraftPackage) -> str:
         "## Review Boundary",
         "- formal_write: false",
         "- publication_ready: false",
+        "- requires_user_review: true",
         "- publishing requires separate user approval",
         "",
         "## Summary",
-        f"- status: {report.validation_status.value}",
-        f"- {report.summary}",
+        f"- quality_status: {quality_status}",
+        *_product_owner_verdict_summary(context),
+        f"- quality_summary: {_quality_summary(report.summary, quality_status, context)}",
         "",
         "## Risks",
-        *_list_or_none(report.risks),
+        *_list_or_none(_quality_risks(report.risks, context)),
         "",
         "## Unsupported Claims",
-        *_list_or_none(report.unsupported_claims),
+        *_unsupported_claim_lines(report.unsupported_claims, context),
         "",
         "## Evidence Coverage",
         *_coverage_lines(report.evidence_coverage),
@@ -239,9 +291,61 @@ def _quality_report_content(package: BlogDraftPackage) -> str:
         *_claim_inventory_lines(package.draft.claim_inventory),
         "",
         "## Suggested Actions",
-        *_list_or_none(report.suggested_actions),
+        *_list_or_none(_suggested_actions(report.suggested_actions, context)),
     ]
     return "\n".join(lines).strip() + "\n"
+
+
+def _quality_summary(
+    summary: str,
+    quality_status: str,
+    context: BlogQualityReportContext | None,
+) -> str:
+    prefix = f"{quality_status}: "
+    summary_text = summary.removeprefix(prefix)
+    if context is not None and context.fixture_driven:
+        return f"{summary_text} in this fixture-driven local trial"
+    return summary_text
+
+
+def _quality_risks(
+    risks: tuple[str, ...],
+    context: BlogQualityReportContext | None,
+) -> tuple[str, ...]:
+    if context is None or not context.fixture_driven:
+        return risks
+    fixture_risks = (
+        "This report validates provider-free draft artifact structure, not real AI generation quality.",
+        "Unsupported claim detection is scoped to this fixture-driven trial.",
+        "Source references are fixture-level and do not validate real parser source-span accuracy.",
+        "Publication requires separate user approval and editorial review.",
+    )
+    return risks + fixture_risks
+
+
+def _unsupported_claim_lines(
+    unsupported_claims: tuple[str, ...],
+    context: BlogQualityReportContext | None,
+) -> list[str]:
+    if unsupported_claims:
+        return _list_or_none(unsupported_claims)
+    if context is not None and context.fixture_driven:
+        return ["- none detected in this fixture-driven local trial"]
+    return ["- none"]
+
+
+def _suggested_actions(
+    suggested_actions: tuple[str, ...],
+    context: BlogQualityReportContext | None,
+) -> tuple[str, ...]:
+    if context is None or not context.fixture_driven:
+        return suggested_actions
+    return (
+        "Review draft tone and structure before publication.",
+        "Verify whether the draft preserves the intended product-owner explanation style.",
+        "Confirm that source unit visibility is sufficient for review.",
+        "Do not publish without a separate publication approval flow.",
+    )
 
 
 def _coverage_lines(coverage: tuple[EvidenceCoverageItem, ...]) -> list[str]:
@@ -349,6 +453,53 @@ def _context_frontmatter(context: BlogDraftArtifactContext | None) -> list[str]:
     return lines
 
 
+def _quality_context_frontmatter_before_boundary(
+    context: BlogQualityReportContext | None,
+) -> list[str]:
+    if context is None:
+        return []
+    lines: list[str] = []
+    if context.trial_id is not None:
+        lines.append(f"trial_id: {_json_string(context.trial_id)}")
+    if context.report_scope is not None:
+        lines.append(f"report_scope: {_json_string(context.report_scope)}")
+    return lines
+
+
+def _quality_context_frontmatter_after_boundary(
+    context: BlogQualityReportContext | None,
+) -> list[str]:
+    if context is None or context.real_ai_generation_validated is None:
+        return []
+    return [
+        "real_ai_generation_validated: "
+        f"{_bool_text(context.real_ai_generation_validated)}"
+    ]
+
+
+def _quality_context_frontmatter_verdict(
+    context: BlogQualityReportContext | None,
+) -> list[str]:
+    if context is None:
+        return []
+    lines: list[str] = []
+    if context.product_owner_verdict is not None:
+        lines.append(
+            f"product_owner_verdict: {_json_string(context.product_owner_verdict)}"
+        )
+    if context.created_at is not None:
+        lines.append(f"created_at: {_json_string(context.created_at)}")
+    return lines
+
+
+def _product_owner_verdict_summary(
+    context: BlogQualityReportContext | None,
+) -> list[str]:
+    if context is None or context.product_owner_verdict is None:
+        return []
+    return [f"- product_owner_verdict: {context.product_owner_verdict}"]
+
+
 def _bool_text(value: bool) -> str:
     return "true" if value else "false"
 
@@ -377,9 +528,18 @@ def _require_optional_bool(name: str, value: bool | None) -> None:
         _require_bool(name, value)
 
 
-def _require_optional_context(context: BlogDraftArtifactContext | None) -> None:
+def _require_optional_draft_context(context: BlogDraftArtifactContext | None) -> None:
     if context is not None and not isinstance(context, BlogDraftArtifactContext):
         raise BlogDraftPersistenceError("context must be a BlogDraftArtifactContext")
+
+
+def _require_optional_quality_context(
+    context: BlogQualityReportContext | None,
+) -> None:
+    if context is not None and not isinstance(context, BlogQualityReportContext):
+        raise BlogDraftPersistenceError(
+            "context must be a BlogQualityReportContext"
+        )
 
 
 def _require_non_negative_int(name: str, value: object) -> None:

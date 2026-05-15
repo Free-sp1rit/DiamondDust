@@ -372,3 +372,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 130 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, non-repo-root local trial fixture smoke passed, and the local `knowledge-vault/` trial artifacts were regenerated with patch review report semantic updates.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Design a separate patch decision artifact before formal apply execution.
+
+## 2026-05-16 — Blog Quality Report Semantics Completed
+
+- Scope: Applied accepted `_ai_reports/blog-quality/` module audit feedback to blog quality reports.
+- Outcome: Blog quality reports now include YAML frontmatter, `quality_status` summary wording, `requires_user_review: true`, and provider-free fixture context for local trials. Fixture-driven reports now state real AI generation, unsupported-claim detection, source-span accuracy, and publication approval limits.
+- Review: `docs/reviews/milestone-reviews/2026-05-16-blog-quality-report-semantics.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 local trial artifact hardening; improves blog quality report semantics without provider calls, formal vault writes, publication decision artifacts, user acceptance, or scoring.
+- Validation: 131 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and local trial fixture smoke passed.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Calibrate publication/editorial quality criteria only after real product-owner trial feedback.

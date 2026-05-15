@@ -43,6 +43,10 @@ class LocalTrialUserFeedbackGuideTests(unittest.TestCase):
         self.assertIn("requires_user_review: true", guide)
         self.assertIn("draft_scope: \"provider_free_fixture\"", guide)
         self.assertIn("real_ai_generation_validated: false", guide)
+        self.assertIn("quality_status", guide)
+        self.assertIn("product_owner_verdict: \"pending\"", guide)
+        self.assertIn("report_scope: \"provider_free_fixture\"", guide)
+        self.assertIn("publication_ready: false", guide)
         self.assertIn("patch_acceptance: false", guide)
         self.assertIn("formal_write_approval: false", guide)
 
