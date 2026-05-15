@@ -36,7 +36,9 @@ class LocalTrialFeedbackReportTests(unittest.TestCase):
         self.assertIn("artifact_schema_version: \"0.1.0\"", report.content)
         self.assertIn("trial_pipeline_status: \"passed\"", report.content)
         self.assertIn("product_owner_verdict: \"pending\"", report.content)
+        self.assertIn("- pipeline_summary: local trial trial_report wrote 1 artifacts", report.content)
         self.assertNotIn("\nstatus: \"passed\"", report.content)
+        self.assertNotIn("- passed: local trial", report.content)
         self.assertNotIn("score", report.content.lower())
         self.assertIn("- formal_write_performed: false", report.content)
         self.assertIn("## Feedback Capture", report.content)
@@ -91,7 +93,32 @@ class LocalTrialFeedbackReportTests(unittest.TestCase):
         self.assertEqual(outcome.relative_path, "_ai_reports/local-trials/trial_report.json")
         self.assertEqual(payload["artifact_type"], "local_trial_outcome")
         self.assertEqual(payload["artifact_schema_version"], "0.1.0")
-        self.assertEqual(payload["status"], "passed")
+        self.assertEqual(payload["trial_pipeline_status"], "passed")
+        self.assertTrue(payload["trial_pipeline_passed"])
+        self.assertEqual(payload["product_owner_verdict"], "pending")
+        self.assertEqual(payload["pipeline_summary"], "local trial trial_report wrote 1 artifacts")
+        self.assertEqual(payload["stage_label"], "local_trial_artifact_pipeline")
+        self.assertEqual(payload["stage_scope"], "provider_free_mvp_skeleton")
+        self.assertEqual(
+            payload["not_validated"],
+            [
+                "real_llm_extraction_quality",
+                "formal_vault_apply",
+                "user_acceptance",
+                "blog_publication_quality",
+            ],
+        )
+        self.assertEqual(
+            payload["quality_scope"],
+            {
+                "fixture_driven_trial": True,
+                "real_llm_quality_validated": False,
+                "unsupported_claim_detection_validated": False,
+            },
+        )
+        self.assertNotIn("passed", payload)
+        self.assertNotIn("status", payload)
+        self.assertNotIn("summary", payload)
         self.assertEqual(payload["paths"]["review_start"], "_ai_reports/local-trials/trial_report.md")
         self.assertEqual(payload["paths"]["json_outcome"], outcome.relative_path)
         self.assertEqual(payload["artifact_count"], 3)

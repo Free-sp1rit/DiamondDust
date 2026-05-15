@@ -44,6 +44,8 @@ knowledge-vault/_ai_reports/local-trials/trial_fixture_ab12cd.json
 
 Use the Markdown report for human review and the JSON outcome for lightweight comparison, aggregation, or follow-up issue creation.
 
+The Markdown report and JSON outcome should agree on `trial_pipeline_status` and `product_owner_verdict`. The JSON outcome also records stage scope and quality-scope limits so automation does not treat a fixture-driven provider-free run as real LLM quality validation.
+
 Expected artifact families:
 
 - `_ai_reports/local-trials/`
@@ -80,6 +82,9 @@ After running the fixture trial, these should remain true:
 - the report says `product_owner_verdict: "pending"` before product-owner review
 - the report says `formal_write: false`
 - the report says `provider_called: false`
+- the JSON outcome says `trial_pipeline_status: "passed"` or `trial_pipeline_status: "failed"`
+- the JSON outcome says `product_owner_verdict: "pending"` before product-owner review
+- the JSON outcome lists `real_llm_extraction_quality`, `formal_vault_apply`, `user_acceptance`, and `blog_publication_quality` under `not_validated`
 - the report says `patch_acceptance: false`
 - the report says `formal_write_approval: false`
 - the JSON outcome has `boundaries.formal_write_performed` set to `false`

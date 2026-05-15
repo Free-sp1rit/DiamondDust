@@ -15,8 +15,7 @@ The product-owner trial feedback was evaluated against long-term project maintai
 - This is a report artifact wording and usability change, not a formal schema or runtime AI autonomy change.
 - The report title should remain `Local Trial Feedback Report`.
 - The report must continue to say that local trial output is not formal patch acceptance.
-- The current JSON outcome can remain unchanged in this task unless later feedback asks for a matching JSON schema change.
-- Changing machine-readable outcome JSON status keys should be handled as a separate artifact compatibility decision.
+- The current JSON outcome was unchanged in this task; a later same-branch follow-up evaluates matching JSON semantics separately.
 
 ## Non-goals
 
@@ -73,7 +72,7 @@ Post-Gate 7 local trial usability hardening. This touches a persisted report art
 
 - Existing generated reports retain the old wording until regenerated.
 - Future consumers might still look for `status` in Markdown frontmatter if they parse reports.
-- JSON outcome still contains `status` until a separate artifact compatibility decision is made.
+- JSON outcome semantics are addressed by the follow-up local trial outcome semantic consistency task.
 - Feedback capture fields may need another revision after real product-owner feedback.
 
 ## Escalation Needed

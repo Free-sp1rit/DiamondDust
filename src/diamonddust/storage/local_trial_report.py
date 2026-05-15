@@ -189,7 +189,7 @@ def _report_content(report_input: LocalTrialFeedbackReportInput, *, created_at: 
         "## Summary",
         f"- trial_pipeline_status: {status}",
         "- product_owner_verdict: pending",
-        f"- {report_input.summary}",
+        f"- pipeline_summary: {_pipeline_summary(report_input.summary)}",
         f"- source_input_id: {_inline_or_none(report_input.source_input_id)}",
         f"- patch_id: {_inline_or_none(report_input.patch_id)}",
         f"- draft_id: {_inline_or_none(report_input.draft_id)}",
@@ -250,7 +250,7 @@ def _outcome_payload(
     relative_path: str,
     markdown_report_path: str,
 ) -> dict[str, object]:
-    status = "passed" if report_input.passed else "failed"
+    trial_pipeline_status = "passed" if report_input.passed else "failed"
     return {
         "artifact_type": "local_trial_outcome",
         "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
@@ -269,21 +269,42 @@ def _outcome_payload(
             "source": markdown_report_path,
             "status": "pending_user_input",
         },
-        "passed": report_input.passed,
+        "not_validated": [
+            "real_llm_extraction_quality",
+            "formal_vault_apply",
+            "user_acceptance",
+            "blog_publication_quality",
+        ],
         "patch_id": report_input.patch_id,
+        "pipeline_summary": _pipeline_summary(report_input.summary),
         "paths": {
             "json_outcome": relative_path,
             "markdown_report": markdown_report_path,
             "review_start": markdown_report_path,
         },
+        "product_owner_verdict": "pending",
+        "quality_scope": {
+            "fixture_driven_trial": True,
+            "real_llm_quality_validated": False,
+            "unsupported_claim_detection_validated": False,
+        },
         "source_input_id": report_input.source_input_id,
-        "status": status,
-        "summary": report_input.summary,
+        "stage_label": "local_trial_artifact_pipeline",
+        "stage_scope": "provider_free_mvp_skeleton",
         "trial_id": report_input.trial_id,
+        "trial_pipeline_passed": report_input.passed,
+        "trial_pipeline_status": trial_pipeline_status,
         "unsupported_claim_count": len(report_input.unsupported_claims),
         "unsupported_claims": list(report_input.unsupported_claims),
         "written_paths": list(report_input.written_paths),
     }
+
+
+def _pipeline_summary(summary: str) -> str:
+    for prefix in ("passed: ", "failed: "):
+        if summary.startswith(prefix):
+            return summary.removeprefix(prefix)
+    return summary
 
 
 def _artifact_reading_order(written_paths: tuple[str, ...]) -> list[str]:

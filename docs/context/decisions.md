@@ -262,19 +262,19 @@ Record durable technical and governance decisions here.
 
 ### 2026-05-15 — Separate local trial pipeline status from product-owner verdict
 
-- Decision: Local trial feedback report frontmatter uses `trial_pipeline_status` for run success and `product_owner_verdict: pending` for product-owner acceptance state.
+- Decision: Local trial feedback reports and local trial outcome JSON use `trial_pipeline_status` for run success and `product_owner_verdict: pending` for product-owner acceptance state.
 - Reason: A passed provider-free pipeline run must not imply product-owner acceptance, full MVP readiness, real AI extraction quality, formal patch acceptance, or publication approval.
-- Alternatives: Keep `status: passed`; add numeric scoring immediately; treat the JSON outcome as the only structured status source.
-- Risks: Older generated reports still contain `status` until regenerated, and future tooling may need compatibility handling if it parses report frontmatter.
+- Alternatives: Keep ambiguous `status`/`passed` fields; add numeric scoring immediately; treat Markdown and JSON trial artifacts as semantically independent.
+- Risks: Older generated reports and JSON outcomes retain ambiguous fields until regenerated, and future tooling may need compatibility handling if it parses older artifacts.
 - Follow-up: Keep feedback capture as structured free text until the rubric is calibrated by real product-owner trial feedback.
 
-### 2026-05-15 — Evaluate trial feedback before changing project behavior
+### 2026-05-15 — Apply temporary trial feedback evaluation for outcome semantics
 
-- Decision: Trial feedback should be evaluated against long-term project development and maintainability before being accepted into code, docs, or artifact behavior.
-- Reason: Product-owner trial feedback is high-value evidence, but it should not automatically override architecture, schema compatibility, safety boundaries, or future maintainability.
-- Alternatives: Automatically implement all trial feedback; reject trial feedback unless it is already in formal docs.
-- Risks: Evaluation adds small process overhead and requires clearly explaining when feedback is deferred.
-- Follow-up: Keep this as an operating practice; update governance docs only if the product owner wants it made a formal rule.
+- Decision: For the current local trial feedback task only, product-owner feedback was evaluated against artifact semantics, maintainability, architecture boundaries, and review safety before changing code and docs.
+- Reason: The product owner explicitly made this a temporary task-local principle, not a long-term governance rule.
+- Alternatives: Automatically implement all trial feedback; write the temporary principle into governance docs without separate approval.
+- Risks: Similar future tasks need explicit instruction or a separate governance approval if this behavior should become permanent.
+- Follow-up: Do not treat this as a standing governance policy unless separately approved.
 
 ## Template
 
