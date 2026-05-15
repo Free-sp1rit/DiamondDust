@@ -66,7 +66,7 @@ class BlogDraftPersistenceTests(unittest.TestCase):
 
         self.assertEqual(artifact.report_id, package.quality_report.id)
         self.assertEqual(artifact.draft_id, package.draft.id)
-        self.assertEqual(artifact.validation_status, "warning")
+        self.assertEqual(artifact.quality_status, "warning")
         self.assertEqual(artifact.unsupported_claim_count, 1)
         self.assertEqual(
             artifact.relative_path,

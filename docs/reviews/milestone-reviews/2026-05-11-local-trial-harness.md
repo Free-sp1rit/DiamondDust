@@ -22,7 +22,7 @@ The workflow now supports:
 - structured extraction validation;
 - AI run log persistence;
 - review package persistence;
-- simulated accepted review handoff for draft generation;
+- non-persisted accepted review handoff for draft preview generation;
 - blog draft package persistence;
 - CLI output of written artifact paths and errors.
 

@@ -10,8 +10,20 @@ from diamonddust.ai import AIRunMetadata, EXTRACTION_TASK, validate_extraction_o
 from diamonddust.application.blog_draft import BlogMode, generate_blog_draft_from_review
 from diamonddust.application.patch_review import (
     PatchReviewDecision,
+    PatchReviewResult,
     generate_patch_from_extraction,
     review_patch,
+)
+from diamonddust.domain import KnowledgePatch
+
+
+LOCAL_TRIAL_RUN_SCOPE = "provider_free_fixture"
+LOCAL_TRIAL_METRICS_SCOPE_REASON = "provider_free_local_trial"
+LOCAL_TRIAL_NOT_VALIDATED = (
+    "real_llm_extraction_quality",
+    "source_span_accuracy_from_real_parser",
+    "provider_latency",
+    "provider_cost",
 )
 
 
@@ -60,7 +72,7 @@ class LocalTrialResult:
     review_package_written: bool
     blog_draft_package_written: bool
     feedback_report_written: bool
-    simulated_patch_acceptance: bool
+    draft_generation_handoff_completed: bool
     formal_write_performed: bool
     provider_called: bool
     written_paths: tuple[str, ...]
@@ -80,7 +92,10 @@ class LocalTrialResult:
         _require_bool("review_package_written", self.review_package_written)
         _require_bool("blog_draft_package_written", self.blog_draft_package_written)
         _require_bool("feedback_report_written", self.feedback_report_written)
-        _require_bool("simulated_patch_acceptance", self.simulated_patch_acceptance)
+        _require_bool(
+            "draft_generation_handoff_completed",
+            self.draft_generation_handoff_completed,
+        )
         if self.formal_write_performed is not False:
             raise LocalTrialError("local trials must not perform formal writes")
         if self.provider_called is not False:
@@ -109,7 +124,7 @@ def run_local_trial(
     ai_run_log_written = False
     review_package_written = False
     blog_draft_package_written = False
-    simulated_patch_acceptance = False
+    draft_generation_handoff_completed = False
     patch_id: str | None = None
     draft_id: str | None = None
     unsupported_claims: tuple[str, ...] = ()
@@ -132,7 +147,7 @@ def run_local_trial(
             ai_run_log_written=ai_run_log_written,
             review_package_written=review_package_written,
             blog_draft_package_written=blog_draft_package_written,
-            simulated_patch_acceptance=simulated_patch_acceptance,
+            draft_generation_handoff_completed=draft_generation_handoff_completed,
             written_paths=written_paths,
             patch_id=patch_id,
             draft_id=draft_id,
@@ -178,7 +193,7 @@ def run_local_trial(
             ai_run_log_written=ai_run_log_written,
             review_package_written=review_package_written,
             blog_draft_package_written=blog_draft_package_written,
-            simulated_patch_acceptance=simulated_patch_acceptance,
+            draft_generation_handoff_completed=draft_generation_handoff_completed,
             written_paths=written_paths,
             patch_id=patch_id,
             draft_id=draft_id,
@@ -205,7 +220,7 @@ def run_local_trial(
             ai_run_log_written=ai_run_log_written,
             review_package_written=review_package_written,
             blog_draft_package_written=blog_draft_package_written,
-            simulated_patch_acceptance=simulated_patch_acceptance,
+            draft_generation_handoff_completed=draft_generation_handoff_completed,
             written_paths=written_paths,
             patch_id=patch_id,
             draft_id=draft_id,
@@ -221,6 +236,9 @@ def run_local_trial(
             write_blog_draft_package,
         )
         from diamonddust.storage.candidate_markdown import CandidateMarkdownExportContext
+        from diamonddust.storage.local_trial_report import (
+            LOCAL_TRIAL_PRODUCT_OWNER_VERDICT,
+        )
         from diamonddust.storage.review_report import PatchReviewReportContext
         from diamonddust.storage.review_package import write_review_package
 
@@ -237,15 +255,15 @@ def run_local_trial(
             ),
             review_report_context=PatchReviewReportContext(
                 trial_id=spec.trial_id,
-                review_scope="provider_free_fixture",
+                review_scope=LOCAL_TRIAL_RUN_SCOPE,
                 fixture_driven=True,
             ),
         )
         written_paths.extend(review_package.written_paths)
         review_package_written = True
 
-        review_result = review_patch(patch, PatchReviewDecision.ACCEPTED)
-        simulated_patch_acceptance = True
+        review_result = _draft_generation_handoff(patch)
+        draft_generation_handoff_completed = True
         draft_package = generate_blog_draft_from_review(
             review_result,
             title=spec.blog_title,
@@ -259,14 +277,14 @@ def run_local_trial(
             draft_package,
             vault_root=vault_path,
             context=BlogDraftArtifactContext(
-                draft_scope="provider_free_fixture",
+                draft_scope=LOCAL_TRIAL_RUN_SCOPE,
                 real_ai_generation_validated=False,
             ),
             quality_context=BlogQualityReportContext(
                 trial_id=spec.trial_id,
-                report_scope="provider_free_fixture",
+                report_scope=LOCAL_TRIAL_RUN_SCOPE,
                 real_ai_generation_validated=False,
-                product_owner_verdict="pending",
+                product_owner_verdict=LOCAL_TRIAL_PRODUCT_OWNER_VERDICT,
                 created_at=created_at,
                 fixture_driven=True,
             ),
@@ -289,7 +307,7 @@ def run_local_trial(
         ai_run_log_written=ai_run_log_written,
         review_package_written=review_package_written,
         blog_draft_package_written=blog_draft_package_written,
-        simulated_patch_acceptance=simulated_patch_acceptance,
+        draft_generation_handoff_completed=draft_generation_handoff_completed,
         written_paths=written_paths,
         patch_id=patch_id,
         draft_id=draft_id,
@@ -309,7 +327,7 @@ def _trial_result(
     ai_run_log_written: bool,
     review_package_written: bool,
     blog_draft_package_written: bool,
-    simulated_patch_acceptance: bool,
+    draft_generation_handoff_completed: bool,
     written_paths: list[str],
     patch_id: str | None,
     draft_id: str | None,
@@ -324,7 +342,7 @@ def _trial_result(
         and ai_run_log_written
         and review_package_written
         and blog_draft_package_written
-        and simulated_patch_acceptance
+        and draft_generation_handoff_completed
     )
     result = LocalTrialResult(
         trial_id=spec.trial_id,
@@ -338,7 +356,7 @@ def _trial_result(
         review_package_written=review_package_written,
         blog_draft_package_written=blog_draft_package_written,
         feedback_report_written=False,
-        simulated_patch_acceptance=simulated_patch_acceptance,
+        draft_generation_handoff_completed=draft_generation_handoff_completed,
         formal_write_performed=False,
         provider_called=False,
         written_paths=tuple(written_paths),
@@ -431,26 +449,34 @@ def _summary_for(
     return summary
 
 
+def _draft_generation_handoff(patch: KnowledgePatch) -> PatchReviewResult:
+    """Create a non-persisted review handoff used only to render trial draft previews."""
+    return review_patch(patch, PatchReviewDecision.ACCEPTED)
+
+
 def _local_trial_run_log_context(spec: LocalTrialSpec, *, source_input_id: str | None):
     from diamonddust.storage.ai_run_log import (
         AIRunLogArtifactContext,
         AIRunMetricsScope,
         AIRunOutputArtifact,
     )
-    from diamonddust.storage.local_trial_report import AI_LOCAL_TRIAL_REPORTS_DIR
+    from diamonddust.storage.local_trial_report import (
+        AI_LOCAL_TRIAL_REPORTS_DIR,
+        LOCAL_TRIAL_STAGE_LABEL,
+    )
 
     _require_non_empty("source_input_id", source_input_id)
     return AIRunLogArtifactContext(
         trial_id=spec.trial_id,
-        stage_label="local_trial_artifact_pipeline",
-        run_scope="provider_free_fixture",
+        stage_label=LOCAL_TRIAL_STAGE_LABEL,
+        run_scope=LOCAL_TRIAL_RUN_SCOPE,
         real_provider_call=False,
         fixture_driven=True,
         prompt_used=False,
         metrics_scope=AIRunMetricsScope(
             cost_applicable=False,
             latency_applicable=False,
-            reason="provider_free_local_trial",
+            reason=LOCAL_TRIAL_METRICS_SCOPE_REASON,
         ),
         source_input_id=source_input_id,
         output_artifacts=(
@@ -463,12 +489,7 @@ def _local_trial_run_log_context(spec: LocalTrialSpec, *, source_input_id: str |
                 path=f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{spec.trial_id}.json",
             ),
         ),
-        not_validated=(
-            "real_llm_extraction_quality",
-            "source_span_accuracy_from_real_parser",
-            "provider_latency",
-            "provider_cost",
-        ),
+        not_validated=LOCAL_TRIAL_NOT_VALIDATED,
     )
 
 

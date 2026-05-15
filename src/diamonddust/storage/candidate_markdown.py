@@ -301,7 +301,7 @@ def _manifest_content(manifest: CandidateMarkdownManifest) -> str:
         f"- relation operations: {manifest.relation_count}",
         "",
         "## Risks",
-        *[f"- {risk}" for risk in manifest.risks],
+        *_list_or_none(manifest.risks),
         "",
         "## Review Boundary",
         "- formal_write: false",
@@ -327,6 +327,12 @@ def _manifest_content(manifest: CandidateMarkdownManifest) -> str:
             ]
         )
     return "\n".join(lines).strip() + "\n"
+
+
+def _list_or_none(values: tuple[str, ...]) -> list[str]:
+    if not values:
+        return ["- none"]
+    return [f"- {value}" for value in values]
 
 
 def _safe_output_path(root: Path, relative_path: str) -> Path:

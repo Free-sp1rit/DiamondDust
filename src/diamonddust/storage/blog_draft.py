@@ -57,7 +57,7 @@ class BlogQualityReportArtifact:
     draft_id: str
     relative_path: str
     content: str
-    validation_status: str
+    quality_status: str
     risk_count: int
     unsupported_claim_count: int
     formal_write_allowed: bool
@@ -69,7 +69,7 @@ class BlogQualityReportArtifact:
         _require_non_empty("draft_id", self.draft_id)
         _require_non_empty("relative_path", self.relative_path)
         _require_non_empty("content", self.content)
-        _require_non_empty("validation_status", self.validation_status)
+        _require_non_empty("quality_status", self.quality_status)
         _require_non_negative_int("risk_count", self.risk_count)
         _require_non_negative_int(
             "unsupported_claim_count",
@@ -200,7 +200,7 @@ def render_blog_quality_report(
         draft_id=package.draft.id,
         relative_path=relative_path,
         content=content,
-        validation_status=report.validation_status.value,
+        quality_status=report.validation_status.value,
         risk_count=len(risks),
         unsupported_claim_count=len(report.unsupported_claims),
         formal_write_allowed=False,
