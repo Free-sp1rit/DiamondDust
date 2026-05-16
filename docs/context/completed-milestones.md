@@ -427,3 +427,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 150 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, or persisting real raw provider output.
+
+## 2026-05-16 — Provider Request Builder Completed
+
+- Scope: Implemented the provider-neutral `extract_units` request builder from ingested Markdown essays.
+- Outcome: Application code can now build traceable provider requests containing source identity, source path, content hashes, body line range, frontmatter, body text, and source reference metadata while validating model policy before returning the request.
+- Review: `docs/reviews/milestone-reviews/2026-05-16-provider-request-builder.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness milestone; prepares real provider request construction without approving real provider integration.
+- Validation: 154 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Escalate before rendering provider prompts, choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, or sending essay body text to an external provider.

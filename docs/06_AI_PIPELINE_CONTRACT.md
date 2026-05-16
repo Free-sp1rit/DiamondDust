@@ -45,6 +45,31 @@ Defaults:
 The application provider extraction handoff must validate provider requests
 against model policy before provider execution.
 
+## Provider Request Builder
+
+The `extract_units` provider request builder converts an ingested Markdown essay
+into a provider-neutral request payload before provider execution.
+
+The request payload should preserve:
+
+- `source_input_id`
+- `source_path`
+- `raw_content_hash`
+- `body_content_hash`
+- `body_line_start`
+- `body_line_end`
+- `frontmatter`
+- `body`
+- `source_ref`
+
+Rules:
+
+- Request building is deterministic and provider-neutral.
+- Request building does not call a provider.
+- Request building does not render or tune prompts.
+- Request building must validate model policy before returning a request.
+- Sending request payload body text to a real provider still requires real-provider approval.
+
 ## Provider Adapter Boundary
 
 The Provider Adapter Boundary Skeleton introduces provider-neutral request,
