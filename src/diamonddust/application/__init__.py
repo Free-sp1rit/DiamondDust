@@ -39,6 +39,11 @@ from diamonddust.application.patch_review import (
     target_path_for_unit,
     validate_patch_review_safety,
 )
+from diamonddust.application.provider_extraction import (
+    ProviderExtractionError,
+    ProviderExtractionRun,
+    run_provider_extraction,
+)
 
 __all__ = [
     "BlogDraft",
@@ -63,10 +68,13 @@ __all__ = [
     "PatchReviewDecision",
     "PatchReviewError",
     "PatchReviewResult",
+    "ProviderExtractionError",
+    "ProviderExtractionRun",
     "generate_blog_draft_from_review",
     "generate_patch_from_extraction",
     "inspect_patch_diff",
     "review_patch",
+    "run_provider_extraction",
     "run_local_trial",
     "run_mvp_release_readiness",
     "scan_critical_architecture_violations",

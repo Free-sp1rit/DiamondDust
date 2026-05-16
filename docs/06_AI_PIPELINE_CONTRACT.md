@@ -23,6 +23,31 @@ Every AI task must define:
 - validation rules
 - failure behavior
 
+## Provider Adapter Boundary
+
+The Provider Adapter Boundary Skeleton introduces provider-neutral request,
+response, error, settings, usage, and fake-provider envelopes for the
+`extract_units` task only.
+
+Responsibilities:
+
+- Provider adapters return typed response/error envelopes.
+- Provider adapters do not persist artifacts by default.
+- Application pipelines record run log data from provider envelopes.
+- Storage adapters persist `_ai_runs`, `_ai_suggestions`, and `_ai_reports`.
+- Domain core must not import provider SDKs, HTTP clients, storage adapters, or provider boundary modules.
+- Provider output must pass structured typed validation before becoming domain data.
+- KnowledgePatch construction remains deterministic in the application/domain validation flow.
+
+Skeleton constraints:
+
+- The skeleton must not call a real provider.
+- The skeleton must not read API keys.
+- The skeleton must not add provider SDK dependencies.
+- The skeleton must not persist real raw provider output.
+- The first future real-provider task is limited to `extract_units`.
+- Provider-side tools, relation suggestion, blog draft generation, patch generation, formal apply, patch acceptance, and publication remain disallowed until separately approved.
+
 ## AI Output Boundary
 
 LLM output may produce:

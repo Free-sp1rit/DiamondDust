@@ -4,6 +4,14 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-16 — Keep provider adapters envelope-only in the v0 skeleton
+
+- Decision: Provider Adapter Boundary Skeleton introduces provider-neutral request, response, error, settings, usage, and fake-provider envelopes for `extract_units` only. Provider adapters return typed envelopes and do not persist artifacts by default.
+- Reason: DiamondDust needs a testable boundary for future real-provider extraction without adding SDKs, reading API keys, making network calls, or mixing provider execution with storage/formal vault behavior.
+- Alternatives: Let provider adapters write `_ai_runs` directly; let provider output produce `KnowledgePatch` directly; introduce a real provider SDK immediately.
+- Risks: Future implementation must preserve ownership boundaries: application records run log data, storage persists artifacts, and provider adapters only execute/return envelopes.
+- Follow-up: Escalate before adding provider SDK dependencies, reading API keys, making real network calls, enabling provider-side tools, enabling cost-bearing behavior, or persisting real raw provider output.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
