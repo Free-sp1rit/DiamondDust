@@ -42,12 +42,19 @@ from diamonddust.ai.provider import (
     ProviderResult,
     ProviderUsage,
 )
+from diamonddust.ai.prompt import (
+    EXTRACT_UNITS_PROMPT_VERSION,
+    PromptRenderError,
+    RenderedPrompt,
+    render_extract_units_prompt,
+)
 
 __all__ = [
     "AIValidationStatus",
     "AIRunLog",
     "AIRunMetadata",
     "EXTRACTION_TASK",
+    "EXTRACT_UNITS_PROMPT_VERSION",
     "ExtractionProposal",
     "ExtractionValidationError",
     "ExtractionValidationResult",
@@ -72,12 +79,15 @@ __all__ = [
     "ProviderResponse",
     "ProviderResult",
     "ProviderUsage",
+    "PromptRenderError",
     "RawProviderOutputRetentionMode",
     "RawProviderOutputRetentionPolicy",
     "RetryPolicy",
     "TimeoutPolicy",
+    "RenderedPrompt",
     "compute_ai_output_hash",
     "default_model_policy",
+    "render_extract_units_prompt",
     "validate_provider_request_policy",
     "validate_extraction_output",
 ]

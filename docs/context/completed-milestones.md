@@ -438,3 +438,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 154 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Escalate before rendering provider prompts, choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, or sending essay body text to an external provider.
+
+## 2026-05-16 — Extraction Prompt Renderer Completed
+
+- Scope: Implemented the provider-neutral `extract_units.v1` prompt renderer.
+- Outcome: AI boundary code can now render deterministic prompt packages from provider requests, including source metadata, system prompt, user prompt, output instructions, and a stable prompt hash while validating model policy before rendering.
+- Review: `docs/reviews/milestone-reviews/2026-05-16-extraction-prompt-renderer.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness milestone; prepares provider prompt construction without approving real provider integration.
+- Validation: 159 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, persisting raw provider output, or sending rendered prompt text to an external provider.
