@@ -114,6 +114,7 @@ class AIRunLogArtifactContext:
     prompt_used: bool | None = None
     metrics_scope: AIRunMetricsScope | None = None
     source_input_id: str | None = None
+    prompt_hash: str | None = None
     output_artifacts: tuple[AIRunOutputArtifact, ...] = ()
     not_validated: tuple[str, ...] = ()
     provider_request_id: str | None = None
@@ -135,6 +136,7 @@ class AIRunLogArtifactContext:
                 "metrics_scope must be an AIRunMetricsScope"
             )
         _require_optional_str("source_input_id", self.source_input_id)
+        _require_optional_str("prompt_hash", self.prompt_hash)
         _require_tuple(
             "output_artifacts",
             self.output_artifacts,
@@ -160,6 +162,7 @@ class AIRunLogArtifactContext:
         if self.metrics_scope is not None:
             data["metrics_scope"] = self.metrics_scope.to_mapping()
         _set_optional(data, "source_input_id", self.source_input_id)
+        _set_optional(data, "prompt_hash", self.prompt_hash)
         if self.output_artifacts:
             data["output_artifacts"] = [
                 artifact.to_mapping() for artifact in self.output_artifacts

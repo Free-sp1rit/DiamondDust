@@ -44,6 +44,14 @@ Record durable technical and governance decisions here.
 - Risks: Prompt text and prompt package fields may become compatibility surfaces, and rendered prompts contain essay body text that must not be sent externally without explicit approval.
 - Follow-up: Add prompt review and golden-output evaluation only after first-provider, API key, network, and cost decisions are approved.
 
+### 2026-05-16 — Compose provider extraction in the application layer
+
+- Decision: Add an application-level `extract_units` provider orchestration boundary that builds provider requests, renders prompts, executes a supplied provider boundary, validates structured output, and returns run-log context with prompt hash.
+- Reason: Future real-provider extraction needs one testable orchestration seam while preserving the separation between application flow, provider adapters, domain validation, and storage persistence.
+- Alternatives: Let provider adapters build requests and persist run logs; call provider clients directly from CLI code; defer orchestration until real provider integration.
+- Risks: The orchestration result may become an application API surface, and prompt hash traceability must not be mistaken for prompt text persistence.
+- Follow-up: Escalate before deciding how rendered prompts are passed into concrete provider SDK calls, and before enabling real network calls, API key reads, costs, fallback, or raw output retention.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
