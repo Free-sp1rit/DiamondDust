@@ -36,6 +36,14 @@ Record durable technical and governance decisions here.
 - Risks: Request payload field names may become a compatibility surface, and the payload contains essay body text that must not be sent to an external provider without explicit approval.
 - Follow-up: Add prompt rendering only after first-provider, prompt review, API key, network, and cost decisions are approved.
 
+### 2026-05-16 — Render extraction prompts before provider execution
+
+- Decision: Add a provider-neutral `extract_units.v1` prompt renderer that converts typed provider requests into deterministic prompt packages with source metadata, output instructions, and stable prompt hashes.
+- Reason: Future real-provider extraction needs a testable request-to-prompt handoff before SDK, auth, network, and model-quality decisions are approved.
+- Alternatives: Let provider adapters render prompts internally; keep prompts only in docs; wait until real provider integration to define prompt packages.
+- Risks: Prompt text and prompt package fields may become compatibility surfaces, and rendered prompts contain essay body text that must not be sent externally without explicit approval.
+- Follow-up: Add prompt review and golden-output evaluation only after first-provider, API key, network, and cost decisions are approved.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.

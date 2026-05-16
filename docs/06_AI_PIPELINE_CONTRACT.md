@@ -70,6 +70,38 @@ Rules:
 - Request building must validate model policy before returning a request.
 - Sending request payload body text to a real provider still requires real-provider approval.
 
+## Extraction Prompt Renderer
+
+The `extract_units.v1` prompt renderer converts a provider-neutral
+`ProviderRequest` into a deterministic prompt package before provider execution.
+
+Rendered prompt packages should include:
+
+- run id
+- task
+- prompt version
+- schema version
+- input hash
+- source input id
+- source path
+- frontmatter JSON
+- source ref JSON
+- system prompt
+- user prompt
+- output instructions
+- prompt hash
+
+Rules:
+
+- Prompt rendering is deterministic and provider-neutral.
+- Prompt rendering does not call a provider.
+- Prompt rendering does not use provider SDK message types.
+- Prompt rendering does not persist the prompt package by default.
+- Prompt rendering must validate model policy before rendering.
+- Prompt rendering must preserve source metadata and instruct providers not to invent sources.
+- Prompt rendering must not generate KnowledgePatch data, formal notes, blog drafts, publication content, or tool calls.
+- Sending rendered prompt text to a real provider still requires real-provider approval.
+
 ## Provider Adapter Boundary
 
 The Provider Adapter Boundary Skeleton introduces provider-neutral request,
