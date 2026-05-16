@@ -526,12 +526,16 @@ Optional:
 - `source_input_id`
 - `output_artifacts`
 - `not_validated`
+- `provider_request_id`
+- `retry_count`
+- `token_usage`
 
 Rules:
 
 - AI run artifacts may record both passed and failed validation runs.
 - AI run artifacts must not persist raw model output.
 - AI run artifacts must stay under `_ai_runs/`.
+- Provider envelope metadata such as provider request id, retry count, and token usage may be persisted only as typed run-log context recorded by the application pipeline and rendered by the storage adapter.
 - Provider-free local trial run artifacts should mark `run_scope: provider_free_fixture`, `real_provider_call: false`, `fixture_driven: true`, and `prompt_used: false` while preserving the task contract `prompt_version`.
 - When provider metrics are not produced, local trial run artifacts should keep `cost` and `latency` unset and include `metrics_scope` explaining that cost and latency are not applicable.
 - Local trial run artifacts should preserve `source_input_id`, point `output_artifacts` at the generated downstream trial report/outcome artifacts, and list run-specific `not_validated` limits such as real LLM extraction quality, real parser source-span accuracy, provider latency, and provider cost.

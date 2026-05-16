@@ -12,7 +12,11 @@ from diamonddust.ai import (
     ProviderRequest,
     ProviderUsage,
 )
-from diamonddust.application import generate_patch_from_extraction, run_provider_extraction
+from diamonddust.application import (
+    generate_patch_from_extraction,
+    provider_run_log_context,
+    run_provider_extraction,
+)
 
 
 CREATED_AT = "2026-05-16T00:00:00Z"
@@ -61,7 +65,18 @@ class ProviderBoundaryTests(unittest.TestCase):
 
     def test_provider_extraction_validates_structured_output_before_patch_generation(self) -> None:
         run = run_provider_extraction(
-            FakeProvider(structured_output=_valid_output()),
+            FakeProvider(
+                structured_output=_valid_output(),
+                provider_request_id="provider_req_boundary_ab12cd",
+                usage=ProviderUsage(
+                    input_tokens=11,
+                    output_tokens=22,
+                    total_tokens=33,
+                    cost=0.12,
+                    latency_ms=250.0,
+                    retry_count=1,
+                ),
+            ),
             _request(),
         )
 
@@ -69,6 +84,20 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertIsNotNone(run.validation_result.proposal)
         self.assertEqual(run.run_log.validation_status.value, "passed")
         self.assertEqual(run.run_log.provider, "fake-provider")
+        self.assertEqual(run.run_log.cost, 0.12)
+        self.assertEqual(run.run_log.latency, 250.0)
+
+        context = provider_run_log_context(run).to_mapping()
+        self.assertEqual(context["provider_request_id"], "provider_req_boundary_ab12cd")
+        self.assertEqual(context["retry_count"], 1)
+        self.assertEqual(
+            context["token_usage"],
+            {
+                "input_tokens": 11,
+                "output_tokens": 22,
+                "total_tokens": 33,
+            },
+        )
 
         patch = generate_patch_from_extraction(
             run.validation_result.proposal,
@@ -91,6 +120,8 @@ class ProviderBoundaryTests(unittest.TestCase):
         error = ProviderError(
             error_type=ProviderErrorType.TIMEOUT,
             message="provider timed out",
+            provider_request_id="provider_req_timeout_ab12cd",
+            retry_count=2,
         )
         run = run_provider_extraction(
             FakeProvider(error=error),
@@ -103,6 +134,10 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertTrue(run.run_log.output_hash.startswith("sha256:"))
         self.assertEqual(run.errors, ("provider timeout: provider timed out",))
         self.assertTrue(error.should_retry)
+        context = provider_run_log_context(run).to_mapping()
+        self.assertEqual(context["provider_request_id"], "provider_req_timeout_ab12cd")
+        self.assertEqual(context["retry_count"], 2)
+        self.assertNotIn("token_usage", context)
 
     def test_auth_errors_are_not_retryable_by_default(self) -> None:
         error = ProviderError(

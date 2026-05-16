@@ -34,6 +34,7 @@ Responsibilities:
 - Provider adapters return typed response/error envelopes.
 - Provider adapters do not persist artifacts by default.
 - Application pipelines record run log data from provider envelopes.
+- Application pipelines may convert provider request ids, retry counts, and token usage into typed run-log context.
 - Storage adapters persist `_ai_runs`, `_ai_suggestions`, and `_ai_reports`.
 - Domain core must not import provider SDKs, HTTP clients, storage adapters, or provider boundary modules.
 - Provider output must pass structured typed validation before becoming domain data.
@@ -80,6 +81,9 @@ Every AI run must record:
 - output_hash
 - cost if available
 - latency if available
+- provider_request_id if available
+- retry_count if available
+- token_usage if available
 - validation_status
 
 ## Compile Cache

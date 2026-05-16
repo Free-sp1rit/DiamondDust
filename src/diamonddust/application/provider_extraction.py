@@ -17,7 +17,9 @@ from diamonddust.ai.provider import (
     ProviderError,
     ProviderRequest,
     ProviderResult,
+    ProviderUsage,
 )
+from diamonddust.storage.ai_run_log import AIRunLogArtifactContext, AIRunTokenUsage
 
 
 class ProviderExtractionError(ValueError):
@@ -89,6 +91,28 @@ def run_provider_extraction(
     )
 
 
+def provider_run_log_context(run: ProviderExtractionRun) -> AIRunLogArtifactContext:
+    """Map provider envelope metadata into storage-owned run-log context."""
+
+    if not isinstance(run, ProviderExtractionRun):
+        raise ProviderExtractionError("run must be ProviderExtractionRun")
+
+    result = run.provider_result
+    if result.response is not None:
+        usage = result.response.usage
+        return AIRunLogArtifactContext(
+            provider_request_id=result.response.provider_request_id,
+            retry_count=usage.retry_count,
+            token_usage=_token_usage_from_provider_usage(usage),
+        )
+
+    assert result.error is not None
+    return AIRunLogArtifactContext(
+        provider_request_id=result.error.provider_request_id,
+        retry_count=result.error.retry_count,
+    )
+
+
 def _provider_error_validation_result(
     request: ProviderRequest,
     error: ProviderError,
@@ -103,6 +127,22 @@ def _provider_error_validation_result(
         proposal=None,
         run_log=run_log,
         errors=(f"provider {error.error_type.value}: {error.message}",),
+    )
+
+
+def _token_usage_from_provider_usage(
+    usage: ProviderUsage,
+) -> AIRunTokenUsage | None:
+    if (
+        usage.input_tokens is None
+        and usage.output_tokens is None
+        and usage.total_tokens is None
+    ):
+        return None
+    return AIRunTokenUsage(
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+        total_tokens=usage.total_tokens,
     )
 
 

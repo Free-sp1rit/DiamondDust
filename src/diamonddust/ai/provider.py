@@ -166,6 +166,7 @@ class ProviderError:
     error_type: ProviderErrorType
     message: str
     provider_request_id: str | None = None
+    retry_count: int | None = None
     retryable: bool | None = None
 
     def __post_init__(self) -> None:
@@ -173,6 +174,7 @@ class ProviderError:
             raise ProviderBoundaryError("error_type must be ProviderErrorType")
         _require_non_empty("message", self.message)
         _require_optional_str("provider_request_id", self.provider_request_id)
+        _require_optional_non_negative_int("retry_count", self.retry_count)
         if self.retryable is not None:
             _require_bool("retryable", self.retryable)
 
@@ -190,6 +192,8 @@ class ProviderError:
         }
         if self.provider_request_id is not None:
             data["provider_request_id"] = self.provider_request_id
+        if self.retry_count is not None:
+            data["retry_count"] = self.retry_count
         return MappingProxyType(data)
 
 
@@ -224,6 +228,7 @@ class FakeProvider:
     structured_output: object | None = None
     error: ProviderError | None = None
     usage: ProviderUsage = field(default_factory=ProviderUsage)
+    provider_request_id: str | None = None
 
     def __post_init__(self) -> None:
         if (self.structured_output is None) == (self.error is None):
@@ -232,6 +237,7 @@ class FakeProvider:
             raise ProviderBoundaryError("error must be ProviderError")
         if not isinstance(self.usage, ProviderUsage):
             raise ProviderBoundaryError("usage must be ProviderUsage")
+        _require_optional_str("provider_request_id", self.provider_request_id)
 
     def generate(self, request: ProviderRequest) -> ProviderResult:
         if not isinstance(request, ProviderRequest):
@@ -244,6 +250,7 @@ class FakeProvider:
                 request,
                 self.structured_output,
                 usage=self.usage,
+                provider_request_id=self.provider_request_id,
             ),
         )
 
