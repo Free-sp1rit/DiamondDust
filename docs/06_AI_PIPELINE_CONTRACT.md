@@ -179,6 +179,36 @@ Skeleton constraints:
 - The first future real-provider task is limited to `extract_units`.
 - Provider-side tools, relation suggestion, blog draft generation, patch generation, formal apply, patch acceptance, and publication remain disallowed until separately approved.
 
+## Provider Integration Readiness Gate
+
+Before real provider integration starts, DiamondDust must produce a readiness
+report from explicit provider integration decisions.
+
+The readiness gate must block when any required decision is missing:
+
+- first provider
+- default model
+- provider SDK dependency approval
+- API key environment variable approval
+- real provider call approval
+- real network call approval
+- rendered prompt external-use approval
+- structured output mechanism approval
+- cost limit approval
+- timeout policy approval
+- retry policy approval
+- raw output retention decision
+- fallback behavior decision
+- allowed task scope limited to `extract_units`
+
+Rules:
+
+- The readiness gate does not approve real provider calls by itself.
+- The readiness gate must not read API keys.
+- The readiness gate must not call a provider.
+- The readiness gate must fail closed when decisions are missing or task scope expands beyond `extract_units`.
+- A ready report still requires normal branch, PR, review, and escalation workflow before implementation.
+
 ## AI Output Boundary
 
 LLM output may produce:
