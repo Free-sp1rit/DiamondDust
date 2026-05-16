@@ -11,6 +11,18 @@ from diamonddust.ai.extraction import (
     compute_ai_output_hash,
     validate_extraction_output,
 )
+from diamonddust.ai.provider import (
+    FakeProvider,
+    ProviderBoundaryError,
+    ProviderClient,
+    ProviderError,
+    ProviderErrorType,
+    ProviderModelSettings,
+    ProviderRequest,
+    ProviderResponse,
+    ProviderResult,
+    ProviderUsage,
+)
 
 __all__ = [
     "AIValidationStatus",
@@ -20,6 +32,16 @@ __all__ = [
     "ExtractionProposal",
     "ExtractionValidationError",
     "ExtractionValidationResult",
+    "FakeProvider",
+    "ProviderBoundaryError",
+    "ProviderClient",
+    "ProviderError",
+    "ProviderErrorType",
+    "ProviderModelSettings",
+    "ProviderRequest",
+    "ProviderResponse",
+    "ProviderResult",
+    "ProviderUsage",
     "compute_ai_output_hash",
     "validate_extraction_output",
 ]

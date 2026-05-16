@@ -4,11 +4,11 @@ Last updated: 2026-05-16
 
 ## Current Stage
 
-Post-Gate 7 trial feedback cleanup audit complete with follow-up.
+Provider Adapter Boundary Skeleton implementation is complete with follow-up.
 
 ## Current Focus
 
-Prepare for the next real-provider planning step from a cleaned local trial baseline: feedback-era artifacts separate pipeline/report status from product-owner verdict, local trial draft preview generation is named as a non-persisted handoff rather than patch acceptance, and provider-free fixture scope remains isolated from generic storage adapters.
+Prepare the escalation and execution plan for the first real provider integration from a provider-neutral skeleton baseline. The current skeleton keeps real provider calls disabled, avoids SDK dependencies, avoids API key reads, and limits future first-provider scope to `extract_units`. Provider adapters return typed response/error envelopes; application pipelines record run logs; storage adapters persist `_ai_runs`, `_ai_suggestions`, and `_ai_reports`; and formal vault mutation remains out of scope.
 
 Initialization acceptance is complete with a `pass with follow-up` decision. The governance initialization PR has been completed and merged by the product owner. Gate 2 through Gate 6 planning and implementation are complete.
 
@@ -28,7 +28,7 @@ Each skill is intentionally lightweight and contains only workflow guidance in `
 
 DiamondDust is a local-first semantic knowledge compiler. Its MVP path is to turn Markdown essays into structured `KnowledgeUnit` candidates, candidate `Relation`s, validated `KnowledgePatch` files, review reports, blog drafts, and blog quality reports.
 
-The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, AI run log persistence with provider-free local trial scope context, an application-layer patch review workflow, candidate Markdown export with explicit preview/source-of-truth boundaries, patch review reports with pending decision metadata and non-binding decision prompts, review package storage adapters, a deterministic blog draft workflow with review/scope frontmatter and supporting concept inventory, durable blog draft package persistence, blog quality reports with precise report validation/publication boundary semantics, artifact schema versioning, a local trial CLI with packaged `local-trial-fixture` assets, feedback reports and machine-readable outcome JSON artifacts that separate `trial_pipeline_status` from `product_owner_verdict`, explicit local trial quality-scope limits, feedback capture fields, and a cleaned local trial draft-generation handoff that does not expose patch-acceptance terminology. It also includes minimal Python packaging metadata with a `diamonddust` console script, formal vault conflict preflight checks, formal apply dry-run plans, a checked-in local trial fixture pair, user-facing local trial guides, a Gate 7 release readiness harness, five sample essay fixtures, unit tests, and GitHub Actions CI for wheel build/install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls and formal vault patch apply execution are not present yet. Generated `knowledge-vault/` trial output is ignored. `目录结构.md` describes the intended target structure, not the fully materialized repository.
+The current repository now contains the initial product implementation skeleton: typed domain schemas, a Markdown storage ingestion adapter, a provider-neutral AI extraction proposal boundary, provider-neutral request/response/error/model-settings envelopes with a fake provider skeleton for `extract_units`, AI run log persistence with provider-free local trial scope context, an application-layer patch review workflow, candidate Markdown export with explicit preview/source-of-truth boundaries, patch review reports with pending decision metadata and non-binding decision prompts, review package storage adapters, a deterministic blog draft workflow with review/scope frontmatter and supporting concept inventory, durable blog draft package persistence, blog quality reports with precise report validation/publication boundary semantics, artifact schema versioning, a local trial CLI with packaged `local-trial-fixture` assets, feedback reports and machine-readable outcome JSON artifacts that separate `trial_pipeline_status` from `product_owner_verdict`, explicit local trial quality-scope limits, feedback capture fields, and a cleaned local trial draft-generation handoff that does not expose patch-acceptance terminology. It also includes minimal Python packaging metadata with a `diamonddust` console script, formal vault conflict preflight checks, formal apply dry-run plans, a checked-in local trial fixture pair, user-facing local trial guides, a Gate 7 release readiness harness, five sample essay fixtures, unit tests, and GitHub Actions CI for wheel build/install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls and formal vault patch apply execution are not present yet. Generated `knowledge-vault/` trial output is ignored. `目录结构.md` describes the intended target structure, not the fully materialized repository.
 
 ## Source-of-Truth Documents
 
@@ -61,7 +61,7 @@ Current gate position:
 - Gate 5: Patch Review passed with follow-up on 2026-05-10.
 - Gate 6: Blog Draft passed with follow-up on 2026-05-10.
 - Gate 7: MVP Release readiness passed with follow-up on 2026-05-10.
-- Next likely stage: post-MVP hardening and release-quality infrastructure.
+- Next likely stage: first real provider integration planning and escalation from the provider-neutral boundary skeleton.
 
 Initialization acceptance review:
 

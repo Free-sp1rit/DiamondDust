@@ -394,3 +394,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 132 unit tests passed, `python3 -m compileall src tests` passed, `git diff --check` passed, and local trial fixture smoke passed.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Keep real provider execution context separate from provider-free fixture context during provider integration planning.
+
+## 2026-05-16 — Provider Adapter Boundary Skeleton Completed
+
+- Scope: Implemented provider-neutral request, response, error, model settings, usage, fake provider, and application handoff from provider envelopes into existing extraction validation.
+- Outcome: Added a fake-provider-only skeleton for `extract_units` without real provider SDKs, API key reads, network calls, raw provider output persistence, formal apply, patch acceptance, publication, or provider-side tool execution.
+- Review: `docs/reviews/milestone-reviews/2026-05-16-provider-adapter-boundary-skeleton.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; affects the Gate 4 AI extraction boundary but does not approve real provider integration.
+- Validation: 139 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, or persisting real raw provider output.

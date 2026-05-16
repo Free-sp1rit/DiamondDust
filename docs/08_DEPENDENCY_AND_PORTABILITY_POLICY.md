@@ -77,3 +77,19 @@ Development-only dependencies may be added without user approval if they are low
 ## Replacement Strategy
 
 Every external service or vendor-specific library must be accessed through an interface or adapter.
+
+## Provider Adapter Skeleton Rule
+
+Provider Adapter Boundary Skeleton work may define provider-neutral ports,
+typed response/error envelopes, fake providers, and tests without escalation
+when it does not add dependencies, read API keys, call real networks, or persist
+real raw provider output.
+
+Escalation is required before:
+
+- adding a provider SDK or provider-specific framework dependency
+- reading or requiring an API key
+- making real provider network calls
+- enabling cost-bearing behavior
+- persisting real raw provider output
+- enabling provider-side tools, web search, file search, MCP calls, or autonomous tool execution
