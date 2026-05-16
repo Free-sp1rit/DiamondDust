@@ -125,6 +125,33 @@ Rules:
 - Provider errors must fail closed and produce failed validation results.
 - Real provider execution still requires separate approval.
 
+## Provider Execution Request
+
+The provider execution request is the typed input contract for concrete provider
+adapters. It combines the provider-neutral `ProviderRequest` with the rendered
+prompt package.
+
+The execution request must validate that the rendered prompt matches the
+provider request for:
+
+- run id
+- task
+- prompt version
+- schema version
+- input hash
+- source input id when present in the request payload
+- source path when present in the request payload
+
+Rules:
+
+- Concrete provider adapters should receive a `ProviderExecutionRequest`.
+- Provider adapters must return typed response/error envelopes.
+- Provider adapters must not re-render prompts internally.
+- Provider adapters must not persist prompt text, raw provider output, run logs, suggestions, reports, or formal vault files by default.
+- Provider adapters must not log API keys.
+- The execution request does not approve real provider calls.
+- Mapping an execution request into provider-specific SDK messages requires separate real-provider approval.
+
 ## Provider Adapter Boundary
 
 The Provider Adapter Boundary Skeleton introduces provider-neutral request,
@@ -134,6 +161,7 @@ response, error, settings, usage, and fake-provider envelopes for the
 Responsibilities:
 
 - Provider adapters return typed response/error envelopes.
+- Concrete provider adapters receive provider execution requests that include rendered prompt packages.
 - Provider adapters do not persist artifacts by default.
 - Application pipelines record run log data from provider envelopes.
 - Application pipelines may convert provider request ids, retry counts, and token usage into typed run-log context.

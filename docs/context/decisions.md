@@ -52,6 +52,14 @@ Record durable technical and governance decisions here.
 - Risks: The orchestration result may become an application API surface, and prompt hash traceability must not be mistaken for prompt text persistence.
 - Follow-up: Escalate before deciding how rendered prompts are passed into concrete provider SDK calls, and before enabling real network calls, API key reads, costs, fallback, or raw output retention.
 
+### 2026-05-17 — Pass rendered prompts through typed provider execution requests
+
+- Decision: Add a prompt-aware `ProviderExecutionRequest` boundary that combines `ProviderRequest` and `RenderedPrompt`, validates metadata alignment, and is the v0 input shape for concrete provider adapters.
+- Reason: Concrete provider adapters should not re-render prompts internally or infer prompt data from ad hoc payloads; they need a typed, testable handoff before real SDK mapping is approved.
+- Alternatives: Keep provider adapters request-only; let adapters re-render prompts; pass loose dictionaries or SDK-specific message objects through application code.
+- Risks: The execution request becomes part of the adapter contract, and prompt text remains in memory even though it is not persisted by default.
+- Follow-up: Escalate before mapping `ProviderExecutionRequest` into a provider SDK request body, reading API keys, making network calls, or retaining prompt/raw output text.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
