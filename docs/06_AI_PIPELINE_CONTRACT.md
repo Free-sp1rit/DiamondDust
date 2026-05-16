@@ -23,6 +23,28 @@ Every AI task must define:
 - validation rules
 - failure behavior
 
+## Model Policy V0
+
+The v0 model policy is provider-neutral and exists before real provider
+integration.
+
+Defaults:
+
+- `first_provider: undecided`
+- real provider calls require user approval
+- provider SDK dependencies require escalation
+- API key environment variable policy is shape-only; key reads are disabled
+- allowed tasks are limited to `extract_units`
+- structured output is required for provider output that becomes domain data
+- invalid output fails closed
+- model fallback is disabled
+- raw provider output must not be persisted or logged
+- provider request id, retry count, token usage, cost, and latency may be recorded when available
+- domain core must not import provider SDKs or provider boundary modules
+
+The application provider extraction handoff must validate provider requests
+against model policy before provider execution.
+
 ## Provider Adapter Boundary
 
 The Provider Adapter Boundary Skeleton introduces provider-neutral request,

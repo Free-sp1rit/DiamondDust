@@ -12,6 +12,7 @@ from diamonddust.ai import (
     compute_ai_output_hash,
     validate_extraction_output,
 )
+from diamonddust.ai.model_policy import ModelPolicy, validate_provider_request_policy
 from diamonddust.ai.provider import (
     ProviderClient,
     ProviderError,
@@ -55,6 +56,8 @@ class ProviderExtractionRun:
 def run_provider_extraction(
     provider: ProviderClient,
     request: ProviderRequest,
+    *,
+    model_policy: ModelPolicy | None = None,
 ) -> ProviderExtractionRun:
     """Execute a provider boundary and validate output before patch generation."""
 
@@ -62,6 +65,7 @@ def run_provider_extraction(
         raise ProviderExtractionError("provider must implement generate")
     if not isinstance(request, ProviderRequest):
         raise ProviderExtractionError("request must be ProviderRequest")
+    validate_provider_request_policy(request, model_policy)
 
     provider_result = provider.generate(request)
     if not isinstance(provider_result, ProviderResult):

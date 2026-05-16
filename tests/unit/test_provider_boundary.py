@@ -8,8 +8,10 @@ from diamonddust.ai import (
     ProviderBoundaryError,
     ProviderError,
     ProviderErrorType,
+    ModelPolicyError,
     ProviderModelSettings,
     ProviderRequest,
+    ProviderResult,
     ProviderUsage,
 )
 from diamonddust.application import (
@@ -139,6 +141,16 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertEqual(context["retry_count"], 2)
         self.assertNotIn("token_usage", context)
 
+    def test_unapproved_real_provider_call_fails_before_provider_execution(self) -> None:
+        provider = _RecordingProvider()
+        with self.assertRaises(ModelPolicyError):
+            run_provider_extraction(
+                provider,
+                _request(settings=_settings(real_provider_calls_enabled=True)),
+            )
+
+        self.assertFalse(provider.called)
+
     def test_auth_errors_are_not_retryable_by_default(self) -> None:
         error = ProviderError(
             error_type=ProviderErrorType.AUTH_ERROR,
@@ -148,22 +160,36 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertFalse(error.should_retry)
 
 
-def _settings() -> ProviderModelSettings:
+class _RecordingProvider:
+    def __init__(self) -> None:
+        self.called = False
+
+    def generate(self, request: ProviderRequest) -> ProviderResult:
+        self.called = True
+        return FakeProvider(structured_output=_valid_output()).generate(request)
+
+
+def _settings(*, real_provider_calls_enabled: bool = False) -> ProviderModelSettings:
     return ProviderModelSettings(
         provider="fake-provider",
         model="fake-structured-model",
         prompt_version="extract_units.v1",
         schema_version="0.1.0",
+        real_provider_calls_enabled=real_provider_calls_enabled,
     )
 
 
-def _request(*, task: str = EXTRACTION_TASK) -> ProviderRequest:
+def _request(
+    *,
+    task: str = EXTRACTION_TASK,
+    settings: ProviderModelSettings | None = None,
+) -> ProviderRequest:
     return ProviderRequest(
         run_id="run_provider_boundary_ab12cd",
         task=task,
         input_hash="sha256:input",
         input_payload={"source_input_id": SOURCE_ID},
-        settings=_settings(),
+        settings=settings or _settings(),
     )
 
 
