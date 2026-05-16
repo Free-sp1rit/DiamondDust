@@ -1,11 +1,11 @@
 import unittest
 
 from diamonddust.ai import (
-    FakeProvider,
+    FakeExecutionProvider,
     ModelPolicyError,
+    ProviderExecutionRequest,
     ProviderError,
     ProviderErrorType,
-    ProviderRequest,
     ProviderResult,
     ProviderUsage,
 )
@@ -27,7 +27,7 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
         essay = _essay()
         spec = _spec()
         request = build_extract_units_provider_request(essay, spec)
-        provider = FakeProvider(
+        provider = FakeExecutionProvider(
             structured_output=_valid_output(request.input_payload),
             provider_request_id="provider_req_orchestrator_ab12cd",
             usage=ProviderUsage(
@@ -43,6 +43,8 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
         self.assertTrue(run.is_valid, run.errors)
         self.assertEqual(run.request.run_id, "run_provider_orchestrator_ab12cd")
         self.assertEqual(run.rendered_prompt.source_input_id, essay.source_id)
+        self.assertEqual(run.execution_request.provider_request, run.request)
+        self.assertEqual(run.execution_request.rendered_prompt, run.rendered_prompt)
         self.assertTrue(run.rendered_prompt.prompt_hash.startswith("sha256:"))
         self.assertEqual(run.run_log.validation_status.value, "passed")
 
@@ -78,7 +80,7 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
         )
 
         run = run_extract_units_provider_orchestration(
-            FakeProvider(error=error),
+            FakeExecutionProvider(error=error),
             _essay(),
             _spec(),
         )
@@ -97,7 +99,7 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
 
     def test_invalid_provider_output_fails_before_patch_generation(self) -> None:
         run = run_extract_units_provider_orchestration(
-            FakeProvider(structured_output="not structured"),
+            FakeExecutionProvider(structured_output="not structured"),
             _essay(),
             _spec(),
         )
@@ -125,14 +127,14 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
     def test_orchestrator_rejects_invalid_inputs(self) -> None:
         with self.assertRaises(ProviderExtractionError):
             run_extract_units_provider_orchestration(
-                FakeProvider(structured_output={}),
+                FakeExecutionProvider(structured_output={}),
                 "not an essay",
                 _spec(),
             )
 
         with self.assertRaises(ProviderExtractionError):
             run_extract_units_provider_orchestration(
-                FakeProvider(structured_output={}),
+                FakeExecutionProvider(structured_output={}),
                 _essay(),
                 "not a spec",
             )
@@ -142,9 +144,9 @@ class _RecordingProvider:
     def __init__(self) -> None:
         self.called = False
 
-    def generate(self, request: ProviderRequest) -> ProviderResult:
+    def generate(self, request: ProviderExecutionRequest) -> ProviderResult:
         self.called = True
-        return FakeProvider(structured_output={}).generate(request)
+        return FakeExecutionProvider(structured_output={}).generate(request)
 
 
 def _essay():

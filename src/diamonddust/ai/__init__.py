@@ -42,6 +42,11 @@ from diamonddust.ai.provider import (
     ProviderResult,
     ProviderUsage,
 )
+from diamonddust.ai.provider_execution import (
+    FakeExecutionProvider,
+    ProviderExecutionClient,
+    ProviderExecutionRequest,
+)
 from diamonddust.ai.prompt import (
     EXTRACT_UNITS_PROMPT_VERSION,
     PromptRenderError,
@@ -59,6 +64,7 @@ __all__ = [
     "ExtractionValidationError",
     "ExtractionValidationResult",
     "FakeProvider",
+    "FakeExecutionProvider",
     "APIKeyEnvVarPolicy",
     "CostPolicy",
     "DOMAIN_CORE_DEPENDENCY_RULE",
@@ -74,6 +80,8 @@ __all__ = [
     "ProviderClient",
     "ProviderError",
     "ProviderErrorType",
+    "ProviderExecutionClient",
+    "ProviderExecutionRequest",
     "ProviderModelSettings",
     "ProviderRequest",
     "ProviderResponse",

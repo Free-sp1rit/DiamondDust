@@ -9,6 +9,8 @@ from diamonddust.ai import (
     AIRunMetadata,
     AIValidationStatus,
     ExtractionValidationResult,
+    ProviderExecutionClient,
+    ProviderExecutionRequest,
     RenderedPrompt,
     compute_ai_output_hash,
     render_extract_units_prompt,
@@ -64,6 +66,7 @@ class ProviderExtractionRun:
 class ProviderExtractionOrchestration:
     request: ProviderRequest
     rendered_prompt: RenderedPrompt
+    execution_request: ProviderExecutionRequest
     extraction_run: ProviderExtractionRun
     run_log_context: AIRunLogArtifactContext
 
@@ -72,6 +75,10 @@ class ProviderExtractionOrchestration:
             raise ProviderExtractionError("request must be ProviderRequest")
         if not isinstance(self.rendered_prompt, RenderedPrompt):
             raise ProviderExtractionError("rendered_prompt must be RenderedPrompt")
+        if not isinstance(self.execution_request, ProviderExecutionRequest):
+            raise ProviderExtractionError(
+                "execution_request must be ProviderExecutionRequest"
+            )
         if not isinstance(self.extraction_run, ProviderExtractionRun):
             raise ProviderExtractionError(
                 "extraction_run must be ProviderExtractionRun"
@@ -99,7 +106,7 @@ class ProviderExtractionOrchestration:
 
 
 def run_extract_units_provider_orchestration(
-    provider: ProviderClient,
+    provider: ProviderExecutionClient,
     essay: IngestedMarkdownEssay,
     spec: ExtractUnitsProviderRequestSpec,
     *,
@@ -118,21 +125,47 @@ def run_extract_units_provider_orchestration(
         model_policy=model_policy,
     )
     rendered_prompt = render_extract_units_prompt(request, model_policy=model_policy)
-    extraction_run = run_provider_extraction(
+    execution_request = ProviderExecutionRequest(
+        provider_request=request,
+        rendered_prompt=rendered_prompt,
+    )
+    extraction_run = run_provider_prompt_extraction(
         provider,
-        request,
+        execution_request,
         model_policy=model_policy,
     )
 
     return ProviderExtractionOrchestration(
         request=request,
         rendered_prompt=rendered_prompt,
+        execution_request=execution_request,
         extraction_run=extraction_run,
         run_log_context=_prompt_run_log_context(
             provider_run_log_context(extraction_run),
             rendered_prompt,
         ),
     )
+
+
+def run_provider_prompt_extraction(
+    provider: ProviderExecutionClient,
+    execution_request: ProviderExecutionRequest,
+    *,
+    model_policy: ModelPolicy | None = None,
+) -> ProviderExtractionRun:
+    """Execute a prompt-aware provider boundary and validate structured output."""
+
+    if not hasattr(provider, "generate"):
+        raise ProviderExtractionError("provider must implement generate")
+    if not isinstance(execution_request, ProviderExecutionRequest):
+        raise ProviderExtractionError(
+            "execution_request must be ProviderExecutionRequest"
+        )
+    request = execution_request.provider_request
+    validate_provider_request_policy(request, model_policy)
+
+    provider_result = provider.generate(execution_request)
+    return _validated_provider_result(request, provider_result)
 
 
 def run_provider_extraction(
@@ -150,6 +183,13 @@ def run_provider_extraction(
     validate_provider_request_policy(request, model_policy)
 
     provider_result = provider.generate(request)
+    return _validated_provider_result(request, provider_result)
+
+
+def _validated_provider_result(
+    request: ProviderRequest,
+    provider_result: object,
+) -> ProviderExtractionRun:
     if not isinstance(provider_result, ProviderResult):
         raise ProviderExtractionError("provider returned an invalid result")
     if provider_result.request != request:

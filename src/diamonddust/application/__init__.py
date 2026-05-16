@@ -46,6 +46,7 @@ from diamonddust.application.provider_extraction import (
     provider_run_log_context,
     run_extract_units_provider_orchestration,
     run_provider_extraction,
+    run_provider_prompt_extraction,
 )
 from diamonddust.application.provider_request import (
     ExtractUnitsProviderRequestSpec,
@@ -89,6 +90,7 @@ __all__ = [
     "provider_run_log_context",
     "run_extract_units_provider_orchestration",
     "run_provider_extraction",
+    "run_provider_prompt_extraction",
     "run_local_trial",
     "run_mvp_release_readiness",
     "scan_critical_architecture_violations",

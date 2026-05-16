@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-16
+Last updated: 2026-05-17
 
 ## Tooling and Repository Shape
 
@@ -70,11 +70,11 @@ Last updated: 2026-05-16
 - Needed decision: Choose provider adapter and model policy only when the patch review workflow is ready for real model output.
 - Impact: Affects dependencies, cost, auth, prompt design, and run log fields.
 
-### 2026-05-16 — How should rendered prompts enter concrete provider adapters?
+### 2026-05-17 — How should provider execution requests map to the first provider SDK?
 
-- Context: The application orchestrator renders prompt packages and records prompt hashes, while the current provider boundary remains provider-neutral and request-centered.
-- Needed decision: Before real provider integration, decide whether concrete adapters receive a rendered prompt package directly, derive provider-specific request bodies inside the adapter, or use a small application-level execution adapter.
-- Impact: Affects provider SDK coupling, replayability, prompt traceability, and how much prompt text can be logged or retained.
+- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. No real provider SDK mapping exists yet.
+- Needed decision: Before real provider integration, choose the first provider, model, API key env var, request body shape, structured-output mechanism, timeout/retry settings, cost limit, and prompt/raw-output retention behavior.
+- Impact: Affects provider SDK coupling, privacy posture, replayability, prompt traceability, cost control, and extraction quality evaluation.
 
 ## Patch Review
 

@@ -460,3 +460,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 164 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, persisting raw provider output, or sending rendered prompt text to an external provider.
+
+## 2026-05-17 — Provider Execution Request Completed
+
+- Scope: Implemented the prompt-aware provider execution request boundary for `extract_units`.
+- Outcome: Concrete provider adapters now have a typed input shape that combines `ProviderRequest` and `RenderedPrompt`, validates metadata alignment, and supports provider-free fake execution tests without persisting prompt text.
+- Review: `docs/reviews/milestone-reviews/2026-05-17-provider-execution-request.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; clarifies concrete provider adapter input without approving real provider integration.
+- Validation: 168 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, persisting prompt/raw provider output, or sending rendered prompt text to an external provider.
