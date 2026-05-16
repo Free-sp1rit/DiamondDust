@@ -20,6 +20,14 @@ Record durable technical and governance decisions here.
 - Risks: Run-log artifact consumers may treat optional provider metadata as a stable compatibility contract before replay/import requirements are designed.
 - Follow-up: Clarify latency units and raw output retention policy before recording production provider metrics.
 
+### 2026-05-16 — Keep model policy conservative before real provider integration
+
+- Decision: Add a provider-neutral v0 model policy skeleton that defaults to `first_provider: undecided`, allows only `extract_units`, requires structured output, rejects unapproved real-provider calls before provider execution, disables fallback, and forbids raw provider output persistence/logging and API key logging.
+- Reason: Future provider work needs an executable policy boundary before SDK, auth, cost, retry, fallback, or raw-output decisions are approved.
+- Alternatives: Keep policy only in docs; add a real provider SDK immediately; let provider adapters decide policy internally.
+- Risks: Policy fields can become a compatibility surface before CLI/config usage is designed.
+- Follow-up: Create an explicit provider integration escalation before choosing the first provider, model, SDK, API key env var, cost limit, retry policy, raw output retention, or fallback behavior.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.

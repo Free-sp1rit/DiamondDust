@@ -81,9 +81,9 @@ Every external service or vendor-specific library must be accessed through an in
 ## Provider Adapter Skeleton Rule
 
 Provider Adapter Boundary Skeleton work may define provider-neutral ports,
-typed response/error envelopes, fake providers, and tests without escalation
-when it does not add dependencies, read API keys, call real networks, or persist
-real raw provider output.
+typed response/error envelopes, model policy skeletons, fake providers, and
+tests without escalation when it does not add dependencies, read API keys, call
+real networks, or persist real raw provider output.
 
 Escalation is required before:
 

@@ -416,3 +416,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 140 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Clarify latency units, cost limits, retry policy, fallback behavior, and raw output retention before real provider integration.
+
+## 2026-05-16 — Model Policy Skeleton Completed
+
+- Scope: Implemented the provider-neutral v0 model policy skeleton and request policy validation.
+- Outcome: The application provider extraction handoff now validates model policy before provider execution. Defaults keep first provider undecided, only `extract_units` allowed, structured output required, real provider calls unapproved, fallback disabled, raw output persistence/logging disabled, and API key logging forbidden.
+- Review: `docs/reviews/milestone-reviews/2026-05-16-model-policy-skeleton.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness milestone; prepares real provider planning without approving real provider integration.
+- Validation: 150 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, or persisting real raw provider output.
