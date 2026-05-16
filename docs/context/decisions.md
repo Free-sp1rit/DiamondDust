@@ -28,6 +28,14 @@ Record durable technical and governance decisions here.
 - Risks: Policy fields can become a compatibility surface before CLI/config usage is designed.
 - Follow-up: Create an explicit provider integration escalation before choosing the first provider, model, SDK, API key env var, cost limit, retry policy, raw output retention, or fallback behavior.
 
+### 2026-05-16 — Build provider requests from ingestion before provider execution
+
+- Decision: Add an application-layer builder that converts `IngestedMarkdownEssay` values into provider-neutral `extract_units` requests with source identity, source path, content hashes, body line range, frontmatter, body text, and source reference payload fields.
+- Reason: Real-provider extraction needs a deterministic, testable Markdown-to-provider-request handoff before prompt rendering or provider SDK integration.
+- Alternatives: Let provider adapters read Markdown directly; build request payloads ad hoc in CLI code; wait until real provider integration to define the payload.
+- Risks: Request payload field names may become a compatibility surface, and the payload contains essay body text that must not be sent to an external provider without explicit approval.
+- Follow-up: Add prompt rendering only after first-provider, prompt review, API key, network, and cost decisions are approved.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
