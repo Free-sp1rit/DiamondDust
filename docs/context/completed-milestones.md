@@ -471,3 +471,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 168 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, persisting prompt/raw provider output, or sending rendered prompt text to an external provider.
+
+## 2026-05-17 — Provider Integration Readiness Gate Completed
+
+- Scope: Implemented an application-level readiness gate for first real-provider integration decisions.
+- Outcome: The project can now report `blocked` until required provider, model, SDK, API key env var, network, prompt externalization, structured-output mechanism, cost, timeout, retry, raw-output retention, fallback, and task-scope decisions are explicit.
+- Review: `docs/reviews/milestone-reviews/2026-05-17-provider-integration-readiness.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves real-provider integration safety without approving real provider integration.
+- Validation: 173 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Use the readiness report as input to first-provider escalation; escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, persisting prompt/raw provider output, or sending rendered prompt text to an external provider.

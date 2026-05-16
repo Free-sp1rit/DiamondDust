@@ -48,6 +48,13 @@ from diamonddust.application.provider_extraction import (
     run_provider_extraction,
     run_provider_prompt_extraction,
 )
+from diamonddust.application.provider_integration_readiness import (
+    ProviderIntegrationDecisionSet,
+    ProviderIntegrationReadinessError,
+    ProviderIntegrationReadinessReport,
+    ProviderIntegrationReadinessStatus,
+    assess_provider_integration_readiness,
+)
 from diamonddust.application.provider_request import (
     ExtractUnitsProviderRequestSpec,
     ProviderRequestBuildError,
@@ -80,6 +87,10 @@ __all__ = [
     "ProviderExtractionError",
     "ProviderExtractionOrchestration",
     "ProviderExtractionRun",
+    "ProviderIntegrationDecisionSet",
+    "ProviderIntegrationReadinessError",
+    "ProviderIntegrationReadinessReport",
+    "ProviderIntegrationReadinessStatus",
     "ProviderRequestBuildError",
     "ExtractUnitsProviderRequestSpec",
     "generate_blog_draft_from_review",
@@ -91,6 +102,7 @@ __all__ = [
     "run_extract_units_provider_orchestration",
     "run_provider_extraction",
     "run_provider_prompt_extraction",
+    "assess_provider_integration_readiness",
     "run_local_trial",
     "run_mvp_release_readiness",
     "scan_critical_architecture_violations",

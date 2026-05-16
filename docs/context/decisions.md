@@ -60,6 +60,14 @@ Record durable technical and governance decisions here.
 - Risks: The execution request becomes part of the adapter contract, and prompt text remains in memory even though it is not persisted by default.
 - Follow-up: Escalate before mapping `ProviderExecutionRequest` into a provider SDK request body, reading API keys, making network calls, or retaining prompt/raw output text.
 
+### 2026-05-17 — Gate real-provider integration with explicit readiness decisions
+
+- Decision: Add an application-level readiness gate that reports blocked until all required real-provider decisions are explicit and the first-provider task scope remains `extract_units` only.
+- Reason: The project needs a fail-closed guard before SDK, auth, network, cost, retry, fallback, prompt externalization, or raw-output retention behavior can enter implementation.
+- Alternatives: Keep readiness only in docs; ask for decisions ad hoc during provider implementation; start real-provider code before all approvals are explicit.
+- Risks: The decision set may become a planning contract and may need new fields after the first provider is chosen.
+- Follow-up: Use the readiness report as input to the first-provider escalation and implementation plan; it does not replace user approval, PR review, or milestone review.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
