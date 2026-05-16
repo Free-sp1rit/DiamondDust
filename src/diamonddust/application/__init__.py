@@ -42,6 +42,7 @@ from diamonddust.application.patch_review import (
 from diamonddust.application.provider_extraction import (
     ProviderExtractionError,
     ProviderExtractionRun,
+    provider_run_log_context,
     run_provider_extraction,
 )
 
@@ -74,6 +75,7 @@ __all__ = [
     "generate_patch_from_extraction",
     "inspect_patch_diff",
     "review_patch",
+    "provider_run_log_context",
     "run_provider_extraction",
     "run_local_trial",
     "run_mvp_release_readiness",

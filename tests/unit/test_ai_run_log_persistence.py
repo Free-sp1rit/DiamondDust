@@ -9,6 +9,7 @@ from diamonddust.storage import (
     AIRunLogArtifactContext,
     AIRunMetricsScope,
     AIRunOutputArtifact,
+    AIRunTokenUsage,
     AIRunLogPersistenceError,
     render_ai_run_log_artifact,
     write_ai_run_log_artifact,
@@ -103,6 +104,13 @@ class AIRunLogPersistenceTests(unittest.TestCase):
                     "provider_latency",
                     "provider_cost",
                 ),
+                provider_request_id="provider_req_ai_run_ab12cd",
+                retry_count=2,
+                token_usage=AIRunTokenUsage(
+                    input_tokens=10,
+                    output_tokens=20,
+                    total_tokens=30,
+                ),
             ),
         )
         data = json.loads(artifact.content)
@@ -134,6 +142,16 @@ class AIRunLogPersistenceTests(unittest.TestCase):
         self.assertIn("real_llm_extraction_quality", data["not_validated"])
         self.assertIn("provider_latency", data["not_validated"])
         self.assertIn("provider_cost", data["not_validated"])
+        self.assertEqual(data["provider_request_id"], "provider_req_ai_run_ab12cd")
+        self.assertEqual(data["retry_count"], 2)
+        self.assertEqual(
+            data["token_usage"],
+            {
+                "input_tokens": 10,
+                "output_tokens": 20,
+                "total_tokens": 30,
+            },
+        )
 
     def test_writes_run_log_only_under_ai_runs(self) -> None:
         result = validate_extraction_output(_valid_output(), _metadata())
@@ -171,6 +189,13 @@ class AIRunLogPersistenceTests(unittest.TestCase):
                 artifact_type="formal_note",
                 path="40-concepts/unit_ai_run_ab12cd.md",
             )
+
+    def test_provider_metadata_context_is_validated(self) -> None:
+        with self.assertRaises(AIRunLogPersistenceError):
+            AIRunLogArtifactContext(retry_count=-1)
+
+        with self.assertRaises(AIRunLogPersistenceError):
+            AIRunTokenUsage()
 
     def test_created_at_is_required(self) -> None:
         result = validate_extraction_output(_valid_output(), _metadata())

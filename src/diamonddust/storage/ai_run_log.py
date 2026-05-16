@@ -80,6 +80,31 @@ class AIRunOutputArtifact:
 
 
 @dataclass(frozen=True)
+class AIRunTokenUsage:
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
+
+    def __post_init__(self) -> None:
+        _require_optional_non_negative_int("input_tokens", self.input_tokens)
+        _require_optional_non_negative_int("output_tokens", self.output_tokens)
+        _require_optional_non_negative_int("total_tokens", self.total_tokens)
+        if (
+            self.input_tokens is None
+            and self.output_tokens is None
+            and self.total_tokens is None
+        ):
+            raise AIRunLogPersistenceError("token_usage must include at least one value")
+
+    def to_mapping(self) -> dict[str, int]:
+        data: dict[str, int] = {}
+        _set_optional(data, "input_tokens", self.input_tokens)
+        _set_optional(data, "output_tokens", self.output_tokens)
+        _set_optional(data, "total_tokens", self.total_tokens)
+        return data
+
+
+@dataclass(frozen=True)
 class AIRunLogArtifactContext:
     trial_id: str | None = None
     stage_label: str | None = None
@@ -91,6 +116,9 @@ class AIRunLogArtifactContext:
     source_input_id: str | None = None
     output_artifacts: tuple[AIRunOutputArtifact, ...] = ()
     not_validated: tuple[str, ...] = ()
+    provider_request_id: str | None = None
+    retry_count: int | None = None
+    token_usage: AIRunTokenUsage | None = None
 
     def __post_init__(self) -> None:
         if self.trial_id is not None:
@@ -114,6 +142,12 @@ class AIRunLogArtifactContext:
             allow_empty=True,
         )
         _require_str_tuple("not_validated", self.not_validated, allow_empty=True)
+        _require_optional_str("provider_request_id", self.provider_request_id)
+        _require_optional_non_negative_int("retry_count", self.retry_count)
+        if self.token_usage is not None and not isinstance(
+            self.token_usage, AIRunTokenUsage
+        ):
+            raise AIRunLogPersistenceError("token_usage must be an AIRunTokenUsage")
 
     def to_mapping(self) -> dict[str, object]:
         data: dict[str, object] = {}
@@ -132,6 +166,10 @@ class AIRunLogArtifactContext:
             ]
         if self.not_validated:
             data["not_validated"] = list(self.not_validated)
+        _set_optional(data, "provider_request_id", self.provider_request_id)
+        _set_optional(data, "retry_count", self.retry_count)
+        if self.token_usage is not None:
+            data["token_usage"] = self.token_usage.to_mapping()
         return data
 
 
@@ -273,6 +311,11 @@ def _require_bool(name: str, value: object) -> None:
 def _require_optional_bool(name: str, value: bool | None) -> None:
     if value is not None:
         _require_bool(name, value)
+
+
+def _require_optional_non_negative_int(name: str, value: int | None) -> None:
+    if value is not None and (not isinstance(value, int) or value < 0):
+        raise AIRunLogPersistenceError(f"{name} must be a non-negative integer")
 
 
 def _require_optional_context(context: AIRunLogArtifactContext | None) -> None:

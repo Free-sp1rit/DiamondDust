@@ -405,3 +405,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 139 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, or persisting real raw provider output.
+
+## 2026-05-16 — Provider Run Log Metadata Completed
+
+- Scope: Connected provider response/error envelope metadata to optional AI run-log artifact context.
+- Outcome: AI run logs can now persist provider request id, retry count, and token usage through a typed storage context mapped by the application layer, while provider adapters remain side-effect free.
+- Review: `docs/reviews/milestone-reviews/2026-05-16-provider-run-log-metadata.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves future real-provider traceability without approving real provider integration.
+- Validation: 140 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Clarify latency units, cost limits, retry policy, fallback behavior, and raw output retention before real provider integration.

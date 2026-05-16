@@ -12,6 +12,14 @@ Record durable technical and governance decisions here.
 - Risks: Future implementation must preserve ownership boundaries: application records run log data, storage persists artifacts, and provider adapters only execute/return envelopes.
 - Follow-up: Escalate before adding provider SDK dependencies, reading API keys, making real network calls, enabling provider-side tools, enabling cost-bearing behavior, or persisting real raw provider output.
 
+### 2026-05-16 — Record provider envelope metadata through run-log context
+
+- Decision: Provider request ids, retry counts, and token usage are recorded as optional typed AI run-log artifact context, mapped by the application layer from provider response/error envelopes and persisted by the storage adapter under `_ai_runs`.
+- Reason: Future real-provider extraction needs traceable run metadata, but provider adapters should remain side-effect free and raw provider output should remain outside durable run logs.
+- Alternatives: Store provider metadata directly in provider adapters; add provider fields to domain extraction models; defer trace metadata until after real provider integration.
+- Risks: Run-log artifact consumers may treat optional provider metadata as a stable compatibility contract before replay/import requirements are designed.
+- Follow-up: Clarify latency units and raw output retention policy before recording production provider metrics.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
