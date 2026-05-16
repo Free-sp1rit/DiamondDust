@@ -9,7 +9,9 @@ from diamonddust.ai import (
     AIRunMetadata,
     AIValidationStatus,
     ExtractionValidationResult,
+    RenderedPrompt,
     compute_ai_output_hash,
+    render_extract_units_prompt,
     validate_extraction_output,
 )
 from diamonddust.ai.model_policy import ModelPolicy, validate_provider_request_policy
@@ -20,7 +22,12 @@ from diamonddust.ai.provider import (
     ProviderResult,
     ProviderUsage,
 )
+from diamonddust.application.provider_request import (
+    ExtractUnitsProviderRequestSpec,
+    build_extract_units_provider_request,
+)
 from diamonddust.storage.ai_run_log import AIRunLogArtifactContext, AIRunTokenUsage
+from diamonddust.storage.markdown import IngestedMarkdownEssay
 
 
 class ProviderExtractionError(ValueError):
@@ -51,6 +58,81 @@ class ProviderExtractionRun:
     @property
     def is_valid(self) -> bool:
         return self.validation_result.is_valid
+
+
+@dataclass(frozen=True)
+class ProviderExtractionOrchestration:
+    request: ProviderRequest
+    rendered_prompt: RenderedPrompt
+    extraction_run: ProviderExtractionRun
+    run_log_context: AIRunLogArtifactContext
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.request, ProviderRequest):
+            raise ProviderExtractionError("request must be ProviderRequest")
+        if not isinstance(self.rendered_prompt, RenderedPrompt):
+            raise ProviderExtractionError("rendered_prompt must be RenderedPrompt")
+        if not isinstance(self.extraction_run, ProviderExtractionRun):
+            raise ProviderExtractionError(
+                "extraction_run must be ProviderExtractionRun"
+            )
+        if not isinstance(self.run_log_context, AIRunLogArtifactContext):
+            raise ProviderExtractionError(
+                "run_log_context must be AIRunLogArtifactContext"
+            )
+
+    @property
+    def validation_result(self) -> ExtractionValidationResult:
+        return self.extraction_run.validation_result
+
+    @property
+    def run_log(self) -> AIRunLog:
+        return self.extraction_run.run_log
+
+    @property
+    def errors(self) -> tuple[str, ...]:
+        return self.extraction_run.errors
+
+    @property
+    def is_valid(self) -> bool:
+        return self.extraction_run.is_valid
+
+
+def run_extract_units_provider_orchestration(
+    provider: ProviderClient,
+    essay: IngestedMarkdownEssay,
+    spec: ExtractUnitsProviderRequestSpec,
+    *,
+    model_policy: ModelPolicy | None = None,
+) -> ProviderExtractionOrchestration:
+    """Run the provider-neutral extraction handoff without artifact persistence."""
+
+    if not isinstance(essay, IngestedMarkdownEssay):
+        raise ProviderExtractionError("essay must be IngestedMarkdownEssay")
+    if not isinstance(spec, ExtractUnitsProviderRequestSpec):
+        raise ProviderExtractionError("spec must be ExtractUnitsProviderRequestSpec")
+
+    request = build_extract_units_provider_request(
+        essay,
+        spec,
+        model_policy=model_policy,
+    )
+    rendered_prompt = render_extract_units_prompt(request, model_policy=model_policy)
+    extraction_run = run_provider_extraction(
+        provider,
+        request,
+        model_policy=model_policy,
+    )
+
+    return ProviderExtractionOrchestration(
+        request=request,
+        rendered_prompt=rendered_prompt,
+        extraction_run=extraction_run,
+        run_log_context=_prompt_run_log_context(
+            provider_run_log_context(extraction_run),
+            rendered_prompt,
+        ),
+    )
 
 
 def run_provider_extraction(
@@ -114,6 +196,28 @@ def provider_run_log_context(run: ProviderExtractionRun) -> AIRunLogArtifactCont
     return AIRunLogArtifactContext(
         provider_request_id=result.error.provider_request_id,
         retry_count=result.error.retry_count,
+    )
+
+
+def _prompt_run_log_context(
+    context: AIRunLogArtifactContext,
+    rendered_prompt: RenderedPrompt,
+) -> AIRunLogArtifactContext:
+    return AIRunLogArtifactContext(
+        trial_id=context.trial_id,
+        stage_label=context.stage_label,
+        run_scope=context.run_scope,
+        real_provider_call=context.real_provider_call,
+        fixture_driven=context.fixture_driven,
+        prompt_used=True,
+        metrics_scope=context.metrics_scope,
+        source_input_id=rendered_prompt.source_input_id,
+        prompt_hash=rendered_prompt.prompt_hash,
+        output_artifacts=context.output_artifacts,
+        not_validated=context.not_validated,
+        provider_request_id=context.provider_request_id,
+        retry_count=context.retry_count,
+        token_usage=context.token_usage,
     )
 
 

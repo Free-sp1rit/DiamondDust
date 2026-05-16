@@ -102,6 +102,29 @@ Rules:
 - Prompt rendering must not generate KnowledgePatch data, formal notes, blog drafts, publication content, or tool calls.
 - Sending rendered prompt text to a real provider still requires real-provider approval.
 
+## Provider Extraction Orchestrator
+
+The provider extraction orchestrator composes the provider-readiness skeleton for
+`extract_units` without persisting artifacts or integrating a real provider.
+
+The orchestrator should:
+
+- build a provider-neutral request from ingested Markdown
+- render an `extract_units.v1` prompt package
+- execute a provider boundary that returns a typed response/error envelope
+- validate structured provider output before it becomes domain data
+- produce run-log context with provider metadata and prompt hash
+
+Rules:
+
+- Orchestration belongs in the application layer.
+- Orchestration does not call providers directly; it receives a provider boundary.
+- Orchestration does not persist prompt packages, run logs, suggestions, reports, or formal vault files by default.
+- Prompt hash may be recorded for traceability, but prompt text must not be persisted by default.
+- Provider output must pass typed validation before patch generation.
+- Provider errors must fail closed and produce failed validation results.
+- Real provider execution still requires separate approval.
+
 ## Provider Adapter Boundary
 
 The Provider Adapter Boundary Skeleton introduces provider-neutral request,
@@ -163,6 +186,7 @@ Every AI run must record:
 - provider_request_id if available
 - retry_count if available
 - token_usage if available
+- prompt_hash if available
 - validation_status
 
 ## Compile Cache

@@ -449,3 +449,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 159 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, persisting raw provider output, or sending rendered prompt text to an external provider.
+
+## 2026-05-16 — Provider Extraction Orchestrator Completed
+
+- Scope: Implemented the application-level provider extraction orchestration skeleton for `extract_units`.
+- Outcome: Application code can now build provider-neutral requests, render prompt packages, execute a supplied provider boundary, validate structured output, and return run-log context with provider metadata plus prompt hash without persisting prompt text.
+- Review: `docs/reviews/milestone-reviews/2026-05-16-provider-extraction-orchestrator.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; composes the provider skeleton without approving real provider integration.
+- Validation: 164 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Escalate before choosing a real provider, adding SDK dependencies, reading API keys, making real network calls, setting cost limits, enabling fallback, persisting raw provider output, or sending rendered prompt text to an external provider.

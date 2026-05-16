@@ -93,6 +93,7 @@ class AIRunLogPersistenceTests(unittest.TestCase):
                     reason="provider_free_local_trial",
                 ),
                 source_input_id="raw_essay_20260511_ai_run_ab12cd",
+                prompt_hash="sha256:prompt",
                 output_artifacts=(
                     AIRunOutputArtifact(
                         artifact_type="local_trial_feedback_report",
@@ -130,6 +131,7 @@ class AIRunLogPersistenceTests(unittest.TestCase):
             },
         )
         self.assertEqual(data["source_input_id"], "raw_essay_20260511_ai_run_ab12cd")
+        self.assertEqual(data["prompt_hash"], "sha256:prompt")
         self.assertEqual(
             data["output_artifacts"],
             [

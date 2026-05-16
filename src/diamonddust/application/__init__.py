@@ -41,8 +41,10 @@ from diamonddust.application.patch_review import (
 )
 from diamonddust.application.provider_extraction import (
     ProviderExtractionError,
+    ProviderExtractionOrchestration,
     ProviderExtractionRun,
     provider_run_log_context,
+    run_extract_units_provider_orchestration,
     run_provider_extraction,
 )
 from diamonddust.application.provider_request import (
@@ -75,6 +77,7 @@ __all__ = [
     "PatchReviewError",
     "PatchReviewResult",
     "ProviderExtractionError",
+    "ProviderExtractionOrchestration",
     "ProviderExtractionRun",
     "ProviderRequestBuildError",
     "ExtractUnitsProviderRequestSpec",
@@ -84,6 +87,7 @@ __all__ = [
     "inspect_patch_diff",
     "review_patch",
     "provider_run_log_context",
+    "run_extract_units_provider_orchestration",
     "run_provider_extraction",
     "run_local_trial",
     "run_mvp_release_readiness",

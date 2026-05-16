@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-15
+Last updated: 2026-05-16
 
 ## Tooling and Repository Shape
 
@@ -69,6 +69,12 @@ Last updated: 2026-05-15
 - Context: Gate 4 is provider-neutral and does not call an LLM.
 - Needed decision: Choose provider adapter and model policy only when the patch review workflow is ready for real model output.
 - Impact: Affects dependencies, cost, auth, prompt design, and run log fields.
+
+### 2026-05-16 — How should rendered prompts enter concrete provider adapters?
+
+- Context: The application orchestrator renders prompt packages and records prompt hashes, while the current provider boundary remains provider-neutral and request-centered.
+- Needed decision: Before real provider integration, decide whether concrete adapters receive a rendered prompt package directly, derive provider-specific request bodies inside the adapter, or use a small application-level execution adapter.
+- Impact: Affects provider SDK coupling, replayability, prompt traceability, and how much prompt text can be logged or retained.
 
 ## Patch Review
 
