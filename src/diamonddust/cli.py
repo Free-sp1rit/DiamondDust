@@ -11,7 +11,14 @@ import sys
 from tempfile import TemporaryDirectory
 from typing import Sequence, TextIO
 
-from diamonddust.application import LocalTrialResult, LocalTrialSpec, run_local_trial
+from diamonddust.application import (
+    LocalTrialResult,
+    LocalTrialSpec,
+    ProviderIntegrationDecisionSet,
+    assess_provider_integration_readiness,
+    render_provider_integration_readiness_markdown,
+    run_local_trial,
+)
 from diamonddust.application.blog_draft import BlogMode
 
 
@@ -33,6 +40,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_local_trial_command(args, stdout=sys.stdout, stderr=sys.stderr)
     if args.command == "local-trial-fixture":
         return _run_local_trial_fixture_command(args, stdout=sys.stdout, stderr=sys.stderr)
+    if args.command == "provider-readiness-report":
+        return _run_provider_readiness_report_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
     parser.print_help()
     return 2
 
@@ -68,7 +81,91 @@ def _build_parser() -> argparse.ArgumentParser:
     fixture_trial.add_argument("--root", default=".")
     fixture_trial.add_argument("--vault-root", default=DEFAULT_VAULT_ROOT)
     fixture_trial.add_argument("--created-at", default=_utc_now())
+
+    provider_readiness = subparsers.add_parser(
+        "provider-readiness-report",
+        help="render a provider integration readiness report without provider calls",
+    )
+    provider_readiness.add_argument("--first-provider")
+    provider_readiness.add_argument("--default-model")
+    provider_readiness.add_argument("--provider-sdk-dependency")
+    provider_readiness.add_argument(
+        "--provider-sdk-dependency-approved",
+        action="store_true",
+    )
+    provider_readiness.add_argument("--api-key-env-var")
+    provider_readiness.add_argument("--api-key-env-var-approved", action="store_true")
+    provider_readiness.add_argument(
+        "--real-provider-calls-approved",
+        action="store_true",
+    )
+    provider_readiness.add_argument(
+        "--real-network-calls-approved",
+        action="store_true",
+    )
+    provider_readiness.add_argument(
+        "--prompt-text-external-approved",
+        action="store_true",
+    )
+    provider_readiness.add_argument("--structured-output-mechanism")
+    provider_readiness.add_argument(
+        "--structured-output-mechanism-approved",
+        action="store_true",
+    )
+    provider_readiness.add_argument("--cost-limit", type=float)
+    provider_readiness.add_argument("--cost-limit-approved", action="store_true")
+    provider_readiness.add_argument("--timeout-seconds", type=int)
+    provider_readiness.add_argument("--timeout-policy-approved", action="store_true")
+    provider_readiness.add_argument("--max-retries", type=int)
+    provider_readiness.add_argument("--retry-policy-approved", action="store_true")
+    provider_readiness.add_argument("--raw-output-retention")
+    provider_readiness.add_argument(
+        "--raw-output-retention-approved",
+        action="store_true",
+    )
+    provider_readiness.add_argument("--fallback-behavior")
+    provider_readiness.add_argument("--fallback-behavior-approved", action="store_true")
     return parser
+
+
+def _run_provider_readiness_report_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        decisions = ProviderIntegrationDecisionSet(
+            first_provider=args.first_provider,
+            default_model=args.default_model,
+            provider_sdk_dependency=args.provider_sdk_dependency,
+            provider_sdk_dependency_approved=args.provider_sdk_dependency_approved,
+            api_key_env_var=args.api_key_env_var,
+            api_key_env_var_approved=args.api_key_env_var_approved,
+            real_provider_calls_approved=args.real_provider_calls_approved,
+            real_network_calls_approved=args.real_network_calls_approved,
+            prompt_text_external_approved=args.prompt_text_external_approved,
+            structured_output_mechanism=args.structured_output_mechanism,
+            structured_output_mechanism_approved=(
+                args.structured_output_mechanism_approved
+            ),
+            cost_limit=args.cost_limit,
+            cost_limit_approved=args.cost_limit_approved,
+            timeout_seconds=args.timeout_seconds,
+            timeout_policy_approved=args.timeout_policy_approved,
+            max_retries=args.max_retries,
+            retry_policy_approved=args.retry_policy_approved,
+            raw_output_retention=args.raw_output_retention,
+            raw_output_retention_approved=args.raw_output_retention_approved,
+            fallback_behavior=args.fallback_behavior,
+            fallback_behavior_approved=args.fallback_behavior_approved,
+        )
+        report = assess_provider_integration_readiness(decisions)
+        stdout.write(render_provider_integration_readiness_markdown(report))
+    except Exception as exc:
+        print(f"provider readiness report failed: {exc}", file=stderr)
+        return 1
+    return 0
 
 
 def _run_local_trial_fixture_command(

@@ -493,3 +493,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 176 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Use rendered readiness reports as planning/escalation input only; separately approve provider, model, SDK dependency, API key env var, network calls, cost, retry, fallback, raw-output retention, and prompt externalization before real-provider integration.
+
+## 2026-05-17 — Provider Readiness CLI Command Completed
+
+- Scope: Added `diamonddust provider-readiness-report` as a diagnostic CLI command for first-provider readiness review.
+- Outcome: The CLI can render blocked or ready readiness reports from explicit command-line decision values, returns success for valid blocked diagnostics, keeps the first-provider task scope fixed to `extract_units`, and does not read API key values, call providers, or persist artifacts.
+- Review: `docs/reviews/milestone-reviews/2026-05-17-provider-readiness-command.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves first-provider escalation usability without approving real provider integration.
+- Validation: 178 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider readiness CLI smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Treat CLI output as review input only; record provider approvals separately before SDK, API key, network, cost, retry, fallback, raw-output retention, or prompt externalization behavior is implemented.

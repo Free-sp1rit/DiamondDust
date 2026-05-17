@@ -212,9 +212,11 @@ Rules:
 Readiness report rendering:
 
 - Readiness reports may be rendered to deterministic Markdown for review and escalation input.
+- The CLI may expose readiness report rendering as a diagnostic command.
 - Rendering must not read API key values, call providers, persist prompt text, or persist raw provider output.
 - Rendered reports may display the approved API key environment variable name, but never environment variable values.
 - Rendered reports are review artifacts only and must not be treated as real-provider implementation approval.
+- A blocked readiness report is a valid diagnostic output and does not need to fail CLI execution.
 
 ## AI Output Boundary
 

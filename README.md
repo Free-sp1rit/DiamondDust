@@ -8,7 +8,7 @@ DiamondDust 是一个本地优先的语义知识编译器：它将零散随笔�
 
 The project has completed the Gate 7 MVP release readiness skeleton.
 
-The current implementation includes typed domain schemas, read-only Markdown ingestion, provider-neutral structured extraction validation, AI run log persistence, patch review, candidate Markdown export, patch review report rendering, review package persistence, deterministic blog draft generation, durable blog draft package persistence, a local trial CLI with packaged fixture assets and feedback reports, formal vault conflict preflight checks, formal apply dry-run plans, a five-sample release readiness harness, and GitHub Actions CI for package install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls, formal vault apply/revert execution, publishing, and UI flows remain future work behind the existing review boundaries.
+The current implementation includes typed domain schemas, read-only Markdown ingestion, provider-neutral structured extraction validation, provider readiness reporting, AI run log persistence, patch review, candidate Markdown export, patch review report rendering, review package persistence, deterministic blog draft generation, durable blog draft package persistence, a local trial CLI with packaged fixture assets and feedback reports, formal vault conflict preflight checks, formal apply dry-run plans, a five-sample release readiness harness, and GitHub Actions CI for package install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls, formal vault apply/revert execution, publishing, and UI flows remain future work behind the existing review boundaries.
 
 ## Local Trial
 
@@ -51,6 +51,18 @@ Patch review reports under `_ai_reports/patch-reviews/` include pending decision
 See `docs/guides/local-trial-user-feedback.md` for the safe local trial review flow and feedback capture rubric.
 
 See `docs/guides/local-trial-extraction-json.md` for the extraction JSON shape and a validated minimal example.
+
+## Provider Readiness
+
+Before real provider integration, render the current approval checklist:
+
+```bash
+diamonddust provider-readiness-report
+```
+
+The default report is expected to be `blocked` until provider, model, SDK, API key environment variable, network, prompt externalization, structured output, cost, retry, timeout, raw output retention, and fallback decisions are explicit.
+
+This command does not read API key values, call providers, persist prompt/raw provider output, or approve real provider integration.
 
 ## Development Validation
 
