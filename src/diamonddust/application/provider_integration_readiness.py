@@ -135,6 +135,90 @@ def assess_provider_integration_readiness(
     )
 
 
+def render_provider_integration_readiness_markdown(
+    report: ProviderIntegrationReadinessReport,
+) -> str:
+    """Render a provider readiness report without reading secrets or providers."""
+
+    if not isinstance(report, ProviderIntegrationReadinessReport):
+        raise ProviderIntegrationReadinessError(
+            "report must be ProviderIntegrationReadinessReport"
+        )
+
+    decisions = report.decisions
+    lines = [
+        "# Provider Integration Readiness Report",
+        "",
+        "## Summary",
+        "",
+        f"- readiness_status: {report.status.value}",
+        f"- first_provider: {_text_or_pending(decisions.first_provider)}",
+        f"- default_model: {_text_or_pending(decisions.default_model)}",
+        f"- allowed_tasks: {_tuple_text(decisions.allowed_tasks)}",
+        "- real_provider_integration_approved_by_this_report: false",
+        "",
+        "## Blockers",
+        "",
+        *_list_or_none(report.blockers),
+        "",
+        "## Decision Summary",
+        "",
+        f"- provider_sdk_dependency: {_text_or_pending(decisions.provider_sdk_dependency)}",
+        f"- api_key_env_var: {_text_or_pending(decisions.api_key_env_var)}",
+        f"- structured_output_mechanism: {_text_or_pending(decisions.structured_output_mechanism)}",
+        f"- cost_limit: {_number_or_pending(decisions.cost_limit)}",
+        f"- timeout_seconds: {_number_or_pending(decisions.timeout_seconds)}",
+        f"- max_retries: {_number_or_pending(decisions.max_retries)}",
+        f"- raw_output_retention: {_text_or_pending(decisions.raw_output_retention)}",
+        f"- fallback_behavior: {_text_or_pending(decisions.fallback_behavior)}",
+        "",
+        "## Approval Checklist",
+        "",
+        _check_line(
+            "provider SDK dependency approved",
+            decisions.provider_sdk_dependency_approved,
+        ),
+        _check_line("API key env var approved", decisions.api_key_env_var_approved),
+        _check_line(
+            "real provider calls approved",
+            decisions.real_provider_calls_approved,
+        ),
+        _check_line(
+            "real network calls approved",
+            decisions.real_network_calls_approved,
+        ),
+        _check_line(
+            "rendered prompt external use approved",
+            decisions.prompt_text_external_approved,
+        ),
+        _check_line(
+            "structured output mechanism approved",
+            decisions.structured_output_mechanism_approved,
+        ),
+        _check_line("cost limit approved", decisions.cost_limit_approved),
+        _check_line("timeout policy approved", decisions.timeout_policy_approved),
+        _check_line("retry policy approved", decisions.retry_policy_approved),
+        _check_line(
+            "raw output retention approved",
+            decisions.raw_output_retention_approved,
+        ),
+        _check_line("fallback behavior approved", decisions.fallback_behavior_approved),
+        "",
+        "## Safety Boundaries",
+        "",
+        "- This report does not approve real provider integration.",
+        "- This report does not read API keys or environment variable values.",
+        "- This report does not call a provider or make network requests.",
+        "- This report does not persist prompt text or raw provider output.",
+        "- This report does not allow provider-side tools, formal apply, patch acceptance, or publication.",
+        "",
+        "## Next Step",
+        "",
+        _next_step(report),
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def _readiness_blockers(decisions: ProviderIntegrationDecisionSet) -> list[str]:
     blockers: list[str] = []
     _block_if_missing(
@@ -238,6 +322,35 @@ def _readiness_blockers(decisions: ProviderIntegrationDecisionSet) -> list[str]:
     if decisions.allowed_tasks != (EXTRACTION_TASK,):
         blockers.append("first real-provider task scope must be extract_units only")
     return blockers
+
+
+def _list_or_none(values: tuple[str, ...]) -> list[str]:
+    if not values:
+        return ["- none"]
+    return [f"- {value}" for value in values]
+
+
+def _check_line(label: str, checked: bool) -> str:
+    marker = "x" if checked else " "
+    return f"- [{marker}] {label}"
+
+
+def _next_step(report: ProviderIntegrationReadinessReport) -> str:
+    if report.is_ready:
+        return "Create a separate first-provider implementation plan and escalation request before adding SDKs, reading API keys, or making network calls."
+    return "Resolve blockers through explicit product-owner decisions before starting real-provider implementation."
+
+
+def _text_or_pending(value: str | None) -> str:
+    return value if value is not None else "pending"
+
+
+def _number_or_pending(value: int | float | None) -> str:
+    return str(value) if value is not None else "pending"
+
+
+def _tuple_text(values: tuple[str, ...]) -> str:
+    return ", ".join(values)
 
 
 def _block_if_missing(

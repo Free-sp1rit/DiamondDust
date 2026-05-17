@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from diamonddust.ai import EXTRACTION_TASK
@@ -6,6 +7,7 @@ from diamonddust.application import (
     ProviderIntegrationReadinessError,
     ProviderIntegrationReadinessStatus,
     assess_provider_integration_readiness,
+    render_provider_integration_readiness_markdown,
 )
 
 
@@ -57,6 +59,59 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
 
         with self.assertRaises(ProviderIntegrationReadinessError):
             assess_provider_integration_readiness("not decisions")
+
+    def test_renders_blocked_readiness_report(self) -> None:
+        report = assess_provider_integration_readiness(ProviderIntegrationDecisionSet())
+
+        markdown = render_provider_integration_readiness_markdown(report)
+
+        self.assertIn("# Provider Integration Readiness Report", markdown)
+        self.assertIn("- readiness_status: blocked", markdown)
+        self.assertIn("- first_provider: pending", markdown)
+        self.assertIn("- default model must be selected", markdown)
+        self.assertIn("- [ ] real provider calls approved", markdown)
+        self.assertIn(
+            "This report does not read API keys or environment variable values.",
+            markdown,
+        )
+        self.assertIn(
+            "Resolve blockers through explicit product-owner decisions",
+            markdown,
+        )
+
+    def test_renders_ready_readiness_report_without_approving_integration(self) -> None:
+        secret_value = "DO_NOT_RENDER_THIS_SECRET_VALUE"
+        previous_secret = os.environ.get("DIAMONDDUST_PROVIDER_API_KEY")
+        os.environ["DIAMONDDUST_PROVIDER_API_KEY"] = secret_value
+        report = assess_provider_integration_readiness(_ready_decisions())
+
+        try:
+            markdown = render_provider_integration_readiness_markdown(report)
+        finally:
+            if previous_secret is None:
+                os.environ.pop("DIAMONDDUST_PROVIDER_API_KEY", None)
+            else:
+                os.environ["DIAMONDDUST_PROVIDER_API_KEY"] = previous_secret
+
+        self.assertIn("- readiness_status: ready", markdown)
+        self.assertIn("- first_provider: approved-provider", markdown)
+        self.assertIn("- allowed_tasks: extract_units", markdown)
+        self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", markdown)
+        self.assertNotIn(secret_value, markdown)
+        self.assertIn("- none", markdown)
+        self.assertIn("- [x] provider SDK dependency approved", markdown)
+        self.assertIn(
+            "- real_provider_integration_approved_by_this_report: false",
+            markdown,
+        )
+        self.assertIn(
+            "Create a separate first-provider implementation plan",
+            markdown,
+        )
+
+    def test_readiness_report_renderer_rejects_invalid_input(self) -> None:
+        with self.assertRaises(ProviderIntegrationReadinessError):
+            render_provider_integration_readiness_markdown("not a report")
 
 
 def _ready_decisions(**overrides) -> ProviderIntegrationDecisionSet:
