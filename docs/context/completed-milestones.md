@@ -504,3 +504,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 178 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider readiness CLI smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Treat CLI output as review input only; record provider approvals separately before SDK, API key, network, cost, retry, fallback, raw-output retention, or prompt externalization behavior is implemented.
+
+## 2026-05-17 — Provider Integration Escalation Request Draft Completed
+
+- Scope: Added deterministic first-provider escalation request drafting from provider readiness reports and exposed it through `diamonddust provider-escalation-request`.
+- Outcome: The application and CLI can now present blocked/ready readiness state, requested decisions, risks, affected rules, fallback, and exact user decision needs in the project escalation request shape without recording approval, reading API key values, calling providers, or persisting artifacts.
+- Review: `docs/reviews/milestone-reviews/2026-05-17-provider-escalation-request.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves first-provider approval workflow without approving real provider integration.
+- Validation: 182 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider escalation CLI smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Use the draft as review input only; separately approve provider, model, SDK dependency, API key env var, network calls, cost, retry, fallback, raw-output retention, and prompt externalization before implementation.

@@ -84,6 +84,14 @@ Record durable technical and governance decisions here.
 - Risks: CLI approval flags can be mistaken for durable approval records, and future automation may need an explicit fail-on-blocked mode.
 - Follow-up: Treat CLI output as review input only; record real provider approvals separately before SDK, API key, network, cost, fallback, or raw-output behavior is implemented.
 
+### 2026-05-17 — Draft provider integration escalation requests from readiness state
+
+- Decision: Add deterministic escalation request drafting from typed provider readiness reports and expose it through `diamonddust provider-escalation-request`.
+- Reason: Real provider integration requires explicit product-owner decisions, and the project needs a repeatable way to present those decisions without recording approval or enabling provider behavior.
+- Alternatives: Hand-write escalation requests; persist approval artifacts immediately; start real provider implementation directly.
+- Risks: The draft may be mistaken for approval if copied without review, and requested decision fields may need expansion after the first provider is chosen.
+- Follow-up: Treat escalation drafts as review input only; separately record user approval before SDK dependencies, API key reads, network calls, cost behavior, fallback, prompt externalization, or raw-output retention.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.

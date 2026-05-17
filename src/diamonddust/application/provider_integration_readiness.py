@@ -219,6 +219,81 @@ def render_provider_integration_readiness_markdown(
     return "\n".join(lines) + "\n"
 
 
+def render_provider_integration_escalation_request_markdown(
+    report: ProviderIntegrationReadinessReport,
+) -> str:
+    """Render a first-provider escalation request draft."""
+
+    if not isinstance(report, ProviderIntegrationReadinessReport):
+        raise ProviderIntegrationReadinessError(
+            "report must be ProviderIntegrationReadinessReport"
+        )
+
+    decisions = report.decisions
+    lines = [
+        "# Escalation Request: First Real Provider Integration",
+        "",
+        "## Blocked Goal",
+        "",
+        "Enable the first real-provider integration for `extract_units` while preserving DiamondDust's provider-neutral boundaries.",
+        "",
+        "## Conflicting Constraint",
+        "",
+        "Real provider integration is blocked until provider, model, SDK dependency, API key environment variable, network, prompt externalization, structured output, cost, timeout, retry, raw-output retention, fallback behavior, and task-scope decisions are explicit.",
+        "",
+        "## Current Readiness",
+        "",
+        f"- readiness_status: {report.status.value}",
+        f"- first_provider: {_text_or_pending(decisions.first_provider)}",
+        f"- default_model: {_text_or_pending(decisions.default_model)}",
+        f"- allowed_tasks: {_tuple_text(decisions.allowed_tasks)}",
+        "- approval_recorded_by_this_request: false",
+        "",
+        "### Blockers",
+        "",
+        *_list_or_none(report.blockers),
+        "",
+        "## Why Following It Reduces Quality",
+        "",
+        "Without explicit decisions, implementation would either remain blocked or risk mixing SDK, auth, network, cost, prompt, and raw-output behavior into the codebase without reviewable approval.",
+        "",
+        "## Recommended Change",
+        "",
+        "Approve or deny the requested first-provider decisions separately, then create a follow-up implementation plan only for approved behavior.",
+        "",
+        "## Requested Decisions",
+        "",
+        *_decision_lines(decisions),
+        "",
+        "## Affected Files or Rules",
+        "",
+        "- `docs/06_AI_PIPELINE_CONTRACT.md`",
+        "- `docs/08_DEPENDENCY_AND_PORTABILITY_POLICY.md`",
+        "- `docs/14_CONSTRAINT_ESCALATION_POLICY.md`",
+        "- Future provider adapter modules, only after approval",
+        "- `pyproject.toml`, only if a provider SDK dependency is approved",
+        "",
+        "## Risks If Approved",
+        "",
+        "- External provider calls may send rendered prompt text outside the local machine.",
+        "- SDK dependencies may affect portability, security, and maintenance.",
+        "- Provider cost, latency, retries, and fallback behavior need explicit operating limits.",
+        "- Raw provider output retention can expose user content if handled carelessly.",
+        "- Extraction quality will still need fixture and golden-output evaluation.",
+        "",
+        "## Safe Fallback If Denied",
+        "",
+        "Keep the provider-free local trial path, fake provider skeleton, prompt renderer, readiness reports, and fixture-driven validation. Continue improving review UX and golden fixtures without real provider calls.",
+        "",
+        "## Exact User Decision Needed",
+        "",
+        "Approve, deny, or revise each requested decision. This draft does not record approval, does not read API keys, does not call providers, and does not authorize implementation by itself.",
+        "",
+        "Please approve or deny this change.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def _readiness_blockers(decisions: ProviderIntegrationDecisionSet) -> list[str]:
     blockers: list[str] = []
     _block_if_missing(
@@ -351,6 +426,44 @@ def _number_or_pending(value: int | float | None) -> str:
 
 def _tuple_text(values: tuple[str, ...]) -> str:
     return ", ".join(values)
+
+
+def _bool_text(value: bool) -> str:
+    return "true" if value else "false"
+
+
+def _decision_lines(decisions: ProviderIntegrationDecisionSet) -> list[str]:
+    return [
+        f"- first_provider: {_text_or_pending(decisions.first_provider)}",
+        f"- default_model: {_text_or_pending(decisions.default_model)}",
+        f"- provider_sdk_dependency: {_text_or_pending(decisions.provider_sdk_dependency)}",
+        "- provider_sdk_dependency_approved: "
+        f"{_bool_text(decisions.provider_sdk_dependency_approved)}",
+        f"- api_key_env_var: {_text_or_pending(decisions.api_key_env_var)}",
+        f"- api_key_env_var_approved: {_bool_text(decisions.api_key_env_var_approved)}",
+        "- real_provider_calls_approved: "
+        f"{_bool_text(decisions.real_provider_calls_approved)}",
+        "- real_network_calls_approved: "
+        f"{_bool_text(decisions.real_network_calls_approved)}",
+        "- prompt_text_external_approved: "
+        f"{_bool_text(decisions.prompt_text_external_approved)}",
+        "- structured_output_mechanism: "
+        f"{_text_or_pending(decisions.structured_output_mechanism)}",
+        "- structured_output_mechanism_approved: "
+        f"{_bool_text(decisions.structured_output_mechanism_approved)}",
+        f"- cost_limit: {_number_or_pending(decisions.cost_limit)}",
+        f"- cost_limit_approved: {_bool_text(decisions.cost_limit_approved)}",
+        f"- timeout_seconds: {_number_or_pending(decisions.timeout_seconds)}",
+        f"- timeout_policy_approved: {_bool_text(decisions.timeout_policy_approved)}",
+        f"- max_retries: {_number_or_pending(decisions.max_retries)}",
+        f"- retry_policy_approved: {_bool_text(decisions.retry_policy_approved)}",
+        f"- raw_output_retention: {_text_or_pending(decisions.raw_output_retention)}",
+        "- raw_output_retention_approved: "
+        f"{_bool_text(decisions.raw_output_retention_approved)}",
+        f"- fallback_behavior: {_text_or_pending(decisions.fallback_behavior)}",
+        f"- fallback_behavior_approved: {_bool_text(decisions.fallback_behavior_approved)}",
+        f"- allowed_tasks: {_tuple_text(decisions.allowed_tasks)}",
+    ]
 
 
 def _block_if_missing(

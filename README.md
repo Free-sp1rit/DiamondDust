@@ -64,6 +64,14 @@ The default report is expected to be `blocked` until provider, model, SDK, API k
 
 This command does not read API key values, call providers, persist prompt/raw provider output, or approve real provider integration.
 
+To draft a first-provider escalation request from the same decision inputs:
+
+```bash
+diamonddust provider-escalation-request
+```
+
+The escalation draft is review input only. It does not record approval or authorize implementation by itself.
+
 ## Development Validation
 
 CI runs on pull requests and task-branch pushes through GitHub Actions.
