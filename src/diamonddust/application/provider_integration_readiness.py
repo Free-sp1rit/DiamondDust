@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 import re
@@ -133,6 +134,40 @@ def assess_provider_integration_readiness(
         status=status,
         blockers=blockers,
     )
+
+
+def provider_integration_decisions_from_mapping(
+    value: Mapping[str, object],
+) -> ProviderIntegrationDecisionSet:
+    """Parse strict mapping input into typed provider integration decisions."""
+
+    if not isinstance(value, Mapping):
+        raise ProviderIntegrationReadinessError(
+            "provider decisions input must be a mapping"
+        )
+
+    keys = set(value.keys())
+    if not all(isinstance(key, str) for key in keys):
+        raise ProviderIntegrationReadinessError(
+            "provider decisions input keys must be strings"
+        )
+
+    unknown_fields = sorted(keys - _DECISION_FIELD_NAMES)
+    if unknown_fields:
+        raise ProviderIntegrationReadinessError(
+            "unknown provider decision fields: " + ", ".join(unknown_fields)
+        )
+
+    values = dict(value)
+    if "allowed_tasks" in values:
+        values["allowed_tasks"] = _allowed_tasks_from_json(values["allowed_tasks"])
+
+    try:
+        return ProviderIntegrationDecisionSet(**values)
+    except TypeError as exc:
+        raise ProviderIntegrationReadinessError(
+            "invalid provider decision fields"
+        ) from exc
 
 
 def render_provider_integration_readiness_markdown(
@@ -428,6 +463,16 @@ def _tuple_text(values: tuple[str, ...]) -> str:
     return ", ".join(values)
 
 
+def _allowed_tasks_from_json(value: object) -> tuple[str, ...]:
+    if isinstance(value, tuple):
+        return value
+    if isinstance(value, list):
+        return tuple(value)
+    raise ProviderIntegrationReadinessError(
+        "allowed_tasks must be a JSON array when provided"
+    )
+
+
 def _bool_text(value: bool) -> str:
     return "true" if value else "false"
 
@@ -536,3 +581,6 @@ def _require_str_tuple(
 
 
 _ENV_VAR_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]*$")
+_DECISION_FIELD_NAMES = frozenset(
+    ProviderIntegrationDecisionSet.__dataclass_fields__
+)

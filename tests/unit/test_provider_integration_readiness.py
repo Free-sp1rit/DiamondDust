@@ -7,6 +7,7 @@ from diamonddust.application import (
     ProviderIntegrationReadinessError,
     ProviderIntegrationReadinessStatus,
     assess_provider_integration_readiness,
+    provider_integration_decisions_from_mapping,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
 )
@@ -154,6 +155,49 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
     def test_escalation_request_renderer_rejects_invalid_input(self) -> None:
         with self.assertRaises(ProviderIntegrationReadinessError):
             render_provider_integration_escalation_request_markdown("not a report")
+
+    def test_parses_provider_decisions_from_strict_mapping(self) -> None:
+        decisions = provider_integration_decisions_from_mapping(
+            {
+                "first_provider": "approved-provider",
+                "default_model": "approved-model",
+                "provider_sdk_dependency": "approved-provider-sdk",
+                "provider_sdk_dependency_approved": True,
+                "api_key_env_var": "DIAMONDDUST_PROVIDER_API_KEY",
+                "api_key_env_var_approved": True,
+                "real_provider_calls_approved": True,
+                "real_network_calls_approved": True,
+                "prompt_text_external_approved": True,
+                "structured_output_mechanism": "json_schema",
+                "structured_output_mechanism_approved": True,
+                "cost_limit": 1.0,
+                "cost_limit_approved": True,
+                "timeout_seconds": 30,
+                "timeout_policy_approved": True,
+                "max_retries": 1,
+                "retry_policy_approved": True,
+                "raw_output_retention": "do_not_persist",
+                "raw_output_retention_approved": True,
+                "fallback_behavior": "disabled",
+                "fallback_behavior_approved": True,
+                "allowed_tasks": [EXTRACTION_TASK],
+            }
+        )
+
+        report = assess_provider_integration_readiness(decisions)
+
+        self.assertTrue(report.is_ready)
+        self.assertEqual(decisions.allowed_tasks, (EXTRACTION_TASK,))
+
+    def test_provider_decision_mapping_rejects_unknown_fields(self) -> None:
+        with self.assertRaises(ProviderIntegrationReadinessError):
+            provider_integration_decisions_from_mapping({"unknown": "value"})
+
+    def test_provider_decision_mapping_rejects_invalid_allowed_tasks_shape(self) -> None:
+        with self.assertRaises(ProviderIntegrationReadinessError):
+            provider_integration_decisions_from_mapping(
+                {"allowed_tasks": "extract_units"}
+            )
 
 
 def _ready_decisions(**overrides) -> ProviderIntegrationDecisionSet:

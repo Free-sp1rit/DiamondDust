@@ -92,6 +92,14 @@ Record durable technical and governance decisions here.
 - Risks: The draft may be mistaken for approval if copied without review, and requested decision fields may need expansion after the first provider is chosen.
 - Follow-up: Treat escalation drafts as review input only; separately record user approval before SDK dependencies, API key reads, network calls, cost behavior, fallback, prompt externalization, or raw-output retention.
 
+### 2026-05-17 — Load provider decision diagnostics from JSON input
+
+- Decision: Add strict JSON mapping input for provider integration decisions and allow readiness/escalation CLI commands to load it through `--decisions-json`.
+- Reason: Provider approval packages need a reviewable decision input shape that is less error-prone than long command lines, while still becoming typed decisions before assessment.
+- Alternatives: Keep flags only; merge JSON and flags with override rules; persist decision JSON as an approval artifact.
+- Risks: Decision JSON field names may become a user-facing contract, and JSON files can be mistaken for durable approval records.
+- Follow-up: Treat decision JSON as diagnostic input only; design a separate approval artifact if durable approval records are later needed.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.

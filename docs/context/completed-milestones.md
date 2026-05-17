@@ -515,3 +515,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 182 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider escalation CLI smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Use the draft as review input only; separately approve provider, model, SDK dependency, API key env var, network calls, cost, retry, fallback, raw-output retention, and prompt externalization before implementation.
+
+## 2026-05-17 — Provider Decisions JSON Input Completed
+
+- Scope: Added strict JSON input parsing for provider integration decisions and wired `--decisions-json` into provider readiness and escalation CLI diagnostics.
+- Outcome: Decision JSON maps are validated into typed `ProviderIntegrationDecisionSet` values, reject unknown fields, accept JSON arrays for `allowed_tasks`, and remain diagnostic input rather than approval records. CLI commands do not merge JSON with inline flags, read API key values, call providers, or persist artifacts.
+- Review: `docs/reviews/milestone-reviews/2026-05-17-provider-decisions-json.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves first-provider approval package usability without approving real provider integration.
+- Validation: 188 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider decisions JSON CLI smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Treat decision JSON as diagnostic input only; design a separate durable approval artifact if real provider approval records are later needed.
