@@ -217,6 +217,7 @@ Readiness report rendering:
 - Rendered reports may display the approved API key environment variable name, but never environment variable values.
 - Rendered reports are review artifacts only and must not be treated as real-provider implementation approval.
 - A blocked readiness report is a valid diagnostic output and does not need to fail CLI execution.
+- Readiness reports may be converted into escalation request drafts, but drafts do not record approval or authorize implementation by themselves.
 
 ## AI Output Boundary
 

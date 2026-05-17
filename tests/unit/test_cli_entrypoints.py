@@ -36,6 +36,7 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("local-trial", result.stdout)
         self.assertIn("local-trial-fixture", result.stdout)
         self.assertIn("provider-readiness-report", result.stdout)
+        self.assertIn("provider-escalation-request", result.stdout)
 
     def test_provider_readiness_report_defaults_to_blocked(self) -> None:
         env = dict(os.environ)
@@ -113,6 +114,38 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("- allowed_tasks: extract_units", result.stdout)
         self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", result.stdout)
         self.assertIn("- none", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stderr)
+
+    def test_provider_escalation_request_renders_draft_without_secret(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_PROVIDER_API_KEY"] = "DO_NOT_RENDER_THIS_SECRET_VALUE"
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "diamonddust",
+                "provider-escalation-request",
+                "--api-key-env-var",
+                "DIAMONDDUST_PROVIDER_API_KEY",
+            ],
+            cwd=ROOT,
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            "# Escalation Request: First Real Provider Integration",
+            result.stdout,
+        )
+        self.assertIn("- readiness_status: blocked", result.stdout)
+        self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", result.stdout)
+        self.assertIn("- approval_recorded_by_this_request: false", result.stdout)
+        self.assertIn("Please approve or deny this change.", result.stdout)
         self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stdout)
         self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stderr)
 
