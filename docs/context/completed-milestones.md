@@ -526,3 +526,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 188 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider decisions JSON CLI smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Treat decision JSON as diagnostic input only; design a separate durable approval artifact if real provider approval records are later needed.
+
+## 2026-05-17 — Provider Decisions JSON Template Completed
+
+- Scope: Added a blocked-by-default provider decisions JSON template and exposed it through `diamonddust provider-decisions-template`.
+- Outcome: The template contains every provider decision field, keeps all approvals false, keeps provider/model/SDK/API key env var unset, limits `allowed_tasks` to `extract_units`, parses back into typed decisions, and remains diagnostic input rather than an approval record.
+- Review: `docs/reviews/milestone-reviews/2026-05-17-provider-decisions-template.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves first-provider decision drafting without approving real provider integration.
+- Validation: 190 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider decisions template CLI smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Treat generated templates as editable diagnostic input only; design a separate durable approval artifact if approval records are later needed.

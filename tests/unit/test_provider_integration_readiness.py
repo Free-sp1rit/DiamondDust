@@ -7,6 +7,7 @@ from diamonddust.application import (
     ProviderIntegrationReadinessError,
     ProviderIntegrationReadinessStatus,
     assess_provider_integration_readiness,
+    provider_integration_decision_template_mapping,
     provider_integration_decisions_from_mapping,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
@@ -198,6 +199,24 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
             provider_integration_decisions_from_mapping(
                 {"allowed_tasks": "extract_units"}
             )
+
+    def test_provider_decision_template_is_blocked_and_parseable(self) -> None:
+        template = provider_integration_decision_template_mapping()
+
+        decisions = provider_integration_decisions_from_mapping(template)
+        report = assess_provider_integration_readiness(decisions)
+
+        self.assertFalse(report.is_ready)
+        self.assertEqual(decisions.allowed_tasks, (EXTRACTION_TASK,))
+        self.assertIsNone(decisions.first_provider)
+        self.assertIsNone(decisions.default_model)
+        self.assertIsNone(decisions.api_key_env_var)
+        self.assertFalse(decisions.real_provider_calls_approved)
+        self.assertIn("first provider must be selected", report.blockers)
+        self.assertEqual(
+            set(template),
+            set(ProviderIntegrationDecisionSet.__dataclass_fields__),
+        )
 
 
 def _ready_decisions(**overrides) -> ProviderIntegrationDecisionSet:

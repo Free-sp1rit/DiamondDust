@@ -220,6 +220,7 @@ Readiness report rendering:
 - Readiness reports may be converted into escalation request drafts, but drafts do not record approval or authorize implementation by themselves.
 - CLI diagnostics may load provider decision values from JSON, but decision JSON is input only and must not be treated as a durable approval artifact.
 - Provider decision JSON must not contain API key values.
+- CLI diagnostics may print a blocked-by-default provider decision JSON template for review, but templates do not select providers or record approval.
 
 ## AI Output Boundary
 
