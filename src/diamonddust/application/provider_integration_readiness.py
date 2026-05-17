@@ -170,6 +170,35 @@ def provider_integration_decisions_from_mapping(
         ) from exc
 
 
+def provider_integration_decision_template_mapping() -> dict[str, object]:
+    """Return a JSON-serializable provider decisions template."""
+
+    return {
+        "first_provider": None,
+        "default_model": None,
+        "provider_sdk_dependency": None,
+        "provider_sdk_dependency_approved": False,
+        "api_key_env_var": None,
+        "api_key_env_var_approved": False,
+        "real_provider_calls_approved": False,
+        "real_network_calls_approved": False,
+        "prompt_text_external_approved": False,
+        "structured_output_mechanism": None,
+        "structured_output_mechanism_approved": False,
+        "cost_limit": None,
+        "cost_limit_approved": False,
+        "timeout_seconds": None,
+        "timeout_policy_approved": False,
+        "max_retries": None,
+        "retry_policy_approved": False,
+        "raw_output_retention": None,
+        "raw_output_retention_approved": False,
+        "fallback_behavior": None,
+        "fallback_behavior_approved": False,
+        "allowed_tasks": [EXTRACTION_TASK],
+    }
+
+
 def render_provider_integration_readiness_markdown(
     report: ProviderIntegrationReadinessReport,
 ) -> str:

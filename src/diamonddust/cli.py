@@ -16,6 +16,7 @@ from diamonddust.application import (
     LocalTrialSpec,
     ProviderIntegrationDecisionSet,
     assess_provider_integration_readiness,
+    provider_integration_decision_template_mapping,
     provider_integration_decisions_from_mapping,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
@@ -54,6 +55,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             stdout=sys.stdout,
             stderr=sys.stderr,
         )
+    if args.command == "provider-decisions-template":
+        return _run_provider_decisions_template_command(stdout=sys.stdout)
     parser.print_help()
     return 2
 
@@ -101,6 +104,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="render a first-provider escalation request draft without provider calls",
     )
     _add_provider_readiness_arguments(provider_escalation)
+
+    subparsers.add_parser(
+        "provider-decisions-template",
+        help="print a provider decisions JSON template without provider calls",
+    )
     return parser
 
 
@@ -176,6 +184,18 @@ def _run_provider_escalation_request_command(
     except Exception as exc:
         print(f"provider escalation request failed: {exc}", file=stderr)
         return 1
+    return 0
+
+
+def _run_provider_decisions_template_command(*, stdout: TextIO) -> int:
+    stdout.write(
+        json.dumps(
+            provider_integration_decision_template_mapping(),
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    stdout.write("\n")
     return 0
 
 

@@ -75,11 +75,12 @@ The escalation draft is review input only. It does not record approval or author
 Both provider-readiness commands can load decision values from JSON:
 
 ```bash
+diamonddust provider-decisions-template > provider-decisions.json
 diamonddust provider-readiness-report --decisions-json provider-decisions.json
 diamonddust provider-escalation-request --decisions-json provider-decisions.json
 ```
 
-Decision JSON is diagnostic input, not an approval artifact. It may contain the API key environment variable name, but must not contain API key values.
+The generated template is blocked by default and must be edited before it can represent real decisions. Decision JSON is diagnostic input, not an approval artifact. It may contain the API key environment variable name, but must not contain API key values.
 
 ## Development Validation
 

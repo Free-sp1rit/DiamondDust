@@ -39,6 +39,7 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("local-trial-fixture", result.stdout)
         self.assertIn("provider-readiness-report", result.stdout)
         self.assertIn("provider-escalation-request", result.stdout)
+        self.assertIn("provider-decisions-template", result.stdout)
 
     def test_provider_readiness_report_defaults_to_blocked(self) -> None:
         env = dict(os.environ)
@@ -251,6 +252,51 @@ class CLIEntrypointTests(unittest.TestCase):
             "--decisions-json cannot be combined with decision flags",
             result.stderr,
         )
+
+    def test_provider_decisions_template_prints_parseable_blocked_json(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_PROVIDER_API_KEY"] = "DO_NOT_RENDER_THIS_SECRET_VALUE"
+        result = subprocess.run(
+            [sys.executable, "-m", "diamonddust", "provider-decisions-template"],
+            cwd=ROOT,
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stderr)
+
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["allowed_tasks"], ["extract_units"])
+        self.assertIsNone(payload["first_provider"])
+        self.assertFalse(payload["real_provider_calls_approved"])
+
+        with TemporaryDirectory() as tmp:
+            decisions_path = Path(tmp) / "provider-decisions-template.json"
+            decisions_path.write_text(result.stdout, encoding="utf-8")
+            readiness = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "provider-readiness-report",
+                    "--decisions-json",
+                    str(decisions_path),
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(readiness.returncode, 0, readiness.stderr)
+        self.assertIn("- readiness_status: blocked", readiness.stdout)
+        self.assertIn("- allowed_tasks: extract_units", readiness.stdout)
 
 
 def _ready_provider_decisions() -> dict[str, object]:

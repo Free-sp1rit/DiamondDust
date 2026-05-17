@@ -100,6 +100,14 @@ Record durable technical and governance decisions here.
 - Risks: Decision JSON field names may become a user-facing contract, and JSON files can be mistaken for durable approval records.
 - Follow-up: Treat decision JSON as diagnostic input only; design a separate approval artifact if durable approval records are later needed.
 
+### 2026-05-17 — Provide a blocked provider decisions JSON template
+
+- Decision: Add a blocked-by-default provider decision JSON template and expose it through `diamonddust provider-decisions-template`.
+- Reason: The product owner needs an easy way to start a decision JSON file without copying field names from code, but the template must not select a provider, record approval, or include secrets.
+- Alternatives: Keep JSON input undocumented by example; check in a provider-specific example; make the template a durable approval artifact.
+- Risks: A copied template file can still be mistaken for an approval record, and field names remain a user-facing input contract.
+- Follow-up: Treat generated templates as editable diagnostic input only; design a separate durable approval artifact if approval records are needed later.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
