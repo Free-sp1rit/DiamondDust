@@ -76,6 +76,14 @@ Record durable technical and governance decisions here.
 - Risks: The rendered report format may become a review interface and could be mistaken for approval unless its boundaries stay explicit.
 - Follow-up: Use rendered readiness output as planning/escalation input only; separately approve provider, model, SDK dependency, API key env var, network calls, cost, retry, fallback, and raw-output retention before real-provider integration.
 
+### 2026-05-17 — Expose provider readiness as a diagnostic CLI command
+
+- Decision: Add `diamonddust provider-readiness-report` to render readiness reports from CLI-provided decision values.
+- Reason: First-provider escalation needs a product-owner-visible checklist, but the command must remain diagnostic and must not read API key values, call providers, persist artifacts, or record approval.
+- Alternatives: Keep readiness reports code-only; write readiness reports to `_ai_reports/`; start real provider integration directly.
+- Risks: CLI approval flags can be mistaken for durable approval records, and future automation may need an explicit fail-on-blocked mode.
+- Follow-up: Treat CLI output as review input only; record real provider approvals separately before SDK, API key, network, cost, fallback, or raw-output behavior is implemented.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
