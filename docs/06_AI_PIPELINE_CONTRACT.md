@@ -209,6 +209,13 @@ Rules:
 - The readiness gate must fail closed when decisions are missing or task scope expands beyond `extract_units`.
 - A ready report still requires normal branch, PR, review, and escalation workflow before implementation.
 
+Readiness report rendering:
+
+- Readiness reports may be rendered to deterministic Markdown for review and escalation input.
+- Rendering must not read API key values, call providers, persist prompt text, or persist raw provider output.
+- Rendered reports may display the approved API key environment variable name, but never environment variable values.
+- Rendered reports are review artifacts only and must not be treated as real-provider implementation approval.
+
 ## AI Output Boundary
 
 LLM output may produce:

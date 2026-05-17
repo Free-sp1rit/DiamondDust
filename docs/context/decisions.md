@@ -68,6 +68,14 @@ Record durable technical and governance decisions here.
 - Risks: The decision set may become a planning contract and may need new fields after the first provider is chosen.
 - Follow-up: Use the readiness report as input to the first-provider escalation and implementation plan; it does not replace user approval, PR review, or milestone review.
 
+### 2026-05-17 — Render provider readiness reports for review
+
+- Decision: Add deterministic Markdown rendering for typed provider integration readiness reports.
+- Reason: The product owner needs a readable review artifact before first-provider escalation, but rendering must not read API key values, call providers, persist prompt text, or imply implementation approval.
+- Alternatives: Inspect readiness only through tests/code; persist readiness reports as storage artifacts immediately; include provider-specific SDK request details now.
+- Risks: The rendered report format may become a review interface and could be mistaken for approval unless its boundaries stay explicit.
+- Follow-up: Use rendered readiness output as planning/escalation input only; separately approve provider, model, SDK dependency, API key env var, network calls, cost, retry, fallback, and raw-output retention before real-provider integration.
+
 ### 2026-05-10 — Separate runtime AI autonomy from development-agent autonomy
 
 - Decision: Runtime AI inside DiamondDust may only generate candidates, relations, patches, drafts, and reports; the coding agent may autonomously plan, edit code/docs, test, review, and propose changes within the active task scope.
