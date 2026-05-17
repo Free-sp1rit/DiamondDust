@@ -16,6 +16,7 @@ from diamonddust.application import (
     LocalTrialSpec,
     ProviderIntegrationDecisionSet,
     assess_provider_integration_readiness,
+    provider_integration_decisions_from_mapping,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
     run_local_trial,
@@ -104,6 +105,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _add_provider_readiness_arguments(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--decisions-json")
     command.add_argument("--first-provider")
     command.add_argument("--default-model")
     command.add_argument("--provider-sdk-dependency")
@@ -177,7 +179,14 @@ def _run_provider_escalation_request_command(
     return 0
 
 
-def _provider_decisions_from_args(args: argparse.Namespace) -> ProviderIntegrationDecisionSet:
+def _provider_decisions_from_args(
+    args: argparse.Namespace,
+) -> ProviderIntegrationDecisionSet:
+    if args.decisions_json is not None:
+        if _has_inline_provider_decisions(args):
+            raise ValueError("--decisions-json cannot be combined with decision flags")
+        return _load_provider_decisions_json(args.decisions_json)
+
     return ProviderIntegrationDecisionSet(
         first_provider=args.first_provider,
         default_model=args.default_model,
@@ -203,6 +212,48 @@ def _provider_decisions_from_args(args: argparse.Namespace) -> ProviderIntegrati
         fallback_behavior=args.fallback_behavior,
         fallback_behavior_approved=args.fallback_behavior_approved,
     )
+
+
+def _has_inline_provider_decisions(args: argparse.Namespace) -> bool:
+    return any(
+        (
+            args.first_provider is not None,
+            args.default_model is not None,
+            args.provider_sdk_dependency is not None,
+            args.provider_sdk_dependency_approved,
+            args.api_key_env_var is not None,
+            args.api_key_env_var_approved,
+            args.real_provider_calls_approved,
+            args.real_network_calls_approved,
+            args.prompt_text_external_approved,
+            args.structured_output_mechanism is not None,
+            args.structured_output_mechanism_approved,
+            args.cost_limit is not None,
+            args.cost_limit_approved,
+            args.timeout_seconds is not None,
+            args.timeout_policy_approved,
+            args.max_retries is not None,
+            args.retry_policy_approved,
+            args.raw_output_retention is not None,
+            args.raw_output_retention_approved,
+            args.fallback_behavior is not None,
+            args.fallback_behavior_approved,
+        )
+    )
+
+
+def _load_provider_decisions_json(path: str) -> ProviderIntegrationDecisionSet:
+    try:
+        raw = Path(path).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ValueError(f"cannot read provider decisions JSON: {path}") from exc
+
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid provider decisions JSON: {path}") from exc
+
+    return provider_integration_decisions_from_mapping(value)
 
 
 def _run_local_trial_fixture_command(

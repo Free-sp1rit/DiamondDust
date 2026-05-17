@@ -218,6 +218,8 @@ Readiness report rendering:
 - Rendered reports are review artifacts only and must not be treated as real-provider implementation approval.
 - A blocked readiness report is a valid diagnostic output and does not need to fail CLI execution.
 - Readiness reports may be converted into escalation request drafts, but drafts do not record approval or authorize implementation by themselves.
+- CLI diagnostics may load provider decision values from JSON, but decision JSON is input only and must not be treated as a durable approval artifact.
+- Provider decision JSON must not contain API key values.
 
 ## AI Output Boundary
 

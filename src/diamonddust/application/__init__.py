@@ -54,6 +54,7 @@ from diamonddust.application.provider_integration_readiness import (
     ProviderIntegrationReadinessReport,
     ProviderIntegrationReadinessStatus,
     assess_provider_integration_readiness,
+    provider_integration_decisions_from_mapping,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
 )
@@ -105,6 +106,7 @@ __all__ = [
     "run_provider_extraction",
     "run_provider_prompt_extraction",
     "assess_provider_integration_readiness",
+    "provider_integration_decisions_from_mapping",
     "render_provider_integration_escalation_request_markdown",
     "render_provider_integration_readiness_markdown",
     "run_local_trial",

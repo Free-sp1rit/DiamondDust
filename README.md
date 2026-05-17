@@ -72,6 +72,15 @@ diamonddust provider-escalation-request
 
 The escalation draft is review input only. It does not record approval or authorize implementation by itself.
 
+Both provider-readiness commands can load decision values from JSON:
+
+```bash
+diamonddust provider-readiness-report --decisions-json provider-decisions.json
+diamonddust provider-escalation-request --decisions-json provider-decisions.json
+```
+
+Decision JSON is diagnostic input, not an approval artifact. It may contain the API key environment variable name, but must not contain API key values.
+
 ## Development Validation
 
 CI runs on pull requests and task-branch pushes through GitHub Actions.
