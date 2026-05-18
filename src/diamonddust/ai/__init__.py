@@ -50,7 +50,12 @@ from diamonddust.ai.provider import (
 from diamonddust.ai.provider_execution import (
     FakeExecutionProvider,
     ProviderExecutionClient,
+    ProviderExecutionMessage,
+    ProviderExecutionMessageRole,
+    ProviderExecutionPayload,
+    PROVIDER_EXECUTION_PAYLOAD_SCHEMA_VERSION,
     ProviderExecutionRequest,
+    build_provider_execution_payload,
 )
 from diamonddust.ai.prompt import (
     EXTRACT_UNITS_PROMPT_VERSION,
@@ -88,6 +93,10 @@ __all__ = [
     "ProviderError",
     "ProviderErrorType",
     "ProviderExecutionClient",
+    "ProviderExecutionMessage",
+    "ProviderExecutionMessageRole",
+    "ProviderExecutionPayload",
+    "PROVIDER_EXECUTION_PAYLOAD_SCHEMA_VERSION",
     "ProviderExecutionRequest",
     "ProviderModelSettings",
     "ProviderRequest",
@@ -101,6 +110,7 @@ __all__ = [
     "TimeoutPolicy",
     "RenderedPrompt",
     "compute_ai_output_hash",
+    "build_provider_execution_payload",
     "default_model_policy",
     "extraction_output_json_schema",
     "render_extract_units_prompt",
