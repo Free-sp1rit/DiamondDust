@@ -436,6 +436,14 @@ Record durable technical and governance decisions here.
 - Risks: JSON Schema cannot express every runtime rule, such as source references matching the top-level source input, so docs and schema comments must keep that boundary clear.
 - Follow-up: Use the schema as provider planning input only; decide separately whether a runtime JSON Schema validator is needed after real provider integration begins.
 
+### 2026-05-18 — Carry extract_units output schema in rendered prompts
+
+- Decision: Extend `RenderedPrompt` with `extract_units` output schema id, version, hash, and schema content, and include the schema hash in prompt identity.
+- Reason: Future provider adapters need the machine-readable structured-output contract at the prompt execution boundary, while typed validation remains the authoritative gate after provider output returns.
+- Alternatives: Keep schema available only through a separate CLI command; make concrete provider adapters regenerate schema independently; persist prompt/schema packages now.
+- Risks: Provider-specific APIs may require adapter-level schema transforms later, and rendered prompt/schema payloads must not be persisted or sent externally without the existing real-provider approvals.
+- Follow-up: Add provider-specific schema mapping only after provider, model, SDK, and structured-output mechanism decisions are approved.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

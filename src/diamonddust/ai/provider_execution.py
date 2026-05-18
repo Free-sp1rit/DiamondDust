@@ -91,6 +91,10 @@ def _require_prompt_matches_request(
         raise ProviderBoundaryError(
             "rendered prompt schema_version must match request"
         )
+    if rendered_prompt.output_schema_version != request.schema_version:
+        raise ProviderBoundaryError(
+            "rendered prompt output_schema_version must match request"
+        )
     if rendered_prompt.input_hash != request.input_hash:
         raise ProviderBoundaryError("rendered prompt input_hash must match request")
 

@@ -1,11 +1,15 @@
 import unittest
 
 from diamonddust.ai import (
+    EXTRACTION_OUTPUT_SCHEMA_ID,
+    EXTRACTION_OUTPUT_SCHEMA_VERSION,
     EXTRACT_UNITS_PROMPT_VERSION,
     ModelPolicyError,
     PromptRenderError,
     ProviderModelSettings,
     ProviderRequest,
+    compute_ai_output_hash,
+    extraction_output_json_schema,
     render_extract_units_prompt,
 )
 from diamonddust.application import (
@@ -28,6 +32,16 @@ class PromptRendererTests(unittest.TestCase):
         self.assertEqual(prompt.input_hash, request.input_hash)
         self.assertEqual(prompt.source_input_id, "raw_essay_prompt_renderer_ab12cd")
         self.assertEqual(prompt.source_path, "00-inbox/prompt-renderer.md")
+        self.assertEqual(prompt.output_schema_id, EXTRACTION_OUTPUT_SCHEMA_ID)
+        self.assertEqual(prompt.output_schema_version, EXTRACTION_OUTPUT_SCHEMA_VERSION)
+        self.assertEqual(
+            prompt.output_schema_hash,
+            compute_ai_output_hash(extraction_output_json_schema()),
+        )
+        self.assertEqual(
+            prompt.output_schema["$id"],
+            "diamonddust.extract_units.output.v0",
+        )
         self.assertTrue(prompt.prompt_hash.startswith("sha256:"))
         self.assertIn("Return structured JSON only.", prompt.system_prompt)
         self.assertIn("Do not generate KnowledgePatch", prompt.system_prompt)
@@ -38,10 +52,25 @@ class PromptRendererTests(unittest.TestCase):
         self.assertIn("Prompt rendering preserves source context.", prompt.user_prompt)
         self.assertIn("unit_candidates", prompt.output_instructions)
         self.assertIn("relation_candidates may be empty", prompt.output_instructions)
+        self.assertIn(
+            "Output schema id: diamonddust.extract_units.output.v0",
+            prompt.output_instructions,
+        )
+        self.assertIn(prompt.output_schema_hash, prompt.output_instructions)
+        self.assertIn(
+            '"$id": "diamonddust.extract_units.output.v0"',
+            prompt.output_instructions,
+        )
 
         mapping = prompt.to_mapping()
         self.assertEqual(mapping["prompt_hash"], prompt.prompt_hash)
         self.assertEqual(mapping["source_path"], "00-inbox/prompt-renderer.md")
+        self.assertEqual(mapping["output_schema_id"], EXTRACTION_OUTPUT_SCHEMA_ID)
+        self.assertEqual(mapping["output_schema_hash"], prompt.output_schema_hash)
+        self.assertEqual(
+            mapping["output_schema"]["$id"],
+            prompt.output_schema["$id"],
+        )
 
     def test_prompt_hash_is_stable_for_same_request(self) -> None:
         request = _request()
@@ -55,6 +84,15 @@ class PromptRendererTests(unittest.TestCase):
         request = build_extract_units_provider_request(
             _essay(),
             _spec(prompt_version="extract_units.experimental"),
+        )
+
+        with self.assertRaises(PromptRenderError):
+            render_extract_units_prompt(request)
+
+    def test_prompt_renderer_rejects_unsupported_output_schema_version(self) -> None:
+        request = build_extract_units_provider_request(
+            _essay(),
+            _spec(schema_version="0.2.0"),
         )
 
         with self.assertRaises(PromptRenderError):
@@ -103,13 +141,14 @@ Prompt rendering preserves source context.
 def _spec(
     *,
     prompt_version: str = EXTRACT_UNITS_PROMPT_VERSION,
+    schema_version: str = "0.1.0",
 ) -> ExtractUnitsProviderRequestSpec:
     return ExtractUnitsProviderRequestSpec(
         run_id="run_prompt_renderer_ab12cd",
         provider="fake-provider",
         model="fake-structured-model",
         prompt_version=prompt_version,
-        schema_version="0.1.0",
+        schema_version=schema_version,
     )
 
 

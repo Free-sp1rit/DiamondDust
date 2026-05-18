@@ -50,6 +50,12 @@ class ProviderExecutionRequestTests(unittest.TestCase):
                 ),
             )
 
+        with self.assertRaises(ProviderBoundaryError):
+            ProviderExecutionRequest(
+                provider_request=request,
+                rendered_prompt=replace(rendered_prompt, output_schema_version="0.2.0"),
+            )
+
     def test_fake_execution_provider_returns_envelope_without_persistence(self) -> None:
         request = _request()
         execution_request = ProviderExecutionRequest(
