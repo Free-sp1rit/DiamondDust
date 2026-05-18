@@ -570,3 +570,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 202 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, focused prompt/execution tests passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add provider-specific schema mapping only after provider, model, SDK, structured-output mechanism, prompt externalization, and real network call decisions are approved.
+
+## 2026-05-18 — Provider Execution Payload Completed
+
+- Scope: Added provider-neutral execution payload types and a builder from `ProviderExecutionRequest`.
+- Outcome: Future concrete provider adapters can start from a serializable internal payload containing provider/model settings, system/user messages, output instructions, output schema metadata/content, and safety boundary flags without receiving a provider-specific SDK payload.
+- Review: `docs/reviews/milestone-reviews/2026-05-18-provider-execution-payload.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; clarifies future adapter input without approving real provider integration.
+- Validation: 206 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, focused provider execution payload tests passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add provider-specific SDK request mapping only after first-provider, SDK, API key, network, prompt externalization, structured-output mechanism, cost, retry, and retention decisions are approved.

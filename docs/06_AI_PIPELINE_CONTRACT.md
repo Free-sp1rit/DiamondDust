@@ -162,15 +162,27 @@ provider request for:
 - source input id when present in the request payload
 - source path when present in the request payload
 
+Provider-neutral execution payloads may be built from execution requests for
+future adapter mapping. A payload may contain:
+
+- payload schema version
+- provider/model settings
+- system and user messages
+- output instructions
+- output schema id, version, hash, and schema object
+- structured output requirement
+- real-provider/tool-call/raw-output-persistence boundary flags
+
 Rules:
 
 - Concrete provider adapters should receive a `ProviderExecutionRequest`.
+- Provider-neutral execution payloads are adapter input, not provider SDK payloads.
 - Provider adapters must return typed response/error envelopes.
 - Provider adapters must not re-render prompts internally.
-- Provider adapters must not persist prompt text, raw provider output, run logs, suggestions, reports, or formal vault files by default.
+- Provider adapters must not persist prompt text, schema payloads, raw provider output, run logs, suggestions, reports, or formal vault files by default.
 - Provider adapters must not log API keys.
 - The execution request does not approve real provider calls.
-- Mapping an execution request into provider-specific SDK messages requires separate real-provider approval.
+- Mapping an execution request or provider-neutral payload into provider-specific SDK messages requires separate real-provider approval.
 
 ## Provider Adapter Boundary
 

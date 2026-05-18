@@ -444,6 +444,14 @@ Record durable technical and governance decisions here.
 - Risks: Provider-specific APIs may require adapter-level schema transforms later, and rendered prompt/schema payloads must not be persisted or sent externally without the existing real-provider approvals.
 - Follow-up: Add provider-specific schema mapping only after provider, model, SDK, and structured-output mechanism decisions are approved.
 
+### 2026-05-18 — Build provider-neutral execution payloads before SDK mapping
+
+- Decision: Add provider-neutral execution payload types that convert `ProviderExecutionRequest` into reviewable messages, output instructions, schema metadata/content, model settings, and safety flags.
+- Reason: Concrete provider adapters need a stable internal payload before any provider-specific SDK request mapping is approved.
+- Alternatives: Let each future adapter inspect `RenderedPrompt` directly; map to one provider SDK shape now; persist provider payloads as artifacts.
+- Risks: The payload contains prompt/schema content and must remain in-memory unless prompt/schema retention is separately approved.
+- Follow-up: Add provider-specific request mapping only after first-provider, SDK, network, prompt externalization, structured-output mechanism, cost, and retry decisions are approved.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
