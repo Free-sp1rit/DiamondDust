@@ -358,6 +358,55 @@ def render_provider_integration_escalation_request_markdown(
     return "\n".join(lines) + "\n"
 
 
+def render_provider_integration_decision_package_markdown(
+    report: ProviderIntegrationReadinessReport,
+) -> str:
+    """Render one review package for provider readiness and escalation input."""
+
+    if not isinstance(report, ProviderIntegrationReadinessReport):
+        raise ProviderIntegrationReadinessError(
+            "report must be ProviderIntegrationReadinessReport"
+        )
+
+    lines = [
+        "# Provider Integration Decision Package",
+        "",
+        "## Package Boundary",
+        "",
+        f"- package_readiness_status: {report.status.value}",
+        "- package_records_approval: false",
+        "- provider_called: false",
+        "- network_called: false",
+        "- api_key_values_read: false",
+        "- provider_sdk_dependency_added: false",
+        "- prompt_or_raw_provider_output_persisted: false",
+        "- formal_write_performed: false",
+        "- allowed_first_provider_tasks: extract_units",
+        "",
+        "## Review Sequence",
+        "",
+        "1. Fill or inspect provider decision JSON.",
+        "2. Read the readiness report and resolve blockers.",
+        "3. Review the escalation request draft.",
+        "4. Record product-owner decisions separately before implementation.",
+        "",
+        "## Readiness Report",
+        "",
+        *_shift_markdown_headings(
+            render_provider_integration_readiness_markdown(report),
+            levels=2,
+        ),
+        "",
+        "## Escalation Request Draft",
+        "",
+        *_shift_markdown_headings(
+            render_provider_integration_escalation_request_markdown(report),
+            levels=2,
+        ),
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def _readiness_blockers(decisions: ProviderIntegrationDecisionSet) -> list[str]:
     blockers: list[str] = []
     _block_if_missing(
@@ -490,6 +539,19 @@ def _number_or_pending(value: int | float | None) -> str:
 
 def _tuple_text(values: tuple[str, ...]) -> str:
     return ", ".join(values)
+
+
+def _shift_markdown_headings(markdown: str, *, levels: int) -> list[str]:
+    if levels < 1:
+        raise ProviderIntegrationReadinessError("heading shift levels must be positive")
+
+    lines: list[str] = []
+    for line in markdown.strip().splitlines():
+        if line.startswith("#"):
+            lines.append(("#" * levels) + line)
+        else:
+            lines.append(line)
+    return lines
 
 
 def _allowed_tasks_from_json(value: object) -> tuple[str, ...]:

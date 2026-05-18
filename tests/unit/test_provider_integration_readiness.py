@@ -9,6 +9,7 @@ from diamonddust.application import (
     assess_provider_integration_readiness,
     provider_integration_decision_template_mapping,
     provider_integration_decisions_from_mapping,
+    render_provider_integration_decision_package_markdown,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
 )
@@ -156,6 +157,52 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
     def test_escalation_request_renderer_rejects_invalid_input(self) -> None:
         with self.assertRaises(ProviderIntegrationReadinessError):
             render_provider_integration_escalation_request_markdown("not a report")
+
+    def test_renders_blocked_decision_package(self) -> None:
+        report = assess_provider_integration_readiness(ProviderIntegrationDecisionSet())
+
+        markdown = render_provider_integration_decision_package_markdown(report)
+
+        self.assertIn("# Provider Integration Decision Package", markdown)
+        self.assertIn("## Package Boundary", markdown)
+        self.assertIn("- package_readiness_status: blocked", markdown)
+        self.assertIn("- package_records_approval: false", markdown)
+        self.assertIn("- provider_called: false", markdown)
+        self.assertIn("- api_key_values_read: false", markdown)
+        self.assertIn("- formal_write_performed: false", markdown)
+        self.assertIn("## Readiness Report", markdown)
+        self.assertIn("### Provider Integration Readiness Report", markdown)
+        self.assertIn("## Escalation Request Draft", markdown)
+        self.assertIn(
+            "### Escalation Request: First Real Provider Integration",
+            markdown,
+        )
+        self.assertIn("- first provider must be selected", markdown)
+
+    def test_renders_ready_decision_package_without_secret_values(self) -> None:
+        secret_value = "DO_NOT_RENDER_THIS_SECRET_VALUE"
+        previous_secret = os.environ.get("DIAMONDDUST_PROVIDER_API_KEY")
+        os.environ["DIAMONDDUST_PROVIDER_API_KEY"] = secret_value
+        report = assess_provider_integration_readiness(_ready_decisions())
+
+        try:
+            markdown = render_provider_integration_decision_package_markdown(report)
+        finally:
+            if previous_secret is None:
+                os.environ.pop("DIAMONDDUST_PROVIDER_API_KEY", None)
+            else:
+                os.environ["DIAMONDDUST_PROVIDER_API_KEY"] = previous_secret
+
+        self.assertIn("- package_readiness_status: ready", markdown)
+        self.assertIn("- readiness_status: ready", markdown)
+        self.assertIn("- first_provider: approved-provider", markdown)
+        self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", markdown)
+        self.assertIn("- allowed_first_provider_tasks: extract_units", markdown)
+        self.assertNotIn(secret_value, markdown)
+
+    def test_decision_package_renderer_rejects_invalid_input(self) -> None:
+        with self.assertRaises(ProviderIntegrationReadinessError):
+            render_provider_integration_decision_package_markdown("not a report")
 
     def test_parses_provider_decisions_from_strict_mapping(self) -> None:
         decisions = provider_integration_decisions_from_mapping(

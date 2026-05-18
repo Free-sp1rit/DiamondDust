@@ -40,6 +40,7 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("provider-readiness-report", result.stdout)
         self.assertIn("provider-escalation-request", result.stdout)
         self.assertIn("provider-decisions-template", result.stdout)
+        self.assertIn("provider-decision-package", result.stdout)
 
     def test_provider_readiness_report_defaults_to_blocked(self) -> None:
         env = dict(os.environ)
@@ -297,6 +298,65 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertEqual(readiness.returncode, 0, readiness.stderr)
         self.assertIn("- readiness_status: blocked", readiness.stdout)
         self.assertIn("- allowed_tasks: extract_units", readiness.stdout)
+
+    def test_provider_decision_package_defaults_to_blocked(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        result = subprocess.run(
+            [sys.executable, "-m", "diamonddust", "provider-decision-package"],
+            cwd=ROOT,
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        self.assertIn("# Provider Integration Decision Package", result.stdout)
+        self.assertIn("- package_readiness_status: blocked", result.stdout)
+        self.assertIn("- package_records_approval: false", result.stdout)
+        self.assertIn("### Provider Integration Readiness Report", result.stdout)
+        self.assertIn(
+            "### Escalation Request: First Real Provider Integration",
+            result.stdout,
+        )
+        self.assertIn("- first provider must be selected", result.stdout)
+
+    def test_provider_decision_package_can_load_decisions_json_without_secret(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_PROVIDER_API_KEY"] = "DO_NOT_RENDER_THIS_SECRET_VALUE"
+        with TemporaryDirectory() as tmp:
+            decisions_path = Path(tmp) / "provider-decisions.json"
+            decisions_path.write_text(
+                json.dumps(_ready_provider_decisions()),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "provider-decision-package",
+                    "--decisions-json",
+                    str(decisions_path),
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("- package_readiness_status: ready", result.stdout)
+        self.assertIn("- readiness_status: ready", result.stdout)
+        self.assertIn("- first_provider: approved-provider", result.stdout)
+        self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stderr)
 
 
 def _ready_provider_decisions() -> dict[str, object]:

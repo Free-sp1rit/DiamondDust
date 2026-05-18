@@ -18,6 +18,7 @@ from diamonddust.application import (
     assess_provider_integration_readiness,
     provider_integration_decision_template_mapping,
     provider_integration_decisions_from_mapping,
+    render_provider_integration_decision_package_markdown,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
     run_local_trial,
@@ -57,6 +58,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "provider-decisions-template":
         return _run_provider_decisions_template_command(stdout=sys.stdout)
+    if args.command == "provider-decision-package":
+        return _run_provider_decision_package_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
     parser.print_help()
     return 2
 
@@ -109,6 +116,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "provider-decisions-template",
         help="print a provider decisions JSON template without provider calls",
     )
+
+    provider_decision_package = subparsers.add_parser(
+        "provider-decision-package",
+        help="render one provider decision review package without provider calls",
+    )
+    _add_provider_readiness_arguments(provider_decision_package)
     return parser
 
 
@@ -196,6 +209,22 @@ def _run_provider_decisions_template_command(*, stdout: TextIO) -> int:
         )
     )
     stdout.write("\n")
+    return 0
+
+
+def _run_provider_decision_package_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        decisions = _provider_decisions_from_args(args)
+        report = assess_provider_integration_readiness(decisions)
+        stdout.write(render_provider_integration_decision_package_markdown(report))
+    except Exception as exc:
+        print(f"provider decision package failed: {exc}", file=stderr)
+        return 1
     return 0
 
 
