@@ -42,6 +42,7 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("provider-decisions-template", result.stdout)
         self.assertIn("provider-decision-package", result.stdout)
         self.assertIn("extraction-output-schema", result.stdout)
+        self.assertIn("provider-payload-preview", result.stdout)
 
     def test_provider_readiness_report_defaults_to_blocked(self) -> None:
         env = dict(os.environ)
@@ -383,6 +384,108 @@ class CLIEntrypointTests(unittest.TestCase):
             ["source_input_id", "unit_candidates", "relation_candidates"],
         )
         self.assertIn("knowledge_unit", schema["$defs"])
+
+    def test_provider_payload_preview_prints_payload_without_provider_or_secret(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_PROVIDER_API_KEY"] = "DO_NOT_RENDER_THIS_SECRET_VALUE"
+        with TemporaryDirectory() as tmp:
+            essay_path = Path(tmp) / "trial-essay.md"
+            essay_path.write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "id: raw_essay_preview_ab12cd",
+                        "title: Provider Payload Preview",
+                        "---",
+                        "",
+                        "Provider payload previews expose local review input.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "provider-payload-preview",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_preview_ab12cd",
+                    "--root",
+                    tmp,
+                    "--timeout-seconds",
+                    "30",
+                    "--max-retries",
+                    "1",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stderr)
+
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["payload_schema_version"], "0.1.0")
+        self.assertEqual(payload["run_id"], "run_preview_ab12cd")
+        self.assertEqual(payload["task"], "extract_units")
+        self.assertEqual(payload["provider"], "preview-provider")
+        self.assertEqual(payload["model"], "preview-structured-model")
+        self.assertEqual(payload["prompt_version"], "extract_units.v1")
+        self.assertEqual(payload["schema_version"], "0.1.0")
+        self.assertEqual(
+            payload["output_schema_id"],
+            "diamonddust.extract_units.output.v0",
+        )
+        self.assertEqual(payload["output_schema_version"], "0.1.0")
+        self.assertTrue(payload["structured_output_required"])
+        self.assertFalse(payload["real_provider_calls_enabled"])
+        self.assertFalse(payload["tool_calls_enabled"])
+        self.assertFalse(payload["raw_output_persistence_allowed"])
+        self.assertEqual(payload["timeout_seconds"], 30)
+        self.assertEqual(payload["max_retries"], 1)
+        self.assertEqual(
+            [message["role"] for message in payload["messages"]],
+            ["system", "user"],
+        )
+        self.assertIn(
+            "Provider payload previews expose local review input.",
+            payload["messages"][1]["content"],
+        )
+        self.assertIn("knowledge_unit", payload["output_schema"]["$defs"])
+
+    def test_provider_payload_preview_reports_ingestion_failure(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "diamonddust",
+                "provider-payload-preview",
+                "--essay",
+                "missing.md",
+                "--run-id",
+                "run_preview_missing",
+            ],
+            cwd=ROOT,
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("provider payload preview failed:", result.stderr)
 
 
 def _ready_provider_decisions() -> dict[str, object]:

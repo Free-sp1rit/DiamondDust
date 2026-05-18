@@ -60,6 +60,14 @@ diamonddust extraction-output-schema
 
 The schema is a contract aid. Typed runtime validation remains authoritative before extraction output becomes internal domain data.
 
+To preview the provider-neutral execution payload that a future adapter would receive:
+
+```bash
+diamonddust provider-payload-preview --essay path/to/essay.md --run-id run_preview_ab12cd
+```
+
+This command prints local review JSON to stdout. The payload includes prompt text, source body text, output instructions, output schema metadata/content, and safety flags. It does not call a provider, read API key values, add SDK dependencies, persist prompt/raw provider output, approve real provider integration, or write formal vault content.
+
 ## Provider Readiness
 
 Before real provider integration, render the current approval checklist:

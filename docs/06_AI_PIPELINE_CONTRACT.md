@@ -184,6 +184,30 @@ Rules:
 - The execution request does not approve real provider calls.
 - Mapping an execution request or provider-neutral payload into provider-specific SDK messages requires separate real-provider approval.
 
+## Provider Payload Preview
+
+The `provider-payload-preview` CLI command may render the provider-neutral
+`extract_units` execution payload to stdout for local review.
+
+The preview payload may include:
+
+- provider/model settings
+- system and user prompt messages
+- source body text from the selected Markdown essay
+- output instructions
+- output schema id, version, hash, and schema content
+- real-provider/tool-call/raw-output-persistence boundary flags
+
+Rules:
+
+- Payload preview is local review input only.
+- Payload preview does not call a provider.
+- Payload preview does not read API key values.
+- Payload preview does not add provider SDK dependencies.
+- Payload preview does not persist prompt text, schema payloads, raw provider output, run logs, suggestions, reports, or formal vault files.
+- Payload preview does not approve real provider integration.
+- Sending the preview payload or its prompt/schema content to a real provider still requires separate real-provider approval.
+
 ## Provider Adapter Boundary
 
 The Provider Adapter Boundary Skeleton introduces provider-neutral request,

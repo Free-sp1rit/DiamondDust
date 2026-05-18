@@ -452,6 +452,14 @@ Record durable technical and governance decisions here.
 - Risks: The payload contains prompt/schema content and must remain in-memory unless prompt/schema retention is separately approved.
 - Follow-up: Add provider-specific request mapping only after first-provider, SDK, network, prompt externalization, structured-output mechanism, cost, and retry decisions are approved.
 
+### 2026-05-18 — Expose provider payload preview as local review input
+
+- Decision: Add a `provider-payload-preview` CLI command that builds the existing provider-neutral request, rendered prompt, and execution payload for one Markdown essay, then prints the payload JSON to stdout.
+- Reason: The product owner needs to inspect prompt text, source body text, output instructions, schema content, model settings, and safety flags before approving any provider-specific SDK mapping or real network call.
+- Alternatives: Require Python callers to assemble the payload manually; persist payload preview artifacts; wait until a concrete provider adapter exists.
+- Risks: Payload preview output contains prompt/source/schema content, so it must remain an explicit local review action and must not be mistaken for provider execution or provider approval.
+- Follow-up: Keep provider-specific SDK payload mapping, prompt externalization, raw output retention, API key reads, and real provider calls behind separate approval.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
