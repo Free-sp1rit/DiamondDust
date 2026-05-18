@@ -420,6 +420,14 @@ Record durable technical and governance decisions here.
 - Risks: Early direct Python callers of `LocalTrialResult.simulated_patch_acceptance` must update to `draft_generation_handoff_completed`.
 - Follow-up: When real provider integration begins, keep provider execution context separate from provider-free fixture context and avoid reusing fixture markers for real model runs.
 
+### 2026-05-18 — Compose provider decision packages from readiness state
+
+- Decision: Add a deterministic provider decision package renderer and CLI command that compose the readiness report and escalation request draft from the same typed provider decision input.
+- Reason: Product-owner review of first-provider readiness needs one coherent local artifact while preserving the distinction between diagnostic input, escalation drafting, and actual approval.
+- Alternatives: Keep separate readiness and escalation commands only; persist a provider approval artifact now; start real provider integration immediately.
+- Risks: The package could be mistaken for approval if boundaries weaken, so it explicitly states that it records no approval, calls no provider, reads no API key values, adds no SDK dependency, and authorizes no implementation.
+- Follow-up: Treat decision packages as review input only; create a separate durable approval artifact only after the product owner approves that workflow.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

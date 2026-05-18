@@ -537,3 +537,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 190 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider decisions template CLI smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Treat generated templates as editable diagnostic input only; design a separate durable approval artifact if approval records are later needed.
+
+## 2026-05-18 — Provider Decision Package Completed
+
+- Scope: Added deterministic provider decision package rendering and exposed it through `diamonddust provider-decision-package`.
+- Outcome: The CLI can compose the readiness report and first-provider escalation request draft from the same inline or JSON decision input, while explicitly stating that the package records no approval, calls no provider, reads no API key values, adds no SDK dependency, persists no prompt/raw provider output, and authorizes no implementation.
+- Review: `docs/reviews/milestone-reviews/2026-05-18-provider-decision-package.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves first-provider review packaging without approving real provider integration.
+- Validation: 195 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider decision package CLI smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Treat decision packages as local review input only; create a separate durable approval artifact only after the product owner approves that workflow.
