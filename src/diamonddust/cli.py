@@ -11,12 +11,21 @@ import sys
 from tempfile import TemporaryDirectory
 from typing import Sequence, TextIO
 
-from diamonddust.ai import extraction_output_json_schema
+from diamonddust.ai import (
+    EXTRACTION_OUTPUT_SCHEMA_VERSION,
+    EXTRACT_UNITS_PROMPT_VERSION,
+    ProviderExecutionRequest,
+    build_provider_execution_payload,
+    extraction_output_json_schema,
+    render_extract_units_prompt,
+)
 from diamonddust.application import (
+    ExtractUnitsProviderRequestSpec,
     LocalTrialResult,
     LocalTrialSpec,
     ProviderIntegrationDecisionSet,
     assess_provider_integration_readiness,
+    build_extract_units_provider_request,
     provider_integration_decision_template_mapping,
     provider_integration_decisions_from_mapping,
     render_provider_integration_decision_package_markdown,
@@ -25,6 +34,7 @@ from diamonddust.application import (
     run_local_trial,
 )
 from diamonddust.application.blog_draft import BlogMode
+from diamonddust.storage import read_markdown_essay
 
 
 FIXTURE_TRIAL_ID = "trial_fixture_ab12cd"
@@ -67,6 +77,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "extraction-output-schema":
         return _run_extraction_output_schema_command(stdout=sys.stdout)
+    if args.command == "provider-payload-preview":
+        return _run_provider_payload_preview_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
     parser.print_help()
     return 2
 
@@ -130,6 +146,32 @@ def _build_parser() -> argparse.ArgumentParser:
         "extraction-output-schema",
         help="print the extract_units output JSON Schema without provider calls",
     )
+
+    provider_payload_preview = subparsers.add_parser(
+        "provider-payload-preview",
+        help=(
+            "print the provider-neutral extract_units execution payload "
+            "without provider calls"
+        ),
+    )
+    provider_payload_preview.add_argument("--essay", required=True)
+    provider_payload_preview.add_argument("--run-id", required=True)
+    provider_payload_preview.add_argument("--root")
+    provider_payload_preview.add_argument("--provider", default="preview-provider")
+    provider_payload_preview.add_argument(
+        "--model",
+        default="preview-structured-model",
+    )
+    provider_payload_preview.add_argument(
+        "--prompt-version",
+        default=EXTRACT_UNITS_PROMPT_VERSION,
+    )
+    provider_payload_preview.add_argument(
+        "--schema-version",
+        default=EXTRACTION_OUTPUT_SCHEMA_VERSION,
+    )
+    provider_payload_preview.add_argument("--timeout-seconds", type=int)
+    provider_payload_preview.add_argument("--max-retries", type=int, default=0)
     return parser
 
 
@@ -245,6 +287,46 @@ def _run_extraction_output_schema_command(*, stdout: TextIO) -> int:
         )
     )
     stdout.write("\n")
+    return 0
+
+
+def _run_provider_payload_preview_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        essay = read_markdown_essay(args.essay, root=args.root)
+        provider_request = build_extract_units_provider_request(
+            essay,
+            ExtractUnitsProviderRequestSpec(
+                run_id=args.run_id,
+                provider=args.provider,
+                model=args.model,
+                prompt_version=args.prompt_version,
+                schema_version=args.schema_version,
+                timeout_seconds=args.timeout_seconds,
+                max_retries=args.max_retries,
+            ),
+        )
+        rendered_prompt = render_extract_units_prompt(provider_request)
+        execution_request = ProviderExecutionRequest(
+            provider_request=provider_request,
+            rendered_prompt=rendered_prompt,
+        )
+        payload = build_provider_execution_payload(execution_request)
+        stdout.write(
+            json.dumps(
+                payload.to_mapping(),
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        stdout.write("\n")
+    except Exception as exc:
+        print(f"provider payload preview failed: {exc}", file=stderr)
+        return 1
     return 0
 
 

@@ -581,3 +581,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 206 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, focused provider execution payload tests passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add provider-specific SDK request mapping only after first-provider, SDK, API key, network, prompt externalization, structured-output mechanism, cost, retry, and retention decisions are approved.
+
+## 2026-05-18 — Provider Payload Preview Completed
+
+- Scope: Added `diamonddust provider-payload-preview` to print the provider-neutral `extract_units` execution payload for one Markdown essay.
+- Outcome: The CLI can build a provider-neutral request, render the `extract_units.v1` prompt package, wrap a `ProviderExecutionRequest`, and print the future adapter-facing payload JSON to stdout for local review while keeping real provider calls, SDK dependencies, API key reads, raw output persistence, and formal vault writes disabled.
+- Review: `docs/reviews/milestone-reviews/2026-05-18-provider-payload-preview.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves provider boundary reviewability without approving real provider integration.
+- Validation: 208 unit tests passed, compile check passed, focused CLI/provider payload tests passed, and no dependency was added.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Keep provider-specific SDK payload mapping behind separate approval for provider, model, SDK, network, prompt externalization, structured-output mechanism, cost, retry, fallback, and retention decisions.
