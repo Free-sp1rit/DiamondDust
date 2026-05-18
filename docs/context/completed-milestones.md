@@ -559,3 +559,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 201 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, extraction schema CLI smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Decide later whether runtime JSON Schema validation, provider-specific schema transforms, or authoring helpers are needed after real provider integration begins.
+
+## 2026-05-18 — Prompt Output Schema Package Completed
+
+- Scope: Extended rendered `extract_units` prompt packages with output schema id, version, hash, and generated schema content.
+- Outcome: Future provider adapters can receive the machine-readable structured-output contract through `RenderedPrompt`, and prompt identity now includes the output schema hash. Execution requests reject mismatched rendered prompt output schema versions.
+- Review: `docs/reviews/milestone-reviews/2026-05-18-prompt-output-schema-package.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; strengthens the prompt-aware provider boundary without approving real provider integration.
+- Validation: 202 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, focused prompt/execution tests passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add provider-specific schema mapping only after provider, model, SDK, structured-output mechanism, prompt externalization, and real network call decisions are approved.

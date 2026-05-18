@@ -97,6 +97,10 @@ Rendered prompt packages should include:
 - input hash
 - source input id
 - source path
+- output schema id
+- output schema version
+- output schema hash
+- output schema object
 - frontmatter JSON
 - source ref JSON
 - system prompt
@@ -111,8 +115,11 @@ Rules:
 - Prompt rendering does not use provider SDK message types.
 - Prompt rendering does not persist the prompt package by default.
 - Prompt rendering must validate model policy before rendering.
+- Prompt rendering must include the provider-neutral `extract_units` output schema in the prompt package.
+- Prompt identity must change when the output schema identity changes.
 - Prompt rendering must preserve source metadata and instruct providers not to invent sources.
 - Prompt rendering must not generate KnowledgePatch data, formal notes, blog drafts, publication content, or tool calls.
+- Sending rendered output schema content to a real provider still requires real-provider approval.
 - Sending rendered prompt text to a real provider still requires real-provider approval.
 
 ## Provider Extraction Orchestrator

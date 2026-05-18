@@ -9,6 +9,11 @@ from types import MappingProxyType
 from typing import Mapping
 
 from diamonddust.ai.extraction import EXTRACTION_TASK, compute_ai_output_hash
+from diamonddust.ai.extraction_schema import (
+    EXTRACTION_OUTPUT_SCHEMA_ID,
+    EXTRACTION_OUTPUT_SCHEMA_VERSION,
+    extraction_output_json_schema,
+)
 from diamonddust.ai.model_policy import ModelPolicy, validate_provider_request_policy
 from diamonddust.ai.provider import ProviderRequest
 
@@ -29,6 +34,10 @@ class RenderedPrompt:
     input_hash: str
     source_input_id: str
     source_path: str
+    output_schema_id: str
+    output_schema_version: str
+    output_schema_hash: str
+    output_schema: Mapping[str, object]
     system_prompt: str
     user_prompt: str
     output_instructions: str
@@ -42,12 +51,17 @@ class RenderedPrompt:
         _require_non_empty("input_hash", self.input_hash)
         _require_non_empty("source_input_id", self.source_input_id)
         _require_non_empty("source_path", self.source_path)
+        _require_non_empty("output_schema_id", self.output_schema_id)
+        _require_non_empty("output_schema_version", self.output_schema_version)
+        _require_non_empty("output_schema_hash", self.output_schema_hash)
+        if not isinstance(self.output_schema, Mapping):
+            raise PromptRenderError("output_schema must be a mapping")
         _require_non_empty("system_prompt", self.system_prompt)
         _require_non_empty("user_prompt", self.user_prompt)
         _require_non_empty("output_instructions", self.output_instructions)
         _require_non_empty("prompt_hash", self.prompt_hash)
 
-    def to_mapping(self) -> Mapping[str, str]:
+    def to_mapping(self) -> Mapping[str, object]:
         return MappingProxyType(
             {
                 "run_id": self.run_id,
@@ -57,6 +71,10 @@ class RenderedPrompt:
                 "input_hash": self.input_hash,
                 "source_input_id": self.source_input_id,
                 "source_path": self.source_path,
+                "output_schema_id": self.output_schema_id,
+                "output_schema_version": self.output_schema_version,
+                "output_schema_hash": self.output_schema_hash,
+                "output_schema": dict(self.output_schema),
                 "system_prompt": self.system_prompt,
                 "user_prompt": self.user_prompt,
                 "output_instructions": self.output_instructions,
@@ -89,7 +107,14 @@ def render_extract_units_prompt(
     source_ref = _expect_mapping(payload, "source_ref")
 
     system_prompt = _system_prompt()
-    output_instructions = _output_instructions(request.schema_version)
+    output_schema = extraction_output_json_schema()
+    _require_supported_output_schema(request.schema_version, output_schema)
+    output_schema_hash = compute_ai_output_hash(output_schema)
+    output_instructions = _output_instructions(
+        request.schema_version,
+        output_schema=output_schema,
+        output_schema_hash=output_schema_hash,
+    )
     user_prompt = _user_prompt(
         source_input_id=source_input_id,
         source_path=source_path,
@@ -108,6 +133,9 @@ def render_extract_units_prompt(
             "prompt_version": request.prompt_version,
             "schema_version": request.schema_version,
             "input_hash": request.input_hash,
+            "output_schema_id": EXTRACTION_OUTPUT_SCHEMA_ID,
+            "output_schema_version": EXTRACTION_OUTPUT_SCHEMA_VERSION,
+            "output_schema_hash": output_schema_hash,
             "system_prompt": system_prompt,
             "user_prompt": user_prompt,
             "output_instructions": output_instructions,
@@ -122,6 +150,10 @@ def render_extract_units_prompt(
         input_hash=request.input_hash,
         source_input_id=source_input_id,
         source_path=source_path,
+        output_schema_id=EXTRACTION_OUTPUT_SCHEMA_ID,
+        output_schema_version=EXTRACTION_OUTPUT_SCHEMA_VERSION,
+        output_schema_hash=output_schema_hash,
+        output_schema=MappingProxyType(output_schema),
         system_prompt=system_prompt,
         user_prompt=user_prompt,
         output_instructions=output_instructions,
@@ -151,7 +183,12 @@ def _system_prompt() -> str:
     ).strip()
 
 
-def _output_instructions(schema_version: str) -> str:
+def _output_instructions(
+    schema_version: str,
+    *,
+    output_schema: Mapping[str, object],
+    output_schema_hash: str,
+) -> str:
     return dedent(
         f"""\
         Return one JSON object with:
@@ -159,10 +196,18 @@ def _output_instructions(schema_version: str) -> str:
         - unit_candidates
         - relation_candidates
 
+        Output schema id: {EXTRACTION_OUTPUT_SCHEMA_ID}
+        Output schema hash: {output_schema_hash}
+
         unit_candidates items must include id, type, title, content, status, source_refs, relations, confidence, created_at, updated_at, and schema_version.
         relation_candidates may be empty.
         Every source_refs item must preserve the supplied source_ref fields.
         Use schema_version {schema_version!r}.
+
+        output_schema_json:
+        ```json
+        {_stable_json_mapping(output_schema)}
+        ```
         """
     ).strip()
 
@@ -224,6 +269,25 @@ def _stable_json_mapping(data: Mapping[str, object]) -> str:
         return json.dumps(dict(data), sort_keys=True, ensure_ascii=True)
     except TypeError as exc:
         raise PromptRenderError("prompt metadata must be JSON serializable") from exc
+
+
+def _require_supported_output_schema(
+    schema_version: str,
+    output_schema: Mapping[str, object],
+) -> None:
+    if schema_version != EXTRACTION_OUTPUT_SCHEMA_VERSION:
+        raise PromptRenderError(
+            "prompt renderer v0 only supports extraction output schema version "
+            f"{EXTRACTION_OUTPUT_SCHEMA_VERSION}"
+        )
+    knowledge_unit = _expect_mapping(
+        _expect_mapping(output_schema, "$defs"),
+        "knowledge_unit",
+    )
+    properties = _expect_mapping(knowledge_unit, "properties")
+    schema_version_rule = _expect_mapping(properties, "schema_version")
+    if schema_version_rule.get("const") != schema_version:
+        raise PromptRenderError("output schema version must match request schema_version")
 
 
 def _require_non_empty(name: str, value: str | None) -> None:
