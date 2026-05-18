@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-17
+Last updated: 2026-05-18
 
 ## Tooling and Repository Shape
 
@@ -54,9 +54,9 @@ Last updated: 2026-05-17
 
 ### 2026-05-12 — When should extraction JSON get a machine-readable schema?
 
-- Context: The local trial CLI now has a checked-in example extraction JSON fixture and a user-facing guide with a validated embedded example, but no JSON Schema or generated authoring helper exists.
-- Needed decision: Add machine-readable schema only if broader trial usage, provider adapter handoff, or external tooling needs it.
-- Impact: Affects validation clarity, compatibility guarantees, and future schema migration surface.
+- Context: The local trial CLI now has a checked-in example extraction JSON fixture and a user-facing guide with a validated embedded example. On 2026-05-18, a generated provider-neutral JSON Schema and CLI printer were added for `extract_units` output.
+- Needed decision: Decide later whether to add runtime JSON Schema validation, provider-specific schema transforms, or external authoring helpers after real provider integration begins.
+- Impact: Affects validation clarity, compatibility guarantees, provider structured-output compatibility, and future schema migration surface.
 
 ### 2026-05-11 — When should artifact versions diverge by artifact type?
 

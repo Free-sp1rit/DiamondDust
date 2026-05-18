@@ -52,6 +52,14 @@ See `docs/guides/local-trial-user-feedback.md` for the safe local trial review f
 
 See `docs/guides/local-trial-extraction-json.md` for the extraction JSON shape and a validated minimal example.
 
+To print the machine-readable `extract_units` output schema used for local review and future provider structured-output planning:
+
+```bash
+diamonddust extraction-output-schema
+```
+
+The schema is a contract aid. Typed runtime validation remains authoritative before extraction output becomes internal domain data.
+
 ## Provider Readiness
 
 Before real provider integration, render the current approval checklist:

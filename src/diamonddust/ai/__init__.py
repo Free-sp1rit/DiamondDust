@@ -11,6 +11,11 @@ from diamonddust.ai.extraction import (
     compute_ai_output_hash,
     validate_extraction_output,
 )
+from diamonddust.ai.extraction_schema import (
+    EXTRACTION_OUTPUT_SCHEMA_ID,
+    EXTRACTION_OUTPUT_SCHEMA_VERSION,
+    extraction_output_json_schema,
+)
 from diamonddust.ai.model_policy import (
     APIKeyEnvVarPolicy,
     CostPolicy,
@@ -59,6 +64,8 @@ __all__ = [
     "AIRunLog",
     "AIRunMetadata",
     "EXTRACTION_TASK",
+    "EXTRACTION_OUTPUT_SCHEMA_ID",
+    "EXTRACTION_OUTPUT_SCHEMA_VERSION",
     "EXTRACT_UNITS_PROMPT_VERSION",
     "ExtractionProposal",
     "ExtractionValidationError",
@@ -95,6 +102,7 @@ __all__ = [
     "RenderedPrompt",
     "compute_ai_output_hash",
     "default_model_policy",
+    "extraction_output_json_schema",
     "render_extract_units_prompt",
     "validate_provider_request_policy",
     "validate_extraction_output",

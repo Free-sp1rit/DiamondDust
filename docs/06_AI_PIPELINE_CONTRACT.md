@@ -45,6 +45,19 @@ Defaults:
 The application provider extraction handoff must validate provider requests
 against model policy before provider execution.
 
+## Extract Units Output Schema
+
+The `extract_units` output contract may be rendered as machine-readable JSON
+Schema for local review and future provider structured-output planning.
+
+Rules:
+
+- The schema is provider-neutral and generated from current domain enum values.
+- The schema does not approve provider calls or provider SDK integration.
+- The schema does not read API keys, call providers, or persist raw provider output.
+- The schema is a contract aid only; typed runtime validation remains authoritative before output becomes domain data.
+- Runtime validation may enforce rules that JSON Schema cannot fully express, such as source references matching the top-level `source_input_id`.
+
 ## Provider Request Builder
 
 The `extract_units` provider request builder converts an ingested Markdown essay

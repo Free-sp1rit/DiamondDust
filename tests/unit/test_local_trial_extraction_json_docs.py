@@ -40,6 +40,8 @@ class LocalTrialExtractionJsonDocsTests(unittest.TestCase):
 
         self.assertIn("docs/guides/local-trial-extraction-json.md", readme)
         self.assertIn("tests/fixtures/local_trial/extraction.json", guide)
+        self.assertIn("diamonddust extraction-output-schema", readme)
+        self.assertIn("diamonddust extraction-output-schema", guide)
 
 
 def _embedded_example() -> object:
