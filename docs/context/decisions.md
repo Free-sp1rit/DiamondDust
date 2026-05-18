@@ -428,6 +428,14 @@ Record durable technical and governance decisions here.
 - Risks: The package could be mistaken for approval if boundaries weaken, so it explicitly states that it records no approval, calls no provider, reads no API key values, adds no SDK dependency, and authorizes no implementation.
 - Follow-up: Treat decision packages as review input only; create a separate durable approval artifact only after the product owner approves that workflow.
 
+### 2026-05-18 — Generate extract_units output schema from domain enums
+
+- Decision: Add a provider-neutral JSON Schema generator and CLI command for `extract_units` structured output.
+- Reason: Future real-provider structured output needs a machine-readable contract, but runtime typed validation must remain the authoritative boundary before provider output becomes domain data.
+- Alternatives: Keep only the Markdown guide; check in a static schema that could drift from domain enums; add a JSON Schema validation dependency now.
+- Risks: JSON Schema cannot express every runtime rule, such as source references matching the top-level source input, so docs and schema comments must keep that boundary clear.
+- Follow-up: Use the schema as provider planning input only; decide separately whether a runtime JSON Schema validator is needed after real provider integration begins.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

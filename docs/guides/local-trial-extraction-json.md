@@ -14,6 +14,14 @@ PYTHONPATH=src python3 -m diamonddust local-trial --extraction-json <path>
 
 The local trial path uses this JSON in place of a provider call. It validates the JSON, writes AI working artifacts, and keeps formal vault files untouched.
 
+To print the machine-readable schema for this shape:
+
+```bash
+diamonddust extraction-output-schema
+```
+
+The printed schema is useful for local review and future provider structured-output planning. It does not call a provider, read API keys, or replace typed runtime validation.
+
 ## Top-Level Shape
 
 The JSON document must be an object with:

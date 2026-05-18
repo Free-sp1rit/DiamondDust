@@ -548,3 +548,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 195 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider decision package CLI smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Treat decision packages as local review input only; create a separate durable approval artifact only after the product owner approves that workflow.
+
+## 2026-05-18 — Extraction Output JSON Schema Completed
+
+- Scope: Added generated machine-readable JSON Schema rendering for `extract_units` output and exposed it through `diamonddust extraction-output-schema`.
+- Outcome: The schema is generated from current domain enum values, documents the structured output shape for future provider planning, and explicitly remains a contract aid rather than the authoritative runtime validator.
+- Review: `docs/reviews/milestone-reviews/2026-05-18-extraction-output-schema.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-readiness milestone; improves future provider structured-output planning without approving real provider integration.
+- Validation: 201 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, extraction schema CLI smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Decide later whether runtime JSON Schema validation, provider-specific schema transforms, or authoring helpers are needed after real provider integration begins.

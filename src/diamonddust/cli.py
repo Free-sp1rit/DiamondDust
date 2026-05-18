@@ -11,6 +11,7 @@ import sys
 from tempfile import TemporaryDirectory
 from typing import Sequence, TextIO
 
+from diamonddust.ai import extraction_output_json_schema
 from diamonddust.application import (
     LocalTrialResult,
     LocalTrialSpec,
@@ -64,6 +65,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             stdout=sys.stdout,
             stderr=sys.stderr,
         )
+    if args.command == "extraction-output-schema":
+        return _run_extraction_output_schema_command(stdout=sys.stdout)
     parser.print_help()
     return 2
 
@@ -122,6 +125,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="render one provider decision review package without provider calls",
     )
     _add_provider_readiness_arguments(provider_decision_package)
+
+    subparsers.add_parser(
+        "extraction-output-schema",
+        help="print the extract_units output JSON Schema without provider calls",
+    )
     return parser
 
 
@@ -225,6 +233,18 @@ def _run_provider_decision_package_command(
     except Exception as exc:
         print(f"provider decision package failed: {exc}", file=stderr)
         return 1
+    return 0
+
+
+def _run_extraction_output_schema_command(*, stdout: TextIO) -> int:
+    stdout.write(
+        json.dumps(
+            extraction_output_json_schema(),
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    stdout.write("\n")
     return 0
 
 

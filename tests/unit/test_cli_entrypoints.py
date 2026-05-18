@@ -41,6 +41,7 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("provider-escalation-request", result.stdout)
         self.assertIn("provider-decisions-template", result.stdout)
         self.assertIn("provider-decision-package", result.stdout)
+        self.assertIn("extraction-output-schema", result.stdout)
 
     def test_provider_readiness_report_defaults_to_blocked(self) -> None:
         env = dict(os.environ)
@@ -357,6 +358,31 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", result.stdout)
         self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stdout)
         self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stderr)
+
+    def test_extraction_output_schema_prints_parseable_json_without_provider(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_PROVIDER_API_KEY"] = "DO_NOT_RENDER_THIS_SECRET_VALUE"
+        result = subprocess.run(
+            [sys.executable, "-m", "diamonddust", "extraction-output-schema"],
+            cwd=ROOT,
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stderr)
+
+        schema = json.loads(result.stdout)
+        self.assertEqual(schema["$id"], "diamonddust.extract_units.output.v0")
+        self.assertEqual(
+            schema["required"],
+            ["source_input_id", "unit_candidates", "relation_candidates"],
+        )
+        self.assertIn("knowledge_unit", schema["$defs"])
 
 
 def _ready_provider_decisions() -> dict[str, object]:
