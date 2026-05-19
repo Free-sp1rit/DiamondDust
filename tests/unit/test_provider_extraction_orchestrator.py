@@ -112,6 +112,31 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
             run.rendered_prompt.prompt_hash,
         )
 
+    def test_provider_output_must_match_prompt_source_input_id(self) -> None:
+        essay = _essay()
+        spec = _spec()
+        request = build_extract_units_provider_request(essay, spec)
+        output = _valid_output(request.input_payload)
+        output["source_input_id"] = "raw_essay_unrelated_source_cd34ef"
+        output["unit_candidates"][0]["source_refs"][0][
+            "source_id"
+        ] = "raw_essay_unrelated_source_cd34ef"
+
+        run = run_extract_units_provider_orchestration(
+            FakeExecutionProvider(structured_output=output),
+            essay,
+            spec,
+        )
+
+        self.assertFalse(run.is_valid)
+        self.assertIsNone(run.validation_result.proposal)
+        self.assertEqual(run.run_log.validation_status.value, "failed")
+        self.assertIn("must match request source_input_id", run.errors[0])
+        self.assertEqual(
+            run.run_log_context.to_mapping()["source_input_id"],
+            essay.source_id,
+        )
+
     def test_policy_guard_prevents_provider_execution(self) -> None:
         provider = _RecordingProvider()
 

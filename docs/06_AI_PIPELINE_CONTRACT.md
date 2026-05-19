@@ -132,6 +132,7 @@ The orchestrator should:
 - build a provider-neutral request from ingested Markdown
 - render an `extract_units.v1` prompt package
 - execute a provider boundary that returns a typed response/error envelope
+- confirm structured output source identity matches the request source identity
 - validate structured provider output before it becomes domain data
 - produce run-log context with provider metadata and prompt hash
 
@@ -141,6 +142,7 @@ Rules:
 - Orchestration does not call providers directly; it receives a provider boundary.
 - Orchestration does not persist prompt packages, run logs, suggestions, reports, or formal vault files by default.
 - Prompt hash may be recorded for traceability, but prompt text must not be persisted by default.
+- Provider output `source_input_id` must match the request payload `source_input_id` before output can be accepted.
 - Provider output must pass typed validation before patch generation.
 - Provider errors must fail closed and produce failed validation results.
 - Real provider execution still requires separate approval.
@@ -224,6 +226,7 @@ Responsibilities:
 - Storage adapters persist `_ai_runs`, `_ai_suggestions`, and `_ai_reports`.
 - Domain core must not import provider SDKs, HTTP clients, storage adapters, or provider boundary modules.
 - Provider output must pass structured typed validation before becoming domain data.
+- Provider output source identity must match the provider request source identity before becoming domain data.
 - KnowledgePatch construction remains deterministic in the application/domain validation flow.
 
 Skeleton constraints:

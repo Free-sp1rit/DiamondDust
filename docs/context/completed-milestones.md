@@ -592,3 +592,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 208 unit tests passed, compile check passed, focused CLI/provider payload tests passed, and no dependency was added.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Keep provider-specific SDK payload mapping behind separate approval for provider, model, SDK, network, prompt externalization, structured-output mechanism, cost, retry, fallback, and retention decisions.
+
+## 2026-05-19 — Provider Output Source Binding Completed
+
+- Scope: Added application-layer source binding for provider structured output in both legacy and prompt-aware provider extraction paths.
+- Outcome: Provider output with a top-level `source_input_id` that does not match the request payload `source_input_id` now fails closed with a failed run log and no extraction proposal before any patch generation.
+- Review: `docs/reviews/milestone-reviews/2026-05-19-provider-output-source-binding.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness milestone; tightens AI output boundary safety before real provider integration.
+- Validation: 210 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, focused provider boundary/orchestrator tests passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Add task-specific source binding rules if future provider tasks beyond `extract_units` are approved.
