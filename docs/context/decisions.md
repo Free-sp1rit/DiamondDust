@@ -460,6 +460,14 @@ Record durable technical and governance decisions here.
 - Risks: Payload preview output contains prompt/source/schema content, so it must remain an explicit local review action and must not be mistaken for provider execution or provider approval.
 - Follow-up: Keep provider-specific SDK payload mapping, prompt externalization, raw output retention, API key reads, and real provider calls behind separate approval.
 
+### 2026-05-19 — Bind provider output to request source identity
+
+- Decision: The application provider extraction handoff now fails closed when structured provider output has a top-level `source_input_id` that does not match the provider request payload `source_input_id`.
+- Reason: Typed extraction validation already checks internal source reference preservation, but real provider output also needs to be bound to the request context before it can become domain data.
+- Alternatives: Put request/source matching into domain validation; rely only on prompt instructions; defer the check until concrete provider integration.
+- Risks: Future non-essay extraction tasks may need task-specific source binding rules, and requests without `source_input_id` cannot benefit from this guard.
+- Follow-up: Keep source binding in the application/provider handoff and add task-specific binding rules if future provider tasks are approved.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

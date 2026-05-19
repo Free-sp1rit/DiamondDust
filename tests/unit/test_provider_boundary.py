@@ -118,6 +118,23 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertEqual(run.run_log.validation_status.value, "failed")
         self.assertIn("structured mapping", run.errors[0])
 
+    def test_provider_output_must_match_request_source_input_id(self) -> None:
+        output = _valid_output()
+        output["source_input_id"] = "raw_essay_unrelated_source_cd34ef"
+        output["unit_candidates"][0]["source_refs"][0][
+            "source_id"
+        ] = "raw_essay_unrelated_source_cd34ef"
+
+        run = run_provider_extraction(
+            FakeProvider(structured_output=output),
+            _request(),
+        )
+
+        self.assertFalse(run.is_valid)
+        self.assertIsNone(run.validation_result.proposal)
+        self.assertEqual(run.run_log.validation_status.value, "failed")
+        self.assertIn("must match request source_input_id", run.errors[0])
+
     def test_provider_error_fails_safely_and_records_failed_run_log(self) -> None:
         error = ProviderError(
             error_type=ProviderErrorType.TIMEOUT,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Mapping
 
 from diamonddust.ai import (
     AIRunLog,
@@ -202,13 +203,11 @@ def _validated_provider_result(
         )
     else:
         assert provider_result.response is not None
-        validation_result = validate_extraction_output(
+        validation_result = _validated_structured_output(
+            request,
             provider_result.response.structured_output,
-            _metadata_from_request(
-                request,
-                cost=provider_result.response.usage.cost,
-                latency=provider_result.response.usage.latency_ms,
-            ),
+            cost=provider_result.response.usage.cost,
+            latency=provider_result.response.usage.latency_ms,
         )
 
     return ProviderExtractionRun(
@@ -275,6 +274,74 @@ def _provider_error_validation_result(
         proposal=None,
         run_log=run_log,
         errors=(f"provider {error.error_type.value}: {error.message}",),
+    )
+
+
+def _validated_structured_output(
+    request: ProviderRequest,
+    structured_output: object,
+    *,
+    cost: float | None,
+    latency: float | None,
+) -> ExtractionValidationResult:
+    source_binding_error = _source_binding_error(request, structured_output)
+    if source_binding_error is not None:
+        return _failed_output_validation_result(
+            request,
+            structured_output,
+            source_binding_error,
+            cost=cost,
+            latency=latency,
+        )
+
+    return validate_extraction_output(
+        structured_output,
+        _metadata_from_request(request, cost=cost, latency=latency),
+    )
+
+
+def _source_binding_error(
+    request: ProviderRequest,
+    structured_output: object,
+) -> str | None:
+    expected_source_input_id = _request_source_input_id(request)
+    if expected_source_input_id is None:
+        return None
+    if not isinstance(structured_output, Mapping):
+        return None
+
+    actual_source_input_id = structured_output.get("source_input_id")
+    if actual_source_input_id != expected_source_input_id:
+        return (
+            "provider output source_input_id must match request source_input_id"
+        )
+    return None
+
+
+def _request_source_input_id(request: ProviderRequest) -> str | None:
+    source_input_id = request.input_payload.get("source_input_id")
+    if isinstance(source_input_id, str) and source_input_id.strip():
+        return source_input_id
+    return None
+
+
+def _failed_output_validation_result(
+    request: ProviderRequest,
+    structured_output: object,
+    error: str,
+    *,
+    cost: float | None,
+    latency: float | None,
+) -> ExtractionValidationResult:
+    run_log = AIRunLog.from_metadata(
+        _metadata_from_request(request, cost=cost, latency=latency),
+        output_hash=compute_ai_output_hash(structured_output),
+        validation_status=AIValidationStatus.FAILED,
+    )
+    return ExtractionValidationResult(
+        proposal=None,
+        run_log=run_log,
+        errors=(error,),
     )
 
 
