@@ -614,3 +614,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 213 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider adapter design docs test passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Product owner should fill or revise `docs/templates/PROVIDER_ADAPTER_DECISION_PACKAGE_TEMPLATE.md` before a selected-provider implementation plan is created.
+
+## 2026-05-20 — Provider Approval Package Revision Completed
+
+- Scope: Revised the provider adapter decision package with product-owner approval for real-provider implementation preparation, OpenAI-targeted planning, and explicit non-approvals for implementation, SDKs, API key reads, network calls, live smoke, raw output retention, patch acceptance, formal apply, and publication.
+- Outcome: The template now separates implementation preparation, actual implementation, one-time live smoke, and recurring live smoke approvals. The adapter design now includes SDK vs direct HTTP comparison inputs, adapter mapping plan, CLI safety valve design, and CI policy design.
+- Review: `docs/reviews/milestone-reviews/2026-05-20-provider-approval-package-revision.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness design milestone; clarifies product-owner approval semantics before any selected-provider implementation.
+- Validation: 213 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, focused provider adapter design docs test passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Review the SDK vs direct HTTP comparison and separately approve dependency style, default model, API key reading, network calls, live-smoke policy, and retention behavior before implementation.

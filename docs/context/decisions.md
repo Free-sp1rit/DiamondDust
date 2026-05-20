@@ -476,6 +476,14 @@ Record durable technical and governance decisions here.
 - Risks: The template could be mistaken for approval, so it defaults to pending and states that implementation still requires explicit product-owner approval and a separate PR.
 - Follow-up: Use `docs/templates/PROVIDER_ADAPTER_DECISION_PACKAGE_TEMPLATE.md` as the review input before creating a selected-provider implementation plan.
 
+### 2026-05-20 — Approve real-provider implementation preparation only
+
+- Decision: Product owner approved real provider code implementation preparation, selected OpenAI as the first provider target for planning, and kept actual implementation, SDK/dependency changes, API key reading, real network calls, live smoke, raw output retention, patch acceptance, formal apply, and publication unapproved.
+- Reason: DiamondDust can now compare OpenAI SDK vs direct HTTP, refine adapter mapping, CLI safety valves, and CI policy without crossing into real provider execution.
+- Alternatives: Treat OpenAI selection as full implementation approval; keep first provider fully undecided; start SDK implementation immediately.
+- Risks: OpenAI-targeted planning could be mistaken for live-call approval, so the decision package keeps `records_real_provider_approval: false`, `real_provider_calls_approved: false`, and `live_smoke_approval_status: pending`.
+- Follow-up: Complete and review SDK vs direct HTTP comparison, then request separate approval for selected dependency style, default model, API key reading, real network calls, and any live smoke.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

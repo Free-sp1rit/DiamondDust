@@ -29,6 +29,47 @@ Out of scope:
 - raw provider output persistence
 - multi-provider routing or fallback
 
+## Current Product-Owner Decision Snapshot
+
+Approved for this stage:
+
+- real provider code implementation preparation
+- decision package revision
+- SDK vs direct HTTP comparison
+- adapter mapping plan design
+- CLI safety valve design
+- CI policy design
+
+Selected for planning:
+
+- first_provider: openai
+- default_model: pending_owner_selection
+- provider_region_or_endpoint: default_openai_api
+- provider_account_scope: owner_local_api_account
+- initial_allowed_task: `extract_units`
+- structured_output_mechanism: provider_json_schema_if_supported
+- invalid_output_behavior: fail_closed
+
+Still not approved:
+
+- actual real provider adapter implementation
+- OpenAI SDK or any provider SDK dependency
+- direct HTTP implementation
+- dependency file changes
+- API key reading
+- provider network calls
+- live smoke
+- raw provider output persistence
+- patch acceptance
+- formal vault apply
+- publication
+
+Model policy:
+
+- model must be explicit for real runs
+- no hardcoded default model for live calls
+- product owner must approve the default model before live smoke
+
 ## Boundary Diagram
 
 ```text
@@ -86,6 +127,106 @@ execution payload:
 
 The adapter must not re-render prompts or rebuild schemas. Prompt rendering and
 schema identity belong before the adapter boundary.
+
+## Adapter Mapping Plan
+
+The future OpenAI-targeted adapter should map from DiamondDust's
+provider-neutral boundary, not from domain objects:
+
+1. Receive `ProviderExecutionRequest`.
+2. Build `ProviderExecutionPayload` for internal mapping and review parity.
+3. Verify `real_provider_calls_enabled` is true before any network execution.
+4. Verify the model is explicit and product-owner approved.
+5. Read only the approved API key environment variable, and only during an
+   explicitly approved real provider run.
+6. Map `payload.messages` into the selected provider request shape.
+7. Map `payload.output_schema` into the selected structured-output mechanism.
+8. Apply approved timeout, retry, and cost policies.
+9. Parse provider output into structured Python data.
+10. Return `ProviderResult` with `ProviderResponse` or `ProviderError`.
+11. Let application source binding and typed extraction validation decide
+    whether output can become domain data.
+
+The adapter must not:
+
+- construct `KnowledgeUnit`, `Relation`, or `KnowledgePatch`
+- persist `_ai_runs`, `_ai_suggestions`, or `_ai_reports`
+- write formal vault files
+- log prompt/source text by default
+- persist raw provider request or response bodies by default
+
+## SDK Vs Direct HTTP Comparison
+
+This comparison is planning input only. It does not approve either integration
+style.
+
+| Criterion | OpenAI Official SDK | Direct HTTP |
+| --- | --- | --- |
+| Structured output support | Likely lower mapping burden if SDK exposes current structured-output helpers. Must verify after dependency approval. | Maximum control over request JSON, but DiamondDust must maintain provider API payload details directly. |
+| Request/response mapping complexity | Potentially simpler client calls but may introduce SDK-specific object shapes. | More explicit mapping from `ProviderExecutionPayload` to JSON, with more code owned by DiamondDust. |
+| Provider error handling | SDK may provide typed exceptions, but adapter must normalize them into `ProviderErrorType`. | HTTP status and response parsing are explicit, but DiamondDust must implement classification carefully. |
+| Timeout/retry support | SDK may offer built-in configuration; adapter must ensure it follows approved policy. | Full control, but retry and timeout implementation must be owned locally. |
+| Dependency footprint | Adds a production dependency and SDK release surface. Requires approval. | Avoids SDK dependency but may need standard-library or approved HTTP mechanics. |
+| Testability with fake provider | Requires adapter-local fakes or monkeypatchable SDK client boundaries. | Can test request dictionaries and fake transport boundaries directly. |
+| Security and API key handling | SDK may define auth configuration patterns; adapter must read only the approved env var. | Adapter owns header construction and must avoid leaking secrets in errors/logs. |
+| Long-term maintainability | SDK may track provider API changes, but SDK changes can affect DiamondDust. | Fewer dependencies, but provider API changes become DiamondDust maintenance work. |
+| Provider-neutral compatibility | Acceptable only if SDK types stay inside AI adapter modules. | Acceptable if HTTP payload code stays inside AI adapter modules. |
+| Future multi-provider portability | SDK choice is provider-specific but isolated by boundary. | Direct HTTP patterns may be reusable but still provider-specific per API. |
+
+Current recommendation: keep `integration_style: pending_comparison`. Do not
+add the OpenAI SDK, implement HTTP calls, modify dependency files, read keys, or
+make network calls until the product owner approves the comparison outcome.
+
+## CLI Safety Valve Design
+
+Future real-provider CLI behavior must be separate from preview and readiness
+commands.
+
+Required safety properties:
+
+- default CLI paths remain provider-free
+- live commands require explicit real-provider intent
+- model must be passed explicitly for live runs
+- approved API key env var name must be passed or loaded from approved config
+- API key values must never be printed
+- live smoke requires separate approval from implementation approval
+- command output must distinguish preview, dry run, and real provider call
+- formal writes remain disabled
+- raw provider output remains unpersisted by default
+
+Possible future command shape, not approved for implementation:
+
+```text
+diamonddust provider-extract-units \
+  --essay <path> \
+  --run-id <run-id> \
+  --provider openai \
+  --model <owner-approved-model> \
+  --api-key-env-var DIAMONDDUST_OPENAI_API_KEY \
+  --real-provider-call-approved
+```
+
+The exact flags must be designed in a separate implementation plan after
+approval.
+
+## CI Policy Design
+
+Default CI policy:
+
+- no real provider calls
+- no API key requirement
+- no live smoke
+- no raw provider output persistence
+- fake-provider and mapping tests only
+- payload preview and readiness commands remain provider-free
+
+Future live smoke policy:
+
+- manual or opt-in only
+- requires product-owner live-smoke approval
+- requires configured secrets outside the repository
+- must not run on ordinary pull requests by default
+- must assert no formal vault write and no raw output persistence
 
 ## Response Mapping Rules
 

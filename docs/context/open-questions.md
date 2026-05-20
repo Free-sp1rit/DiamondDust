@@ -66,14 +66,14 @@ Last updated: 2026-05-18
 
 ### 2026-05-10 — Which provider adapter should be implemented first?
 
-- Context: Gate 4 is provider-neutral and does not call an LLM.
-- Needed decision: Choose provider adapter and model policy only when the patch review workflow is ready for real model output.
+- Context: Gate 4 is provider-neutral and does not call an LLM. On 2026-05-20, OpenAI was selected as the first provider target for planning and adapter mapping only.
+- Needed decision: Select the default model and approve the dependency style, API key reading, real network calls, live-smoke policy, and model policy before actual provider implementation.
 - Impact: Affects dependencies, cost, auth, prompt design, and run log fields.
 
 ### 2026-05-17 — How should provider execution requests map to the first provider SDK?
 
-- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. A provider integration readiness gate now reports blocked until all required decisions are explicit. A first-provider adapter design and product-owner decision package template now exist, but no real provider SDK mapping exists yet.
-- Needed decision: Before real provider integration, fill and approve the provider adapter decision package, including first provider, model, SDK dependency, API key env var, request body shape, structured-output mechanism, timeout/retry settings, cost limit, fallback behavior, and prompt/raw-output retention behavior.
+- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. A provider integration readiness gate now reports blocked until all required decisions are explicit. A first-provider adapter design and product-owner decision package template now exist. OpenAI-targeted planning is approved, but no real provider SDK mapping exists yet.
+- Needed decision: Before real provider integration, approve the provider adapter decision package items that remain pending, including default model, SDK vs direct HTTP outcome, API key env var reading, request body shape, structured-output mechanism approval, timeout/retry settings, cost limits, fallback behavior, and prompt/raw-output retention behavior.
 - Impact: Affects provider SDK coupling, privacy posture, replayability, prompt traceability, cost control, and extraction quality evaluation.
 
 ## Patch Review
