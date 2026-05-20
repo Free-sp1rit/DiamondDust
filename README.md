@@ -107,6 +107,8 @@ diamonddust provider-decision-package --decisions-json provider-decisions.json
 
 The generated template is blocked by default and must be edited before it can represent real decisions. Decision JSON is diagnostic input, not an approval artifact. It may contain the API key environment variable name, but must not contain API key values.
 
+The first-provider adapter design is documented in `docs/designs/2026-05-20-first-provider-adapter-design.md`. Product-owner approvals for adapter implementation should be captured with `docs/templates/PROVIDER_ADAPTER_DECISION_PACKAGE_TEMPLATE.md` before adding SDKs, reading API key values, or making real provider calls.
+
 ## Development Validation
 
 CI runs on pull requests and task-branch pushes through GitHub Actions.

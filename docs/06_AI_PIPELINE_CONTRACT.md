@@ -210,6 +210,25 @@ Rules:
 - Payload preview does not approve real provider integration.
 - Sending the preview payload or its prompt/schema content to a real provider still requires separate real-provider approval.
 
+## Provider Adapter Design Package
+
+The first-provider adapter design package documents the adapter boundary and
+product-owner decisions required before implementation.
+
+Design artifacts:
+
+- `docs/designs/2026-05-20-first-provider-adapter-design.md`
+- `docs/templates/PROVIDER_ADAPTER_DECISION_PACKAGE_TEMPLATE.md`
+
+Rules:
+
+- The design package is review input only.
+- The decision package template defaults to pending and records no approval by itself.
+- The template must not contain API key values.
+- Adapter implementation must not start until product-owner decisions are explicit.
+- Provider-specific SDK imports may live only in concrete AI adapter modules after approval.
+- The existing readiness gate remains the fail-closed check for blocked/ready status.
+
 ## Provider Adapter Boundary
 
 The Provider Adapter Boundary Skeleton introduces provider-neutral request,
