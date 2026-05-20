@@ -603,3 +603,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 210 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, focused provider boundary/orchestrator tests passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
 - Follow-up: Add task-specific source binding rules if future provider tasks beyond `extract_units` are approved.
+
+## 2026-05-20 — Provider Adapter Design Completed
+
+- Scope: Added the first-provider adapter design and product-owner decision package template.
+- Outcome: The design defines future adapter module boundaries, request/response mapping, error taxonomy mapping, metrics/logging, configuration/secrets rules, tests, and implementation gates for an `extract_units`-only real-provider adapter. The decision package template defaults to pending and lists every product-owner approval needed before implementation.
+- Review: `docs/reviews/milestone-reviews/2026-05-20-provider-adapter-design.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 provider-readiness design milestone; prepares adapter implementation planning without approving real provider integration.
+- Validation: 213 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, provider adapter design docs test passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Product owner should fill or revise `docs/templates/PROVIDER_ADAPTER_DECISION_PACKAGE_TEMPLATE.md` before a selected-provider implementation plan is created.

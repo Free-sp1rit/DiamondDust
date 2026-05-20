@@ -468,6 +468,14 @@ Record durable technical and governance decisions here.
 - Risks: Future non-essay extraction tasks may need task-specific source binding rules, and requests without `source_input_id` cannot benefit from this guard.
 - Follow-up: Keep source binding in the application/provider handoff and add task-specific binding rules if future provider tasks are approved.
 
+### 2026-05-20 — Define first-provider adapter design before implementation
+
+- Decision: Add a first-provider adapter design document and product-owner decision package template before implementing any real provider adapter.
+- Reason: The provider-neutral skeleton is ready for adapter planning, but real integration still requires explicit product-owner decisions for provider, model, dependency, API key env var, network, prompt externalization, structured output, cost, timeout, retry, fallback, and retention behavior.
+- Alternatives: Start implementation from the existing readiness report only; encode adapter decisions directly in code; wait until a provider is selected before documenting boundaries.
+- Risks: The template could be mistaken for approval, so it defaults to pending and states that implementation still requires explicit product-owner approval and a separate PR.
+- Follow-up: Use `docs/templates/PROVIDER_ADAPTER_DECISION_PACKAGE_TEMPLATE.md` as the review input before creating a selected-provider implementation plan.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

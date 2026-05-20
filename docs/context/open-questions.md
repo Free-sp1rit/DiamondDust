@@ -72,8 +72,8 @@ Last updated: 2026-05-18
 
 ### 2026-05-17 — How should provider execution requests map to the first provider SDK?
 
-- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. A provider integration readiness gate now reports blocked until all required decisions are explicit. No real provider SDK mapping exists yet.
-- Needed decision: Before real provider integration, choose the first provider, model, SDK dependency, API key env var, request body shape, structured-output mechanism, timeout/retry settings, cost limit, fallback behavior, and prompt/raw-output retention behavior.
+- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. A provider integration readiness gate now reports blocked until all required decisions are explicit. A first-provider adapter design and product-owner decision package template now exist, but no real provider SDK mapping exists yet.
+- Needed decision: Before real provider integration, fill and approve the provider adapter decision package, including first provider, model, SDK dependency, API key env var, request body shape, structured-output mechanism, timeout/retry settings, cost limit, fallback behavior, and prompt/raw-output retention behavior.
 - Impact: Affects provider SDK coupling, privacy posture, replayability, prompt traceability, cost control, and extraction quality evaluation.
 
 ## Patch Review
