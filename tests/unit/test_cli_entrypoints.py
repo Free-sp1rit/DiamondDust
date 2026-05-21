@@ -41,6 +41,7 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("provider-escalation-request", result.stdout)
         self.assertIn("provider-decisions-template", result.stdout)
         self.assertIn("provider-decision-package", result.stdout)
+        self.assertIn("openai-live-smoke-readiness", result.stdout)
         self.assertIn("extraction-output-schema", result.stdout)
         self.assertIn("provider-payload-preview", result.stdout)
         self.assertIn("openai-payload-preview", result.stdout)
@@ -89,9 +90,12 @@ class CLIEntrypointTests(unittest.TestCase):
                 "--api-key-env-var",
                 "DIAMONDDUST_PROVIDER_API_KEY",
                 "--api-key-env-var-approved",
+                "--api-key-value-reading-approved",
                 "--real-provider-calls-approved",
                 "--real-network-calls-approved",
                 "--prompt-text-external-approved",
+                "--source-body-external-approved",
+                "--output-schema-external-approved",
                 "--structured-output-mechanism",
                 "json_schema",
                 "--structured-output-mechanism-approved",
@@ -362,6 +366,65 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", result.stdout)
         self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stdout)
         self.assertNotIn("DO_NOT_RENDER_THIS_SECRET_VALUE", result.stderr)
+
+    def test_openai_live_smoke_readiness_defaults_to_blocked(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_OPENAI_API_KEY"] = "DO_NOT_RENDER_THIS_OPENAI_SECRET"
+        result = subprocess.run(
+            [sys.executable, "-m", "diamonddust", "openai-live-smoke-readiness"],
+            cwd=ROOT,
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        self.assertIn("# OpenAI Live Smoke Readiness Report", result.stdout)
+        self.assertIn("- live_smoke_readiness_status: blocked", result.stdout)
+        self.assertIn("- api_key_values_read: false", result.stdout)
+        self.assertIn("- provider_called: false", result.stdout)
+        self.assertIn("- network_called: false", result.stdout)
+        self.assertIn("one manual live smoke must be approved", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stdout)
+
+    def test_openai_live_smoke_readiness_can_load_ready_decisions_json(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_OPENAI_API_KEY"] = "DO_NOT_RENDER_THIS_OPENAI_SECRET"
+        with TemporaryDirectory() as tmp:
+            decisions_path = Path(tmp) / "openai-live-smoke-decisions.json"
+            decisions_path.write_text(
+                json.dumps(_openai_live_smoke_ready_decisions()),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "openai-live-smoke-readiness",
+                    "--decisions-json",
+                    str(decisions_path),
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("- live_smoke_readiness_status: ready", result.stdout)
+        self.assertIn("- integration_readiness_status: ready", result.stdout)
+        self.assertIn("- first_provider: openai", result.stdout)
+        self.assertIn("- report_records_live_smoke_approval: false", result.stdout)
+        self.assertIn("- api_key_values_read: false", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stderr)
 
     def test_extraction_output_schema_prints_parseable_json_without_provider(self) -> None:
         env = dict(os.environ)
@@ -639,9 +702,12 @@ def _ready_provider_decisions() -> dict[str, object]:
         "provider_sdk_dependency_approved": True,
         "api_key_env_var": "DIAMONDDUST_PROVIDER_API_KEY",
         "api_key_env_var_approved": True,
+        "api_key_value_reading_approved": True,
         "real_provider_calls_approved": True,
         "real_network_calls_approved": True,
         "prompt_text_external_approved": True,
+        "source_body_external_approved": True,
+        "output_schema_external_approved": True,
         "structured_output_mechanism": "json_schema",
         "structured_output_mechanism_approved": True,
         "cost_limit": 1.0,
@@ -654,8 +720,28 @@ def _ready_provider_decisions() -> dict[str, object]:
         "raw_output_retention_approved": True,
         "fallback_behavior": "disabled",
         "fallback_behavior_approved": True,
+        "manual_live_smoke_approved": False,
+        "recurring_live_smoke_approved": False,
         "allowed_tasks": ["extract_units"],
     }
+
+
+def _openai_live_smoke_ready_decisions() -> dict[str, object]:
+    decisions = _ready_provider_decisions()
+    decisions.update(
+        {
+            "first_provider": "openai",
+            "provider_sdk_dependency": "openai",
+            "api_key_env_var": "DIAMONDDUST_OPENAI_API_KEY",
+            "structured_output_mechanism": "provider_json_schema_if_supported",
+            "timeout_seconds": 30,
+            "max_retries": 0,
+            "raw_output_retention": "do_not_persist",
+            "fallback_behavior": "disabled",
+            "manual_live_smoke_approved": True,
+        }
+    )
+    return decisions
 
 
 def _write_openai_preview_essay(root: str) -> Path:

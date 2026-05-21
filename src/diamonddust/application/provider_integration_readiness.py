@@ -27,9 +27,12 @@ class ProviderIntegrationDecisionSet:
     provider_sdk_dependency_approved: bool = False
     api_key_env_var: str | None = None
     api_key_env_var_approved: bool = False
+    api_key_value_reading_approved: bool = False
     real_provider_calls_approved: bool = False
     real_network_calls_approved: bool = False
     prompt_text_external_approved: bool = False
+    source_body_external_approved: bool = False
+    output_schema_external_approved: bool = False
     structured_output_mechanism: str | None = None
     structured_output_mechanism_approved: bool = False
     cost_limit: float | None = None
@@ -42,6 +45,8 @@ class ProviderIntegrationDecisionSet:
     raw_output_retention_approved: bool = False
     fallback_behavior: str | None = None
     fallback_behavior_approved: bool = False
+    manual_live_smoke_approved: bool = False
+    recurring_live_smoke_approved: bool = False
     allowed_tasks: tuple[str, ...] = (EXTRACTION_TASK,)
 
     def __post_init__(self) -> None:
@@ -55,6 +60,10 @@ class ProviderIntegrationDecisionSet:
         _require_optional_str("api_key_env_var", self.api_key_env_var)
         _require_bool("api_key_env_var_approved", self.api_key_env_var_approved)
         _require_bool(
+            "api_key_value_reading_approved",
+            self.api_key_value_reading_approved,
+        )
+        _require_bool(
             "real_provider_calls_approved",
             self.real_provider_calls_approved,
         )
@@ -62,6 +71,14 @@ class ProviderIntegrationDecisionSet:
         _require_bool(
             "prompt_text_external_approved",
             self.prompt_text_external_approved,
+        )
+        _require_bool(
+            "source_body_external_approved",
+            self.source_body_external_approved,
+        )
+        _require_bool(
+            "output_schema_external_approved",
+            self.output_schema_external_approved,
         )
         _require_optional_str(
             "structured_output_mechanism",
@@ -84,6 +101,11 @@ class ProviderIntegrationDecisionSet:
         )
         _require_optional_str("fallback_behavior", self.fallback_behavior)
         _require_bool("fallback_behavior_approved", self.fallback_behavior_approved)
+        _require_bool("manual_live_smoke_approved", self.manual_live_smoke_approved)
+        _require_bool(
+            "recurring_live_smoke_approved",
+            self.recurring_live_smoke_approved,
+        )
         _require_str_tuple("allowed_tasks", self.allowed_tasks)
 
 
@@ -113,6 +135,41 @@ class ProviderIntegrationReadinessReport:
         return self.status is ProviderIntegrationReadinessStatus.READY
 
 
+@dataclass(frozen=True)
+class OpenAILiveSmokeReadinessReport:
+    decisions: ProviderIntegrationDecisionSet
+    integration_report: ProviderIntegrationReadinessReport
+    status: ProviderIntegrationReadinessStatus
+    blockers: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.decisions, ProviderIntegrationDecisionSet):
+            raise ProviderIntegrationReadinessError(
+                "decisions must be ProviderIntegrationDecisionSet"
+            )
+        if not isinstance(self.integration_report, ProviderIntegrationReadinessReport):
+            raise ProviderIntegrationReadinessError(
+                "integration_report must be ProviderIntegrationReadinessReport"
+            )
+        if not isinstance(self.status, ProviderIntegrationReadinessStatus):
+            raise ProviderIntegrationReadinessError(
+                "status must be ProviderIntegrationReadinessStatus"
+            )
+        _require_str_tuple("blockers", self.blockers, allow_empty=True)
+        if self.status is ProviderIntegrationReadinessStatus.READY and self.blockers:
+            raise ProviderIntegrationReadinessError(
+                "ready live-smoke reports cannot have blockers"
+            )
+        if self.status is ProviderIntegrationReadinessStatus.BLOCKED and not self.blockers:
+            raise ProviderIntegrationReadinessError(
+                "blocked live-smoke reports require blockers"
+            )
+
+    @property
+    def is_ready(self) -> bool:
+        return self.status is ProviderIntegrationReadinessStatus.READY
+
+
 def assess_provider_integration_readiness(
     decisions: ProviderIntegrationDecisionSet,
 ) -> ProviderIntegrationReadinessReport:
@@ -131,6 +188,26 @@ def assess_provider_integration_readiness(
     )
     return ProviderIntegrationReadinessReport(
         decisions=decisions,
+        status=status,
+        blockers=blockers,
+    )
+
+
+def assess_openai_live_smoke_readiness(
+    decisions: ProviderIntegrationDecisionSet,
+) -> OpenAILiveSmokeReadinessReport:
+    """Return a fail-closed readiness report for one manual OpenAI live smoke."""
+
+    integration_report = assess_provider_integration_readiness(decisions)
+    blockers = tuple(_openai_live_smoke_blockers(decisions, integration_report))
+    status = (
+        ProviderIntegrationReadinessStatus.READY
+        if not blockers
+        else ProviderIntegrationReadinessStatus.BLOCKED
+    )
+    return OpenAILiveSmokeReadinessReport(
+        decisions=decisions,
+        integration_report=integration_report,
         status=status,
         blockers=blockers,
     )
@@ -180,9 +257,12 @@ def provider_integration_decision_template_mapping() -> dict[str, object]:
         "provider_sdk_dependency_approved": False,
         "api_key_env_var": None,
         "api_key_env_var_approved": False,
+        "api_key_value_reading_approved": False,
         "real_provider_calls_approved": False,
         "real_network_calls_approved": False,
         "prompt_text_external_approved": False,
+        "source_body_external_approved": False,
+        "output_schema_external_approved": False,
         "structured_output_mechanism": None,
         "structured_output_mechanism_approved": False,
         "cost_limit": None,
@@ -195,6 +275,8 @@ def provider_integration_decision_template_mapping() -> dict[str, object]:
         "raw_output_retention_approved": False,
         "fallback_behavior": None,
         "fallback_behavior_approved": False,
+        "manual_live_smoke_approved": False,
+        "recurring_live_smoke_approved": False,
         "allowed_tasks": [EXTRACTION_TASK],
     }
 
@@ -229,6 +311,7 @@ def render_provider_integration_readiness_markdown(
         "",
         f"- provider_sdk_dependency: {_text_or_pending(decisions.provider_sdk_dependency)}",
         f"- api_key_env_var: {_text_or_pending(decisions.api_key_env_var)}",
+        f"- api_key_value_reading_approved: {_bool_text(decisions.api_key_value_reading_approved)}",
         f"- structured_output_mechanism: {_text_or_pending(decisions.structured_output_mechanism)}",
         f"- cost_limit: {_number_or_pending(decisions.cost_limit)}",
         f"- timeout_seconds: {_number_or_pending(decisions.timeout_seconds)}",
@@ -244,6 +327,10 @@ def render_provider_integration_readiness_markdown(
         ),
         _check_line("API key env var approved", decisions.api_key_env_var_approved),
         _check_line(
+            "API key value reading approved",
+            decisions.api_key_value_reading_approved,
+        ),
+        _check_line(
             "real provider calls approved",
             decisions.real_provider_calls_approved,
         ),
@@ -254,6 +341,14 @@ def render_provider_integration_readiness_markdown(
         _check_line(
             "rendered prompt external use approved",
             decisions.prompt_text_external_approved,
+        ),
+        _check_line(
+            "source body external use approved",
+            decisions.source_body_external_approved,
+        ),
+        _check_line(
+            "output schema external use approved",
+            decisions.output_schema_external_approved,
         ),
         _check_line(
             "structured output mechanism approved",
@@ -267,6 +362,14 @@ def render_provider_integration_readiness_markdown(
             decisions.raw_output_retention_approved,
         ),
         _check_line("fallback behavior approved", decisions.fallback_behavior_approved),
+        _check_line(
+            "one manual live smoke approved",
+            decisions.manual_live_smoke_approved,
+        ),
+        _check_line(
+            "recurring live smoke approved",
+            decisions.recurring_live_smoke_approved,
+        ),
         "",
         "## Safety Boundaries",
         "",
@@ -279,6 +382,99 @@ def render_provider_integration_readiness_markdown(
         "## Next Step",
         "",
         _next_step(report),
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def render_openai_live_smoke_readiness_markdown(
+    report: OpenAILiveSmokeReadinessReport,
+) -> str:
+    """Render one provider-free OpenAI live-smoke readiness report."""
+
+    if not isinstance(report, OpenAILiveSmokeReadinessReport):
+        raise ProviderIntegrationReadinessError(
+            "report must be OpenAILiveSmokeReadinessReport"
+        )
+
+    decisions = report.decisions
+    lines = [
+        "# OpenAI Live Smoke Readiness Report",
+        "",
+        "## Summary",
+        "",
+        f"- live_smoke_readiness_status: {report.status.value}",
+        f"- integration_readiness_status: {report.integration_report.status.value}",
+        f"- first_provider: {_text_or_pending(decisions.first_provider)}",
+        f"- default_model: {_text_or_pending(decisions.default_model)}",
+        f"- api_key_env_var: {_text_or_pending(decisions.api_key_env_var)}",
+        f"- allowed_tasks: {_tuple_text(decisions.allowed_tasks)}",
+        "- report_records_live_smoke_approval: false",
+        "- provider_called: false",
+        "- network_called: false",
+        "- api_key_values_read: false",
+        "- prompt_source_schema_externalized: false",
+        "- formal_write_performed: false",
+        "",
+        "## Blockers",
+        "",
+        *_list_or_none(report.blockers),
+        "",
+        "## Required Live-Smoke Decisions",
+        "",
+        _check_line("default model selected", decisions.default_model is not None),
+        _check_line(
+            "API key value reading approved",
+            decisions.api_key_value_reading_approved,
+        ),
+        _check_line(
+            "real provider calls approved",
+            decisions.real_provider_calls_approved,
+        ),
+        _check_line(
+            "real network calls approved",
+            decisions.real_network_calls_approved,
+        ),
+        _check_line(
+            "rendered prompt external use approved",
+            decisions.prompt_text_external_approved,
+        ),
+        _check_line(
+            "source body external use approved",
+            decisions.source_body_external_approved,
+        ),
+        _check_line(
+            "output schema external use approved",
+            decisions.output_schema_external_approved,
+        ),
+        _check_line("cost limit approved", decisions.cost_limit_approved),
+        _check_line(
+            "one manual live smoke approved",
+            decisions.manual_live_smoke_approved,
+        ),
+        "",
+        "## Fixed v0 Safety Policy",
+        "",
+        f"- provider_sdk_dependency: {_text_or_pending(decisions.provider_sdk_dependency)}",
+        f"- structured_output_mechanism: {_text_or_pending(decisions.structured_output_mechanism)}",
+        f"- timeout_seconds: {_number_or_pending(decisions.timeout_seconds)}",
+        f"- max_retries: {_number_or_pending(decisions.max_retries)}",
+        f"- fallback_behavior: {_text_or_pending(decisions.fallback_behavior)}",
+        f"- raw_output_retention: {_text_or_pending(decisions.raw_output_retention)}",
+        "- provider_side_tools: disabled",
+        "- first_live_task_scope: extract_units only",
+        "",
+        "## Safety Boundaries",
+        "",
+        "- This report does not approve or run live smoke.",
+        "- This report does not read API keys or environment variable values.",
+        "- This report does not call OpenAI or make network requests.",
+        "- This report does not externalize prompt, source, or schema content.",
+        "- This report does not persist prompt text or raw provider output.",
+        "- This report does not allow patch acceptance, formal apply, or publication.",
+        "",
+        "## Next Step",
+        "",
+        _openai_live_smoke_next_step(report),
     ]
     return "\n".join(lines) + "\n"
 
@@ -379,6 +575,7 @@ def render_provider_integration_decision_package_markdown(
         "- network_called: false",
         "- api_key_values_read: false",
         "- provider_sdk_dependency_added: false",
+        "- live_smoke_run: false",
         "- prompt_or_raw_provider_output_persisted: false",
         "- formal_write_performed: false",
         "- allowed_first_provider_tasks: extract_units",
@@ -443,6 +640,11 @@ def _readiness_blockers(decisions: ProviderIntegrationDecisionSet) -> list[str]:
     )
     _block_if_false(
         blockers,
+        decisions.api_key_value_reading_approved,
+        "API key value reading must be approved",
+    )
+    _block_if_false(
+        blockers,
         decisions.real_provider_calls_approved,
         "real provider calls must be approved",
     )
@@ -455,6 +657,16 @@ def _readiness_blockers(decisions: ProviderIntegrationDecisionSet) -> list[str]:
         blockers,
         decisions.prompt_text_external_approved,
         "sending rendered prompt text externally must be approved",
+    )
+    _block_if_false(
+        blockers,
+        decisions.source_body_external_approved,
+        "sending source body externally must be approved",
+    )
+    _block_if_false(
+        blockers,
+        decisions.output_schema_external_approved,
+        "sending output schema externally must be approved",
     )
     _block_if_missing(
         blockers,
@@ -512,6 +724,38 @@ def _readiness_blockers(decisions: ProviderIntegrationDecisionSet) -> list[str]:
     return blockers
 
 
+def _openai_live_smoke_blockers(
+    decisions: ProviderIntegrationDecisionSet,
+    integration_report: ProviderIntegrationReadinessReport,
+) -> list[str]:
+    blockers = list(integration_report.blockers)
+    if decisions.first_provider != "openai":
+        blockers.append("OpenAI live smoke requires first_provider openai")
+    if decisions.provider_sdk_dependency != "openai":
+        blockers.append("OpenAI live smoke requires provider SDK dependency openai")
+    if decisions.api_key_env_var != "DIAMONDDUST_OPENAI_API_KEY":
+        blockers.append(
+            "OpenAI live smoke requires api_key_env_var DIAMONDDUST_OPENAI_API_KEY"
+        )
+    if decisions.structured_output_mechanism != "provider_json_schema_if_supported":
+        blockers.append(
+            "OpenAI live smoke requires provider_json_schema_if_supported structured output"
+        )
+    if decisions.timeout_seconds != 30:
+        blockers.append("OpenAI live smoke v0 requires timeout_seconds 30")
+    if decisions.max_retries != 0:
+        blockers.append("OpenAI live smoke v0 requires max_retries 0")
+    if decisions.fallback_behavior != "disabled":
+        blockers.append("OpenAI live smoke v0 requires fallback_behavior disabled")
+    if decisions.raw_output_retention != "do_not_persist":
+        blockers.append(
+            "OpenAI live smoke v0 requires raw_output_retention do_not_persist"
+        )
+    if not decisions.manual_live_smoke_approved:
+        blockers.append("one manual live smoke must be approved")
+    return _dedupe(blockers)
+
+
 def _list_or_none(values: tuple[str, ...]) -> list[str]:
     if not values:
         return ["- none"]
@@ -527,6 +771,12 @@ def _next_step(report: ProviderIntegrationReadinessReport) -> str:
     if report.is_ready:
         return "Create a separate first-provider implementation plan and escalation request before adding SDKs, reading API keys, or making network calls."
     return "Resolve blockers through explicit product-owner decisions before starting real-provider implementation."
+
+
+def _openai_live_smoke_next_step(report: OpenAILiveSmokeReadinessReport) -> str:
+    if report.is_ready:
+        return "Create a narrowly scoped live-smoke execution plan before running exactly one approved OpenAI extract_units smoke."
+    return "Resolve blockers through explicit product-owner decisions before any key read, prompt externalization, network call, or live smoke."
 
 
 def _text_or_pending(value: str | None) -> str:
@@ -577,12 +827,18 @@ def _decision_lines(decisions: ProviderIntegrationDecisionSet) -> list[str]:
         f"{_bool_text(decisions.provider_sdk_dependency_approved)}",
         f"- api_key_env_var: {_text_or_pending(decisions.api_key_env_var)}",
         f"- api_key_env_var_approved: {_bool_text(decisions.api_key_env_var_approved)}",
+        "- api_key_value_reading_approved: "
+        f"{_bool_text(decisions.api_key_value_reading_approved)}",
         "- real_provider_calls_approved: "
         f"{_bool_text(decisions.real_provider_calls_approved)}",
         "- real_network_calls_approved: "
         f"{_bool_text(decisions.real_network_calls_approved)}",
         "- prompt_text_external_approved: "
         f"{_bool_text(decisions.prompt_text_external_approved)}",
+        "- source_body_external_approved: "
+        f"{_bool_text(decisions.source_body_external_approved)}",
+        "- output_schema_external_approved: "
+        f"{_bool_text(decisions.output_schema_external_approved)}",
         "- structured_output_mechanism: "
         f"{_text_or_pending(decisions.structured_output_mechanism)}",
         "- structured_output_mechanism_approved: "
@@ -598,8 +854,20 @@ def _decision_lines(decisions: ProviderIntegrationDecisionSet) -> list[str]:
         f"{_bool_text(decisions.raw_output_retention_approved)}",
         f"- fallback_behavior: {_text_or_pending(decisions.fallback_behavior)}",
         f"- fallback_behavior_approved: {_bool_text(decisions.fallback_behavior_approved)}",
+        f"- manual_live_smoke_approved: {_bool_text(decisions.manual_live_smoke_approved)}",
+        f"- recurring_live_smoke_approved: {_bool_text(decisions.recurring_live_smoke_approved)}",
         f"- allowed_tasks: {_tuple_text(decisions.allowed_tasks)}",
     ]
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value not in seen:
+            seen.add(value)
+            result.append(value)
+    return result
 
 
 def _block_if_missing(

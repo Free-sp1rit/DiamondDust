@@ -516,6 +516,14 @@ Record durable technical and governance decisions here.
 - Risks: The OpenAI SDK dependency adds a provider-specific package surface, and the future real-run command could be mistaken for live approval if the fail-closed blockers are weakened.
 - Follow-up: Before any live smoke, separately approve default model, API key value reading, prompt/source/schema externalization, per-run cost limit, real provider/network call, live-smoke scope, and whether any raw output hash/metadata retention beyond current defaults is allowed.
 
+### 2026-05-22 — Separate live-smoke readiness from provider implementation readiness
+
+- Decision: Add explicit provider decision fields for API key value reading, source body externalization, output schema externalization, one manual live smoke, and recurring live smoke, and add an OpenAI-specific live-smoke readiness report/CLI command.
+- Reason: Env var name approval, adapter implementation, and generic provider readiness are not sufficient proof that a real live smoke is safe to run. The remaining live-smoke decisions must be visible and testable without reading secrets or calling a provider.
+- Alternatives: Reuse the existing provider readiness report only; ask the product owner to approve live smoke directly in chat; defer readiness checks until the first live run.
+- Risks: The diagnostic decision JSON shape gains new fields, so older decision files default these approvals to `false` and remain blocked until updated.
+- Follow-up: Use `diamonddust openai-live-smoke-readiness` before any live smoke. The report is diagnostic only and still does not approve or execute live provider calls.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

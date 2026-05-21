@@ -6,9 +6,11 @@ from diamonddust.application import (
     ProviderIntegrationDecisionSet,
     ProviderIntegrationReadinessError,
     ProviderIntegrationReadinessStatus,
+    assess_openai_live_smoke_readiness,
     assess_provider_integration_readiness,
     provider_integration_decision_template_mapping,
     provider_integration_decisions_from_mapping,
+    render_openai_live_smoke_readiness_markdown,
     render_provider_integration_decision_package_markdown,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
@@ -30,7 +32,10 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
         self.assertEqual(report.status, ProviderIntegrationReadinessStatus.BLOCKED)
         self.assertIn("first provider must be selected", report.blockers)
         self.assertIn("default model must be selected", report.blockers)
+        self.assertIn("API key value reading must be approved", report.blockers)
         self.assertIn("real provider calls must be approved", report.blockers)
+        self.assertIn("sending source body externally must be approved", report.blockers)
+        self.assertIn("sending output schema externally must be approved", report.blockers)
         self.assertIn("cost limit must be set", report.blockers)
         self.assertIn("timeout policy must be set", report.blockers)
         self.assertIn("retry policy must be set", report.blockers)
@@ -101,6 +106,7 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
         self.assertIn("- first_provider: approved-provider", markdown)
         self.assertIn("- allowed_tasks: extract_units", markdown)
         self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", markdown)
+        self.assertIn("- [x] API key value reading approved", markdown)
         self.assertNotIn(secret_value, markdown)
         self.assertIn("- none", markdown)
         self.assertIn("- [x] provider SDK dependency approved", markdown)
@@ -151,8 +157,74 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
         self.assertIn("- first_provider: approved-provider", markdown)
         self.assertIn("- api_key_env_var: DIAMONDDUST_PROVIDER_API_KEY", markdown)
         self.assertIn("- real_provider_calls_approved: true", markdown)
+        self.assertIn("- api_key_value_reading_approved: true", markdown)
         self.assertIn("- allowed_tasks: extract_units", markdown)
         self.assertNotIn(secret_value, markdown)
+
+    def test_openai_live_smoke_readiness_blocks_until_live_approval(self) -> None:
+        decisions = _ready_decisions(
+            first_provider="openai",
+            provider_sdk_dependency="openai",
+            api_key_env_var="DIAMONDDUST_OPENAI_API_KEY",
+            structured_output_mechanism="provider_json_schema_if_supported",
+            timeout_seconds=30,
+            max_retries=0,
+            fallback_behavior="disabled",
+            raw_output_retention="do_not_persist",
+            manual_live_smoke_approved=False,
+        )
+
+        report = assess_openai_live_smoke_readiness(decisions)
+        markdown = render_openai_live_smoke_readiness_markdown(report)
+
+        self.assertFalse(report.is_ready)
+        self.assertIn("one manual live smoke must be approved", report.blockers)
+        self.assertIn("# OpenAI Live Smoke Readiness Report", markdown)
+        self.assertIn("- live_smoke_readiness_status: blocked", markdown)
+        self.assertIn("- report_records_live_smoke_approval: false", markdown)
+        self.assertIn("- api_key_values_read: false", markdown)
+        self.assertIn("- prompt_source_schema_externalized: false", markdown)
+
+    def test_openai_live_smoke_readiness_ready_without_reading_secret(self) -> None:
+        secret_value = "DO_NOT_RENDER_THIS_SECRET_VALUE"
+        previous_secret = os.environ.get("DIAMONDDUST_OPENAI_API_KEY")
+        os.environ["DIAMONDDUST_OPENAI_API_KEY"] = secret_value
+        decisions = _openai_live_smoke_ready_decisions()
+
+        try:
+            report = assess_openai_live_smoke_readiness(decisions)
+            markdown = render_openai_live_smoke_readiness_markdown(report)
+        finally:
+            if previous_secret is None:
+                os.environ.pop("DIAMONDDUST_OPENAI_API_KEY", None)
+            else:
+                os.environ["DIAMONDDUST_OPENAI_API_KEY"] = previous_secret
+
+        self.assertTrue(report.is_ready)
+        self.assertEqual(report.blockers, ())
+        self.assertIn("- live_smoke_readiness_status: ready", markdown)
+        self.assertIn("- integration_readiness_status: ready", markdown)
+        self.assertIn("- first_provider: openai", markdown)
+        self.assertIn("- provider_called: false", markdown)
+        self.assertIn("- network_called: false", markdown)
+        self.assertNotIn(secret_value, markdown)
+
+    def test_openai_live_smoke_readiness_requires_openai_specific_policy(self) -> None:
+        decisions = _ready_decisions(
+            first_provider="approved-provider",
+            provider_sdk_dependency="approved-provider-sdk",
+            api_key_env_var="DIAMONDDUST_PROVIDER_API_KEY",
+            manual_live_smoke_approved=True,
+        )
+
+        report = assess_openai_live_smoke_readiness(decisions)
+
+        self.assertFalse(report.is_ready)
+        self.assertIn("OpenAI live smoke requires first_provider openai", report.blockers)
+        self.assertIn(
+            "OpenAI live smoke requires provider SDK dependency openai",
+            report.blockers,
+        )
 
     def test_escalation_request_renderer_rejects_invalid_input(self) -> None:
         with self.assertRaises(ProviderIntegrationReadinessError):
@@ -213,9 +285,12 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
                 "provider_sdk_dependency_approved": True,
                 "api_key_env_var": "DIAMONDDUST_PROVIDER_API_KEY",
                 "api_key_env_var_approved": True,
+                "api_key_value_reading_approved": True,
                 "real_provider_calls_approved": True,
                 "real_network_calls_approved": True,
                 "prompt_text_external_approved": True,
+                "source_body_external_approved": True,
+                "output_schema_external_approved": True,
                 "structured_output_mechanism": "json_schema",
                 "structured_output_mechanism_approved": True,
                 "cost_limit": 1.0,
@@ -228,6 +303,8 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
                 "raw_output_retention_approved": True,
                 "fallback_behavior": "disabled",
                 "fallback_behavior_approved": True,
+                "manual_live_smoke_approved": False,
+                "recurring_live_smoke_approved": False,
                 "allowed_tasks": [EXTRACTION_TASK],
             }
         )
@@ -274,9 +351,12 @@ def _ready_decisions(**overrides) -> ProviderIntegrationDecisionSet:
         "provider_sdk_dependency_approved": True,
         "api_key_env_var": "DIAMONDDUST_PROVIDER_API_KEY",
         "api_key_env_var_approved": True,
+        "api_key_value_reading_approved": True,
         "real_provider_calls_approved": True,
         "real_network_calls_approved": True,
         "prompt_text_external_approved": True,
+        "source_body_external_approved": True,
+        "output_schema_external_approved": True,
         "structured_output_mechanism": "json_schema",
         "structured_output_mechanism_approved": True,
         "cost_limit": 1.0,
@@ -289,9 +369,25 @@ def _ready_decisions(**overrides) -> ProviderIntegrationDecisionSet:
         "raw_output_retention_approved": True,
         "fallback_behavior": "disabled",
         "fallback_behavior_approved": True,
+        "manual_live_smoke_approved": False,
+        "recurring_live_smoke_approved": False,
     }
     values.update(overrides)
     return ProviderIntegrationDecisionSet(**values)
+
+
+def _openai_live_smoke_ready_decisions() -> ProviderIntegrationDecisionSet:
+    return _ready_decisions(
+        first_provider="openai",
+        provider_sdk_dependency="openai",
+        api_key_env_var="DIAMONDDUST_OPENAI_API_KEY",
+        structured_output_mechanism="provider_json_schema_if_supported",
+        timeout_seconds=30,
+        max_retries=0,
+        fallback_behavior="disabled",
+        raw_output_retention="do_not_persist",
+        manual_live_smoke_approved=True,
+    )
 
 
 if __name__ == "__main__":
