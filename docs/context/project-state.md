@@ -1,14 +1,14 @@
 # Project State
 
-Last updated: 2026-05-21
+Last updated: 2026-05-22
 
 ## Current Stage
 
-First OpenAI Adapter Implementation, Pre-Live-Smoke Ready is implemented and ready for product-owner review before any live smoke approval.
+OpenAI Live Smoke Readiness Package is implemented for product-owner review before any live smoke approval.
 
 ## Current Focus
 
-The OpenAI official SDK is recorded as a production dependency, and the concrete OpenAI adapter exists behind the AI adapter boundary at `src/diamonddust/ai/adapters/openai.py`. The adapter maps `ProviderExecutionRequest` into an OpenAI Responses-style structured-output request shape, maps fake/future provider responses, usage, and errors back into provider-neutral envelopes, and fails closed before API key reads or network execution. CLI commands now expose sanitized OpenAI payload preview, dry-run reporting, and a future real-run safety valve that returns blocked status without reading `DIAMONDDUST_OPENAI_API_KEY` or calling a provider. Default model, API key value reading, real provider calls, network calls, live smoke, actual prompt/source/schema externalization to a provider, raw provider output persistence, patch acceptance, formal apply, and publication remain explicitly not approved. CI remains provider-free by default and does not require or mention the OpenAI API key. The completed implementation plan is `docs/exec-plans/completed/2026-05-21-first-openai-adapter-pre-live-smoke.md`.
+The OpenAI official SDK is recorded as a production dependency, and the concrete OpenAI adapter exists behind the AI adapter boundary at `src/diamonddust/ai/adapters/openai.py`. The adapter maps `ProviderExecutionRequest` into an OpenAI Responses-style structured-output request shape, maps fake/future provider responses, usage, and errors back into provider-neutral envelopes, and fails closed before API key reads or network execution. CLI commands expose sanitized OpenAI payload preview, dry-run reporting, a future real-run safety valve, and an `openai-live-smoke-readiness` report that returns blocked/ready status without reading `DIAMONDDUST_OPENAI_API_KEY` or calling a provider. The provider decision set now distinguishes API key environment variable name approval from API key value reading approval and separates prompt, source body, and output schema externalization decisions. Default model, API key value reading, real provider calls, network calls, live smoke, actual prompt/source/schema externalization to a provider, raw provider output persistence, patch acceptance, formal apply, and publication remain explicitly not approved until the product owner records those decisions. CI remains provider-free by default and does not require or mention the OpenAI API key. The completed implementation plans are `docs/exec-plans/completed/2026-05-21-first-openai-adapter-pre-live-smoke.md` and `docs/exec-plans/completed/2026-05-22-openai-live-smoke-readiness.md`.
 
 The broader provider-neutral skeleton still keeps future first-provider scope limited to `extract_units`. Provider adapters return typed response/error envelopes; application pipelines assemble run logs and perform source binding plus typed extraction validation; storage adapters persist `_ai_runs`, `_ai_suggestions`, and `_ai_reports`; formal vault mutation remains out of scope.
 

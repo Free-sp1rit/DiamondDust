@@ -33,10 +33,12 @@ from diamonddust.application import (
     LocalTrialResult,
     LocalTrialSpec,
     ProviderIntegrationDecisionSet,
+    assess_openai_live_smoke_readiness,
     assess_provider_integration_readiness,
     build_extract_units_provider_request,
     provider_integration_decision_template_mapping,
     provider_integration_decisions_from_mapping,
+    render_openai_live_smoke_readiness_markdown,
     render_provider_integration_decision_package_markdown,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
@@ -80,6 +82,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_provider_decisions_template_command(stdout=sys.stdout)
     if args.command == "provider-decision-package":
         return _run_provider_decision_package_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+    if args.command == "openai-live-smoke-readiness":
+        return _run_openai_live_smoke_readiness_command(
             args,
             stdout=sys.stdout,
             stderr=sys.stderr,
@@ -168,6 +176,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="render one provider decision review package without provider calls",
     )
     _add_provider_readiness_arguments(provider_decision_package)
+
+    openai_live_smoke_readiness = subparsers.add_parser(
+        "openai-live-smoke-readiness",
+        help="render OpenAI live-smoke readiness without key reads or provider calls",
+    )
+    _add_provider_readiness_arguments(openai_live_smoke_readiness)
 
     subparsers.add_parser(
         "extraction-output-schema",
@@ -263,6 +277,7 @@ def _add_provider_readiness_arguments(command: argparse.ArgumentParser) -> None:
     )
     command.add_argument("--api-key-env-var")
     command.add_argument("--api-key-env-var-approved", action="store_true")
+    command.add_argument("--api-key-value-reading-approved", action="store_true")
     command.add_argument(
         "--real-provider-calls-approved",
         action="store_true",
@@ -273,6 +288,13 @@ def _add_provider_readiness_arguments(command: argparse.ArgumentParser) -> None:
     )
     command.add_argument(
         "--prompt-text-external-approved",
+        action="store_true",
+    )
+    command.add_argument("--source-body-external-approved", action="store_true")
+    command.add_argument(
+        "--output-schema-external-approved",
+        "--schema-external-approved",
+        dest="output_schema_external_approved",
         action="store_true",
     )
     command.add_argument("--structured-output-mechanism")
@@ -293,6 +315,8 @@ def _add_provider_readiness_arguments(command: argparse.ArgumentParser) -> None:
     )
     command.add_argument("--fallback-behavior")
     command.add_argument("--fallback-behavior-approved", action="store_true")
+    command.add_argument("--manual-live-smoke-approved", action="store_true")
+    command.add_argument("--recurring-live-smoke-approved", action="store_true")
 
 
 def _run_provider_readiness_report_command(
@@ -351,6 +375,22 @@ def _run_provider_decision_package_command(
         stdout.write(render_provider_integration_decision_package_markdown(report))
     except Exception as exc:
         print(f"provider decision package failed: {exc}", file=stderr)
+        return 1
+    return 0
+
+
+def _run_openai_live_smoke_readiness_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        decisions = _provider_decisions_from_args(args)
+        report = assess_openai_live_smoke_readiness(decisions)
+        stdout.write(render_openai_live_smoke_readiness_markdown(report))
+    except Exception as exc:
+        print(f"OpenAI live smoke readiness failed: {exc}", file=stderr)
         return 1
     return 0
 
@@ -541,9 +581,12 @@ def _provider_decisions_from_args(
         provider_sdk_dependency_approved=args.provider_sdk_dependency_approved,
         api_key_env_var=args.api_key_env_var,
         api_key_env_var_approved=args.api_key_env_var_approved,
+        api_key_value_reading_approved=args.api_key_value_reading_approved,
         real_provider_calls_approved=args.real_provider_calls_approved,
         real_network_calls_approved=args.real_network_calls_approved,
         prompt_text_external_approved=args.prompt_text_external_approved,
+        source_body_external_approved=args.source_body_external_approved,
+        output_schema_external_approved=args.output_schema_external_approved,
         structured_output_mechanism=args.structured_output_mechanism,
         structured_output_mechanism_approved=(
             args.structured_output_mechanism_approved
@@ -558,6 +601,8 @@ def _provider_decisions_from_args(
         raw_output_retention_approved=args.raw_output_retention_approved,
         fallback_behavior=args.fallback_behavior,
         fallback_behavior_approved=args.fallback_behavior_approved,
+        manual_live_smoke_approved=args.manual_live_smoke_approved,
+        recurring_live_smoke_approved=args.recurring_live_smoke_approved,
     )
 
 
@@ -570,9 +615,12 @@ def _has_inline_provider_decisions(args: argparse.Namespace) -> bool:
             args.provider_sdk_dependency_approved,
             args.api_key_env_var is not None,
             args.api_key_env_var_approved,
+            args.api_key_value_reading_approved,
             args.real_provider_calls_approved,
             args.real_network_calls_approved,
             args.prompt_text_external_approved,
+            args.source_body_external_approved,
+            args.output_schema_external_approved,
             args.structured_output_mechanism is not None,
             args.structured_output_mechanism_approved,
             args.cost_limit is not None,
@@ -585,6 +633,8 @@ def _has_inline_provider_decisions(args: argparse.Namespace) -> bool:
             args.raw_output_retention_approved,
             args.fallback_behavior is not None,
             args.fallback_behavior_approved,
+            args.manual_live_smoke_approved,
+            args.recurring_live_smoke_approved,
         )
     )
 

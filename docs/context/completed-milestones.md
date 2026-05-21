@@ -666,3 +666,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 231 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: Added `openai>=1.0.0` as the selected first-provider SDK dependency and updated CI wheel installation to install project dependencies while keeping default CI provider-free and secret-free.
 - Follow-up: Before any owner live smoke, separately approve default model, API key value reading, prompt/source/schema externalization, real provider/network call, per-run cost limit, live-smoke scope, and any raw output retention beyond current hash/metadata defaults.
+
+## 2026-05-22 — OpenAI Live Smoke Readiness Package Completed
+
+- Scope: Added explicit live-smoke decision fields to provider decision input, an OpenAI-specific live-smoke readiness assessment, Markdown renderer, and `diamonddust openai-live-smoke-readiness` CLI command.
+- Outcome: The readiness path now distinguishes API key env var name approval from API key value reading approval, separates prompt/source body/output schema externalization approvals, requires one manual live-smoke approval for OpenAI live-smoke readiness, and remains provider-free with `provider_called: false`, `network_called: false`, and `api_key_values_read: false`.
+- Review: `docs/reviews/milestone-reviews/2026-05-22-openai-live-smoke-readiness.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider readiness milestone; clarifies live-smoke gating without approving or running live provider execution.
+- Validation: 236 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: No new dependency was added.
+- Follow-up: Before any live smoke, product owner must still approve default model, API key value reading, real provider/network call, prompt/source/output-schema externalization, cost limit, and one manual live smoke.
