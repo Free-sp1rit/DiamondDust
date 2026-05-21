@@ -22,7 +22,7 @@ class CIWorkflowTests(unittest.TestCase):
     def test_ci_runs_required_validation_gates(self) -> None:
         required_commands = (
             "python -m pip wheel . --no-deps --wheel-dir",
-            "python -m pip install --force-reinstall --no-deps",
+            "python -m pip install --force-reinstall",
             "python -m pip check",
             "python -m unittest discover -s tests",
             "python -m compileall src tests",
@@ -36,6 +36,11 @@ class CIWorkflowTests(unittest.TestCase):
     def test_ci_uses_read_only_repository_permissions(self) -> None:
         self.assertIn("permissions:", self.workflow)
         self.assertIn("contents: read", self.workflow)
+
+    def test_ci_default_path_is_provider_free(self) -> None:
+        self.assertNotIn("DIAMONDDUST_OPENAI_API_KEY", self.workflow)
+        self.assertNotIn("openai-extract-units", self.workflow)
+        self.assertNotIn("live-smoke", self.workflow)
 
 
 if __name__ == "__main__":

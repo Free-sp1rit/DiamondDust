@@ -18,7 +18,7 @@ class CLIEntrypointTests(unittest.TestCase):
 
         self.assertEqual(metadata["project"]["name"], "diamonddust")
         self.assertEqual(metadata["project"]["scripts"]["diamonddust"], "diamonddust.cli:main")
-        self.assertEqual(metadata["project"]["dependencies"], [])
+        self.assertEqual(metadata["project"]["dependencies"], ["openai>=1.0.0"])
         self.assertEqual(metadata["tool"]["setuptools"]["packages"]["find"]["where"], ["src"])
 
     def test_module_entrypoint_shows_cli_help(self) -> None:
@@ -43,6 +43,9 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("provider-decision-package", result.stdout)
         self.assertIn("extraction-output-schema", result.stdout)
         self.assertIn("provider-payload-preview", result.stdout)
+        self.assertIn("openai-payload-preview", result.stdout)
+        self.assertIn("openai-dry-run", result.stdout)
+        self.assertIn("openai-extract-units", result.stdout)
 
     def test_provider_readiness_report_defaults_to_blocked(self) -> None:
         env = dict(os.environ)
@@ -487,6 +490,146 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("provider payload preview failed:", result.stderr)
 
+    def test_openai_payload_preview_is_sanitized_and_provider_free(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_OPENAI_API_KEY"] = "DO_NOT_RENDER_THIS_OPENAI_SECRET"
+        with TemporaryDirectory() as tmp:
+            essay_path = _write_openai_preview_essay(tmp)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "openai-payload-preview",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_openai_preview_ab12cd",
+                    "--model",
+                    "owner-approved-model-placeholder",
+                    "--root",
+                    tmp,
+                    "--api-key-env-var",
+                    "DIAMONDDUST_OPENAI_API_KEY",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stderr)
+        self.assertNotIn("OpenAI preview should hide this body text.", result.stdout)
+        self.assertNotIn("knowledge_unit", result.stdout)
+
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["provider"], "openai")
+        self.assertEqual(payload["sdk_method"], "responses.create")
+        self.assertEqual(payload["model"], "owner-approved-model-placeholder")
+        self.assertFalse(payload["provider_called"])
+        self.assertFalse(payload["network_call"])
+        self.assertFalse(payload["api_key_value_read"])
+        self.assertFalse(payload["payload_contains_raw_prompt"])
+        self.assertFalse(payload["payload_contains_raw_schema"])
+        self.assertEqual(payload["api_key_env_var_name"], "DIAMONDDUST_OPENAI_API_KEY")
+        self.assertEqual(payload["message_roles"], ["system", "user"])
+        self.assertEqual(len(payload["message_content_hashes"]), 2)
+
+    def test_openai_dry_run_reports_blockers_without_key_read_or_network(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_OPENAI_API_KEY"] = "DO_NOT_RENDER_THIS_OPENAI_SECRET"
+        with TemporaryDirectory() as tmp:
+            essay_path = _write_openai_preview_essay(tmp)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "openai-dry-run",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_openai_dry_run_ab12cd",
+                    "--model",
+                    "owner-approved-model-placeholder",
+                    "--root",
+                    tmp,
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stderr)
+        report = json.loads(result.stdout)
+        self.assertTrue(report["dry_run"])
+        self.assertTrue(report["real_run_blocked"])
+        self.assertFalse(report["provider_called"])
+        self.assertFalse(report["network_call"])
+        self.assertFalse(report["api_key_value_read"])
+        self.assertIn(
+            "API key value reading is not approved",
+            report["blockers"],
+        )
+        self.assertIn("real network calls are not approved", report["blockers"])
+
+    def test_openai_extract_units_fails_closed_before_key_read_or_network(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_OPENAI_API_KEY"] = "DO_NOT_RENDER_THIS_OPENAI_SECRET"
+        with TemporaryDirectory() as tmp:
+            essay_path = _write_openai_preview_essay(tmp)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "openai-extract-units",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_openai_real_guard_ab12cd",
+                    "--model",
+                    "owner-approved-model-placeholder",
+                    "--root",
+                    tmp,
+                    "--real-provider-call-approved",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stderr, "")
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stderr)
+        report = json.loads(result.stdout)
+        self.assertFalse(report["succeeded"])
+        self.assertFalse(report["provider_called"])
+        self.assertFalse(report["network_call"])
+        self.assertFalse(report["api_key_value_read"])
+        self.assertEqual(report["error"]["error_type"], "permission_error")
+        self.assertIn(
+            "API key value reading is not approved",
+            report["blockers"],
+        )
+
 
 def _ready_provider_decisions() -> dict[str, object]:
     return {
@@ -513,6 +656,24 @@ def _ready_provider_decisions() -> dict[str, object]:
         "fallback_behavior_approved": True,
         "allowed_tasks": ["extract_units"],
     }
+
+
+def _write_openai_preview_essay(root: str) -> Path:
+    essay_path = Path(root) / "openai-preview-essay.md"
+    essay_path.write_text(
+        "\n".join(
+            [
+                "---",
+                "id: raw_essay_openai_preview_ab12cd",
+                "title: OpenAI Preview",
+                "---",
+                "",
+                "OpenAI preview should hide this body text.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return essay_path
 
 
 if __name__ == "__main__":
