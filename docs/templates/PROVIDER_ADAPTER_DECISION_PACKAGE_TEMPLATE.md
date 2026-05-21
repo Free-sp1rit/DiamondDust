@@ -1,12 +1,16 @@
 # Provider Adapter Decision Package Template
 
-This template records product-owner review before first real-provider adapter
-implementation.
+This template records product-owner review for the first OpenAI adapter
+implementation boundary up to "pre-live-smoke ready".
 
-Completing this template does not by itself add a provider SDK, read API keys,
-make network calls, persist raw provider output, apply patches, or publish
-content. Implementation still requires a separate task branch, PR, validation,
-and milestone review.
+This package approves implementation planning for provider adapter code,
+dependency file changes, SDK installation, CLI safety valves, fake/mock tests,
+and provider-free CI protections. It does not approve API key value reads, real
+provider calls, network calls, live smoke, raw provider output persistence,
+patch acceptance, formal apply, or publication.
+
+Code implementation must wait until the associated implementation plan is
+approved.
 
 ## Package Metadata
 
@@ -14,7 +18,13 @@ and milestone review.
 - artifact_schema_version: "0.1.0"
 - decision_status: pending
 - records_real_provider_approval: false
+- records_real_provider_call_approval: false
+- stage_name: First OpenAI Adapter Implementation, Pre-Live-Smoke Ready
+- implementation_stage_approval_status: pre_live_smoke_ready_approved
 - live_smoke_approval_status: pending
+- actual_real_provider_adapter_implementation_approved: true
+- dependency_file_change_approved: true
+- dependency_installation_approved: true
 - created_at: YYYY-MM-DDTHH:MM:SSZ
 - product_owner: pending
 - reviewed_by: pending
@@ -27,7 +37,7 @@ Current approved scope:
 
 - [ ] approved for implementation planning only
 - [x] approved for real provider code implementation preparation
-- [ ] approved for actual real provider code implementation
+- [x] approved for actual real provider code implementation
 - [ ] approved for one manual live smoke run
 - [ ] approved for recurring live smoke runs
 - [ ] approved with revisions listed below
@@ -35,19 +45,24 @@ Current approved scope:
 
 Decision notes:
 
-Real provider code implementation preparation is approved only under these
-limits:
+First OpenAI Adapter Implementation, Pre-Live-Smoke Ready is approved under
+these limits:
 
 - Codex may revise the decision package.
 - Codex may create or update planning/design documents.
-- Codex may compare SDK vs direct HTTP.
-- Codex may design adapter mapping, safety flags, and CI policy.
-- Codex must not implement the real provider adapter yet.
-- Codex must not add SDK dependencies.
-- Codex must not read API keys.
+- Codex may implement the OpenAI provider adapter after the implementation plan
+  is approved.
+- Codex may modify dependency files and install the selected OpenAI SDK after
+  the implementation plan is approved.
+- Codex may implement provider request/response/error mapping, structured
+  output handling, payload preview, dry-run behavior, real-run safety valves,
+  fake/mock SDK tests, secret redaction tests, no-real-call-by-default tests,
+  and provider-free CI protections.
+- Codex must not read API key values.
 - Codex must not make provider network calls.
 - Codex must not run live smoke.
 - Codex must not persist raw provider output.
+- Codex must not externalize rendered prompt/source/schema content.
 - Codex must not create patch acceptance.
 - Codex must not formal apply.
 - Codex must not publish.
@@ -70,19 +85,22 @@ Check only after the product owner explicitly approves the item.
 
 - [x] first provider selected for planning
 - [ ] default model selected
-- [ ] provider SDK or direct HTTP dependency approved
-- [ ] API key environment variable name approved
+- [x] provider SDK or direct HTTP dependency approved
+- [x] API key environment variable name approved
+- [x] actual provider adapter implementation approved
+- [x] dependency file changes approved
+- [x] dependency installation approved
 - [ ] real provider calls approved
 - [ ] real network calls approved
 - [ ] manual live smoke approved
 - [ ] recurring live smoke approved
 - [ ] rendered prompt/source text external use approved
-- [ ] structured output mechanism approved for implementation
-- [ ] timeout policy approved
-- [ ] retry policy approved
+- [x] structured output mechanism approved for implementation
+- [x] timeout policy approved
+- [x] retry policy approved
 - [ ] cost limit approved
-- [ ] fallback behavior approved
-- [ ] raw output retention behavior approved
+- [x] fallback behavior approved
+- [x] raw output retention behavior approved
 - [x] task scope limited to `extract_units`
 - [x] provider-side tools disabled
 - [x] formal vault writes remain disabled
@@ -95,8 +113,10 @@ Check only after the product owner explicitly approves the item.
 - default_model: pending_owner_selection
 - provider_region_or_endpoint: default_openai_api
 - provider_account_scope: owner_local_api_account
+- actual_real_provider_adapter_implementation_approved: true
 - initial_allowed_task:
   - extract_units
+- allowed_task_scope: extract_units only
 - real_provider_calls_approved: false
 - real_network_calls_approved: false
 - live_smoke_approval_status: pending
@@ -112,10 +132,10 @@ The default model is intentionally left pending until the product owner
 separately approves model choice, cost expectations, availability, and
 live-smoke policy.
 
-This decision approves OpenAI-targeted planning and adapter mapping only. It
-does not approve API key reading, real network calls, live smoke runs, raw
-provider output persistence, patch acceptance, formal vault apply, or
-publication.
+This decision approves OpenAI-targeted adapter implementation up to
+pre-live-smoke ready. It does not approve API key value reading, real network
+calls, live smoke runs, prompt/source/schema externalization, raw provider
+output persistence, patch acceptance, formal vault apply, or publication.
 
 Model selection policy:
 
@@ -125,70 +145,81 @@ Model selection policy:
 
 ### Dependency Choice
 
-- integration_style: pending_comparison
-- provider_sdk_dependency: pending
-- provider_sdk_dependency_approved: false
+- integration_style: openai_official_sdk
+- provider_sdk_dependency: openai
+- provider_sdk_dependency_approved: true
+- provider_sdk_dependency_selected: openai
+- provider_sdk_dependency_approved_for_implementation: true
 - dependency_layer: ai_adapter_only
+- dependency_file_change_approved: true
+- dependency_installation_approved: true
 - alternatives_considered:
   - direct HTTP
   - OpenAI official SDK
-- replacement_strategy: pending
+- replacement_strategy: direct_http_fallback_if_sdk_boundary_risk_is_rejected
 
 Decision notes:
 
-Dependency choice is not approved yet.
+The product owner selected the OpenAI official SDK as the first provider
+adapter integration style. Dependency file changes and dependency installation
+are approved for the pre-live-smoke implementation stage, after the
+implementation plan is approved.
 
-Codex must first produce a focused comparison of OpenAI official SDK vs direct
-HTTP for DiamondDust's first provider adapter.
+The SDK must remain isolated to the AI adapter layer. Provider SDK types must
+not leak into domain core, application orchestration, storage adapters, formal
+vault code, or user-facing artifact contracts.
 
-The comparison must evaluate:
+Direct HTTP remains the documented fallback if SDK boundary risk, dependency
+footprint, or long-term maintenance concerns later outweigh SDK benefits.
 
-1. structured output support
-2. request/response mapping complexity
-3. provider error handling
-4. timeout/retry support
-5. dependency footprint
-6. testability with fake provider
-7. security and API key handling
-8. long-term maintainability
-9. provider-neutral boundary compatibility
-10. future multi-provider portability
+Within this implementation scope, Codex must not:
 
-Until this comparison is reviewed and approved, Codex must not:
-
-- add OpenAI SDK
-- add any provider SDK
-- implement real HTTP calls
-- read API keys
+- add any provider SDK other than `openai`
+- implement direct HTTP calls
+- read API key values
 - make real network calls
-- modify dependency files
 
 ### API Key Environment Variable
 
 - api_key_env_var: DIAMONDDUST_OPENAI_API_KEY
-- api_key_env_var_approval_status: pending
-- api_key_env_var_approved: false
+- api_key_env_var_approval_status: approved
+- api_key_env_var_approved: true
 - key_value_in_package: forbidden
 - key_value_in_repo: forbidden
+- key_value_in_artifacts: forbidden
+- key_value_in_logs: forbidden
+- key_value_in_errors: forbidden
+- api_key_value_reading_approved: false
 - key_reading_allowed_in_preview_commands: false
+- key_reading_allowed_in_dry_run_commands: false
+- key_reading_allowed_in_tests: false
+- key_reading_allowed_in_ci: false
 - key_reading_allowed_in_real_provider_run: false
+- key_reading_requires_separate_live_smoke_approval: true
+- api_key_value_must_not_be_logged: true
+- api_key_value_must_not_be_persisted: true
 
-Approving the API key environment variable name does not approve reading the key
-value. Reading the key is allowed only for an explicitly approved real provider
-run.
+Approving the API key environment variable name does not approve reading the
+key value. Reading the key is allowed only after a separately approved real
+provider run or live smoke explicitly permits key reading.
 
 Decision notes:
 
-`DIAMONDDUST_OPENAI_API_KEY` is a suggested future placeholder only. It is not
-approved for reading.
+`DIAMONDDUST_OPENAI_API_KEY` is the approved environment variable name for the
+future OpenAI adapter path. The key value remains forbidden in the package and
+repository, must not be logged or persisted, and is not approved for reading in
+preview, dry-run, test, CI, or current real-provider-run settings.
 
 ### Network And Prompt Externalization
 
 - real_provider_calls_approved: false
 - real_network_calls_approved: false
+- live_smoke_approved: false
+- recurring_live_smoke_approved: false
 - prompt_text_external_approved: false
 - source_body_external_approved: false
 - output_schema_external_approved: false
+- prompt_source_schema_externalization_approved: false
 - live_smoke_approval_status: pending
 
 Decision notes:
@@ -221,8 +252,9 @@ tasks require separate approval.
 ### Structured Output
 
 - structured_output_mechanism: provider_json_schema_if_supported
-- structured_output_mechanism_approval_status: pending
-- structured_output_mechanism_approved: false
+- structured_output_mechanism_approval_status: implementation_approved
+- structured_output_mechanism_approved: true
+- structured_output_mechanism_implementation_approved: true
 - output_schema_id: diamonddust.extract_units.output.v0
 - output_schema_version: "0.1.0"
 - typed_runtime_validation_required: true
@@ -231,41 +263,46 @@ tasks require separate approval.
 
 Decision notes:
 
-The adapter mapping plan may assume provider JSON Schema if the selected OpenAI
-model supports it, but implementation approval remains pending. Typed runtime
-validation remains authoritative even if provider-side structured output is
-available.
+The adapter implementation may use provider JSON Schema if supported by the
+selected OpenAI SDK/model path. Typed runtime validation remains authoritative
+even if provider-side structured output is available. If provider structured
+output fails or is unsupported, the adapter must fail closed and must not
+generate patches, write candidate notes, or formal apply.
 
 ### Timeout, Retry, Cost, And Fallback
 
-- timeout_seconds: pending
-- timeout_policy_approved: false
-- max_retries: pending
-- retry_policy_approved: false
+- timeout_seconds: 30
+- timeout_policy_approved: true
+- max_retries: 0
+- retry_policy_approved: true
 - per_run_cost_limit: pending
 - per_day_cost_limit: pending
 - cost_currency: pending
+- cost_limit_required_for_live_run: true
 - stop_behavior_on_cost_limit: fail_closed
 - cost_limit_approved: false
-- fallback_behavior: pending
-  - recommended v0: disabled
-- fallback_behavior_approved: false
+- fallback_behavior: disabled
+- fallback_behavior_approved: true
 
 Decision notes:
 
-Cost-bearing behavior is not approved. A real provider adapter must fail closed
-when the approved cost policy is missing or exceeded.
+No automatic retry or fallback is allowed in v0. Cost-bearing live behavior is
+not approved. Any future live run must require an explicit cost limit before
+live-smoke approval.
 
 ### Raw Output Retention And Logging
 
-- raw_output_retention: pending
-  - allowed examples: do_not_persist, hash_only, redacted_raw, full_raw_requires_explicit_approval
-  - recommended v0: do_not_persist or hash_only
-- raw_output_retention_approved: false
+- raw_output_retention: do_not_persist
+- raw_output_retention_approved: true
+- raw_provider_output_persistence_approved: false
 - prompt_text_persistence: false
 - source_body_persistence: false
 - raw_provider_request_persistence: false
 - raw_provider_response_persistence: false
+- persist_raw_provider_request: false
+- persist_raw_provider_response: false
+- persist_hash: true
+- full_raw_output_requires_separate_approval: true
 - allowed_trace_fields:
   - run_id
   - provider_request_id
@@ -290,13 +327,15 @@ Rules:
 
 Decision notes:
 
-Raw output retention is not approved. The current safe default is no raw output
-persistence.
+Raw output retention is approved only as `do_not_persist` with hash retention.
+Full raw provider output requires separate explicit approval. Raw provider
+request/response bodies must never enter the formal vault.
 
 ## SDK Vs Direct HTTP Comparison Inputs
 
-This section is planning input only and does not approve either integration
-style.
+This section records the completed planning comparison and selected integration
+style. It does not approve dependency file changes, adapter implementation, API
+key reading, network calls, or live smoke runs.
 
 Evaluation criteria:
 
@@ -314,9 +353,11 @@ Evaluation criteria:
 Current comparison status:
 
 - comparison_required_before_dependency_approval: true
-- comparison_completed: false
-- selected_integration_style: pending
-- dependency_files_may_change: false
+- comparison_completed: true
+- selected_integration_style: openai_official_sdk
+- selected_provider_sdk_dependency: openai
+- direct_http_fallback: allowed_if_sdk_boundary_or_dependency_risk_is_rejected
+- dependency_files_may_change: true
 
 ## Adapter Mapping Plan Inputs
 
@@ -324,7 +365,10 @@ Current comparison status:
 - internal_review_payload: `ProviderExecutionPayload`
 - adapter_output: `ProviderResult`
 - request_mapping_owner: AI adapter layer
+- provider_request_mapping_approved: true
 - response_mapping_owner: AI adapter layer
+- provider_response_mapping_approved: true
+- provider_error_mapping_approved: true
 - source_binding_owner: application provider handoff
 - typed_validation_owner: AI/application validation
 - run_log_persistence_owner: storage adapter, when called by application pipeline
@@ -344,6 +388,9 @@ commands.
 Required safety properties:
 
 - default CLI paths remain provider-free
+- cli_payload_preview_approved: true
+- cli_dry_run_approved: true
+- cli_real_run_safety_valve_approved: true
 - real provider execution requires an explicit real-provider command or flag
 - model must be explicit for live runs
 - API key env var name must be explicit and approved
@@ -357,6 +404,10 @@ Required safety properties:
 - default_ci_calls_provider: false
 - default_ci_requires_api_key: false
 - default_ci_persists_raw_provider_output: false
+- ci_provider_free_default_approved: true
+- fake_or_mocked_sdk_tests_approved: true
+- secret_redaction_tests_approved: true
+- no_real_call_by_default_tests_approved: true
 - live_smoke_ci_policy: manual_or_opt_in_only
 - live_smoke_requires_product_owner_approval: true
 - live_smoke_requires_secret_configuration: true
@@ -398,7 +449,7 @@ describe externalization behavior, but no content may be sent externally.
 - [ ] adapter returns typed `ProviderResult`
 - [ ] adapter maps provider errors into `ProviderErrorType`
 - [ ] adapter refuses execution when real provider calls are not enabled
-- [ ] adapter reads only the approved API key environment variable
+- [ ] adapter does not read API key values before separate live-smoke approval
 - [ ] adapter never prints or persists API key values
 - [ ] structured output passes typed runtime validation
 - [ ] provider output source identity matches request source identity
@@ -409,15 +460,16 @@ describe externalization behavior, but no content may be sent externally.
 
 ## Explicit Non-Approvals
 
-- actual real provider adapter implementation: not approved
-- OpenAI SDK dependency: not approved
 - direct HTTP implementation: not approved
-- dependency file changes: not approved
-- API key reading: not approved
+- default model selection: not approved
+- API key value reading: not approved
 - provider network calls: not approved
+- real provider calls: not approved
+- prompt/source/schema externalization: not approved
 - one manual live smoke run: not approved
 - recurring live smoke runs: not approved
 - raw provider output persistence: not approved
+- raw provider request/response persistence: not approved
 - patch acceptance: not approved
 - formal vault apply: not approved
 - publication: not approved
@@ -426,5 +478,5 @@ describe externalization behavior, but no content may be sent externally.
 
 Continue using the provider-free local trial path, fake providers, payload
 preview, decision package rendering, schema validation, source binding, and
-fixture-driven evaluation. Do not add SDKs, read API keys, make network calls,
+fixture-driven evaluation. Do not add SDKs, read API key values, make network calls,
 run live smoke, or persist raw provider output.

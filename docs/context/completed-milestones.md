@@ -617,11 +617,52 @@ Record completed development milestones and links to reviews here.
 
 ## 2026-05-20 — Provider Approval Package Revision Completed
 
-- Scope: Revised the provider adapter decision package with product-owner approval for real-provider implementation preparation, OpenAI-targeted planning, and explicit non-approvals for implementation, SDKs, API key reads, network calls, live smoke, raw output retention, patch acceptance, formal apply, and publication.
+- Scope: Revised the provider adapter decision package with product-owner approval for real-provider implementation preparation, OpenAI-targeted planning, and explicit non-approvals for implementation, SDKs, API key value reads, network calls, live smoke, raw output retention, patch acceptance, formal apply, and publication.
 - Outcome: The template now separates implementation preparation, actual implementation, one-time live smoke, and recurring live smoke approvals. The adapter design now includes SDK vs direct HTTP comparison inputs, adapter mapping plan, CLI safety valve design, and CI policy design.
 - Review: `docs/reviews/milestone-reviews/2026-05-20-provider-approval-package-revision.md`.
 - Review decision: pass.
 - Gate impact: Post-Gate 7 provider-readiness design milestone; clarifies product-owner approval semantics before any selected-provider implementation.
 - Validation: 213 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, focused provider adapter design docs test passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No production or development dependency was added.
-- Follow-up: Review the SDK vs direct HTTP comparison and separately approve dependency style, default model, API key reading, network calls, live-smoke policy, and retention behavior before implementation.
+- Follow-up: After later SDK and API key env var decisions, separately approve default model, dependency file changes, API key value reading, network calls, live-smoke policy, and retention behavior before implementation.
+
+## 2026-05-20 — OpenAI SDK Decision Recorded
+
+- Scope: Recorded the product-owner decision to adopt the OpenAI official SDK as the future first-provider adapter integration style.
+- Outcome: The decision package and adapter design now state `integration_style: openai_official_sdk` and `provider_sdk_dependency: openai`, while keeping dependency file changes, real adapter implementation, API key value reads, network calls, live smoke, raw output persistence, patch acceptance, formal apply, and publication unapproved.
+- Review: Not required; this records a product-owner dependency-path decision without adding a dependency or implementation code.
+- Gate impact: Post-Gate 7 provider-readiness design update.
+- Validation: See task report for current test results.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Separately approve default model, dependency file change, API key value reading, real network calls, live smoke, timeout/retry/cost policy, and raw output retention before real provider implementation or execution.
+
+## 2026-05-20 — OpenAI API Key Environment Variable Name Recorded
+
+- Scope: Recorded `DIAMONDDUST_OPENAI_API_KEY` as the approved API key environment variable name for the future OpenAI adapter path.
+- Outcome: The decision package and adapter design now distinguish API key environment variable name approval from API key value reading approval. Preview commands and current real-provider-run settings still must not read the key value, and key values must not be logged or persisted.
+- Review: Not required; this records a product-owner secret-name decision without reading or storing a secret.
+- Gate impact: Post-Gate 7 provider-readiness design update.
+- Validation: See task report for current test results.
+- Dependency impact: No production or development dependency was added.
+- Follow-up: Separately approve API key value reading only as part of an explicitly approved real provider run or live smoke.
+
+## 2026-05-20 — OpenAI Adapter Pre-Live-Smoke Implementation Plan Created
+
+- Scope: Recorded product-owner approval for First OpenAI Adapter Implementation, Pre-Live-Smoke Ready, and created the active implementation plan.
+- Outcome: The decision package and adapter design now allow dependency file changes, OpenAI SDK installation, adapter implementation, request/response/error mapping, structured output implementation, CLI preview/dry-run/safety valves, fake/mock SDK tests, secret redaction tests, no-real-call-by-default tests, and provider-free CI protections after the implementation plan is approved.
+- Review: Active plan pending product-owner approval at `docs/exec-plans/active/2026-05-20-first-openai-adapter-pre-live-smoke.md`.
+- Gate impact: Post-Gate 7 provider integration planning milestone.
+- Validation: See task report for current test results.
+- Dependency impact: No production or development dependency was added in this planning task.
+- Follow-up: Do not implement code until the active implementation plan is approved. Live smoke, API key value reading, network calls, default model, prompt/source/schema externalization, cost limit, raw provider output persistence, patch acceptance, formal apply, and publication remain separately unapproved.
+
+## 2026-05-21 — OpenAI Adapter Pre-Live-Smoke Implementation Completed
+
+- Scope: Implemented the OpenAI adapter boundary, OpenAI SDK dependency metadata, sanitized OpenAI payload preview, provider-free dry-run reporting, fail-closed future real-run safety valve, fake/mock SDK mapping tests, response/usage/error mapping tests, secret redaction tests, and provider-free CI install behavior.
+- Outcome: OpenAI-specific SDK import is isolated to `src/diamonddust/ai/adapters/openai.py`; adapter output stays in provider-neutral `ProviderResult` envelopes; CLI preview/dry-run/guard commands do not read `DIAMONDDUST_OPENAI_API_KEY`, do not instantiate a real OpenAI client, do not make network calls, and do not persist raw provider request/response bodies.
+- Review: `docs/reviews/milestone-reviews/2026-05-21-openai-adapter-pre-live-smoke.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 first-provider adapter implementation milestone; prepares owner-controlled live-smoke review without approving live provider execution.
+- Validation: 231 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
+- Dependency impact: Added `openai>=1.0.0` as the selected first-provider SDK dependency and updated CI wheel installation to install project dependencies while keeping default CI provider-free and secret-free.
+- Follow-up: Before any owner live smoke, separately approve default model, API key value reading, prompt/source/schema externalization, real provider/network call, per-run cost limit, live-smoke scope, and any raw output retention beyond current hash/metadata defaults.

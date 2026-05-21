@@ -19,6 +19,15 @@ from diamonddust.ai import (
     extraction_output_json_schema,
     render_extract_units_prompt,
 )
+from diamonddust.ai.adapters.openai import (
+    OPENAI_API_KEY_ENV_VAR,
+    OPENAI_PROVIDER,
+    OpenAIAdapterConfig,
+    OpenAIExecutionClient,
+    build_openai_dry_run_report,
+    build_sanitized_openai_request_preview,
+    live_execution_blockers,
+)
 from diamonddust.application import (
     ExtractUnitsProviderRequestSpec,
     LocalTrialResult,
@@ -79,6 +88,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_extraction_output_schema_command(stdout=sys.stdout)
     if args.command == "provider-payload-preview":
         return _run_provider_payload_preview_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+    if args.command == "openai-payload-preview":
+        return _run_openai_payload_preview_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+    if args.command == "openai-dry-run":
+        return _run_openai_dry_run_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+    if args.command == "openai-extract-units":
+        return _run_openai_extract_units_command(
             args,
             stdout=sys.stdout,
             stderr=sys.stderr,
@@ -172,7 +199,57 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     provider_payload_preview.add_argument("--timeout-seconds", type=int)
     provider_payload_preview.add_argument("--max-retries", type=int, default=0)
+
+    openai_payload_preview = subparsers.add_parser(
+        "openai-payload-preview",
+        help=(
+            "print a sanitized OpenAI extract_units request preview "
+            "without key reads or provider calls"
+        ),
+    )
+    _add_openai_extract_arguments(openai_payload_preview)
+
+    openai_dry_run = subparsers.add_parser(
+        "openai-dry-run",
+        help=(
+            "check the future OpenAI extract_units path without key reads "
+            "or provider calls"
+        ),
+    )
+    _add_openai_extract_arguments(openai_dry_run)
+
+    openai_extract_units = subparsers.add_parser(
+        "openai-extract-units",
+        help=(
+            "future OpenAI extract_units safety valve; fails closed before "
+            "key reads or provider calls in this stage"
+        ),
+    )
+    _add_openai_extract_arguments(openai_extract_units)
+    openai_extract_units.add_argument(
+        "--real-provider-call-approved",
+        action="store_true",
+        help="future safety flag; still blocked without separate live-smoke approval",
+    )
     return parser
+
+
+def _add_openai_extract_arguments(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--essay", required=True)
+    command.add_argument("--run-id", required=True)
+    command.add_argument("--model", required=True)
+    command.add_argument("--root")
+    command.add_argument("--api-key-env-var", default=OPENAI_API_KEY_ENV_VAR)
+    command.add_argument(
+        "--prompt-version",
+        default=EXTRACT_UNITS_PROMPT_VERSION,
+    )
+    command.add_argument(
+        "--schema-version",
+        default=EXTRACTION_OUTPUT_SCHEMA_VERSION,
+    )
+    command.add_argument("--timeout-seconds", type=int, default=30)
+    command.add_argument("--max-retries", type=int, default=0)
 
 
 def _add_provider_readiness_arguments(command: argparse.ArgumentParser) -> None:
@@ -328,6 +405,125 @@ def _run_provider_payload_preview_command(
         print(f"provider payload preview failed: {exc}", file=stderr)
         return 1
     return 0
+
+
+def _run_openai_payload_preview_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        execution_request = _build_openai_execution_request_from_args(
+            args,
+            real_provider_calls_enabled=False,
+        )
+        config = _openai_config_from_args(args)
+        preview = build_sanitized_openai_request_preview(
+            execution_request,
+            config=config,
+        )
+        stdout.write(json.dumps(preview, indent=2, sort_keys=True))
+        stdout.write("\n")
+    except Exception as exc:
+        print(f"OpenAI payload preview failed: {exc}", file=stderr)
+        return 1
+    return 0
+
+
+def _run_openai_dry_run_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        execution_request = _build_openai_execution_request_from_args(
+            args,
+            real_provider_calls_enabled=False,
+        )
+        config = _openai_config_from_args(args)
+        report = build_openai_dry_run_report(execution_request, config=config)
+        stdout.write(json.dumps(report, indent=2, sort_keys=True))
+        stdout.write("\n")
+    except Exception as exc:
+        print(f"OpenAI dry run failed: {exc}", file=stderr)
+        return 1
+    return 0
+
+
+def _run_openai_extract_units_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        execution_request = _build_openai_execution_request_from_args(
+            args,
+            real_provider_calls_enabled=False,
+        )
+        config = _openai_config_from_args(args)
+        result = OpenAIExecutionClient(config=config).generate(execution_request)
+        output: dict[str, object] = {
+            "command": "openai-extract-units",
+            "provider": OPENAI_PROVIDER,
+            "run_id": execution_request.provider_request.run_id,
+            "requested_real_provider_call": args.real_provider_call_approved,
+            "succeeded": result.succeeded,
+            "provider_called": False,
+            "network_call": False,
+            "api_key_value_read": False,
+            "raw_provider_request_persisted": False,
+            "raw_provider_response_persisted": False,
+            "blockers": list(live_execution_blockers(execution_request, config)),
+        }
+        if result.error is not None:
+            output["error"] = dict(result.error.to_mapping())
+        if result.response is not None:
+            output["provider_request_id"] = result.response.provider_request_id
+            output["output_hash"] = result.response.output_hash
+            output["raw_output_persisted"] = result.response.raw_output_persisted
+        stdout.write(json.dumps(output, indent=2, sort_keys=True))
+        stdout.write("\n")
+    except Exception as exc:
+        print(f"OpenAI extract_units failed before execution: {exc}", file=stderr)
+        return 1
+    return 0 if result.succeeded else 1
+
+
+def _build_openai_execution_request_from_args(
+    args: argparse.Namespace,
+    *,
+    real_provider_calls_enabled: bool,
+) -> ProviderExecutionRequest:
+    essay = read_markdown_essay(args.essay, root=args.root)
+    provider_request = build_extract_units_provider_request(
+        essay,
+        ExtractUnitsProviderRequestSpec(
+            run_id=args.run_id,
+            provider=OPENAI_PROVIDER,
+            model=args.model,
+            prompt_version=args.prompt_version,
+            schema_version=args.schema_version,
+            timeout_seconds=args.timeout_seconds,
+            max_retries=args.max_retries,
+            real_provider_calls_enabled=real_provider_calls_enabled,
+        ),
+    )
+    rendered_prompt = render_extract_units_prompt(provider_request)
+    return ProviderExecutionRequest(
+        provider_request=provider_request,
+        rendered_prompt=rendered_prompt,
+    )
+
+
+def _openai_config_from_args(args: argparse.Namespace) -> OpenAIAdapterConfig:
+    return OpenAIAdapterConfig(
+        api_key_env_var=args.api_key_env_var,
+        timeout_seconds=args.timeout_seconds,
+        max_retries=args.max_retries,
+    )
 
 
 def _provider_decisions_from_args(

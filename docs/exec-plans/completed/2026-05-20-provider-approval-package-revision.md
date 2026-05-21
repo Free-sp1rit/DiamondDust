@@ -2,11 +2,11 @@
 
 ## Product Goal
 
-Record product-owner decisions for first-provider implementation preparation without approving real provider adapter implementation, API key reads, network calls, live smoke, raw output persistence, formal apply, patch acceptance, or publication.
+Record product-owner decisions for first-provider implementation preparation without approving real provider adapter implementation, API key value reads, network calls, live smoke, raw output persistence, formal apply, patch acceptance, or publication.
 
 ## Current Understanding
 
-The product owner approved planning/preparation work for real provider code implementation. OpenAI is selected as the first provider target for planning and mapping only. The default model, dependency choice, SDK/direct HTTP approach, API key reading, real network calls, live smoke, and raw output retention remain pending or explicitly not approved.
+The product owner approved planning/preparation work for real provider code implementation. OpenAI is selected as the first provider target for planning and mapping only. The default model, dependency choice, SDK/direct HTTP approach, API key value reading, real network calls, live smoke, and raw output retention remain pending or explicitly not approved.
 
 ## Assumptions
 
@@ -19,7 +19,7 @@ The product owner approved planning/preparation work for real provider code impl
 - No real provider adapter implementation.
 - No provider SDK or production dependency.
 - No `pyproject.toml` or dependency file changes.
-- No API key reads or API key requests.
+- No API key value reads or API key requests.
 - No provider network calls.
 - No live smoke.
 - No raw provider output persistence.
@@ -65,7 +65,7 @@ Post-Gate 7 provider-readiness design milestone. This clarifies approval semanti
 ## Risks
 
 - Template wording could be mistaken as live-call approval unless explicit non-approvals remain prominent.
-- OpenAI-targeted planning could be mistaken as dependency approval unless SDK/direct HTTP decision remains pending.
+- OpenAI-targeted planning could be mistaken as dependency approval unless SDK/direct HTTP decision status is explicit.
 
 ## Escalation Needed
 
@@ -80,6 +80,10 @@ No escalation is needed because this is a decision package and design revision o
 
 - Product-owner preparation approval is recorded without approving real provider calls.
 - OpenAI is recorded as first provider target for planning only.
-- Dependency choice remains pending comparison.
+- Dependency choice remained pending comparison at the time of this completed plan.
 - SDK/direct HTTP comparison exists.
 - Tests and checks pass.
+
+Superseded note:
+
+- On 2026-05-20, the product owner adopted the OpenAI official SDK as the future first-provider integration style. Dependency file changes and actual provider implementation remain separately unapproved.

@@ -50,7 +50,7 @@ Pass. No dependency was added and no dependency files were changed.
 ## Risks
 
 - OpenAI-targeted planning may be mistaken for real provider implementation approval unless decision package status fields are preserved.
-- SDK vs direct HTTP comparison is planning input and still needs product-owner review before dependency approval.
+- SDK vs direct HTTP comparison was planning input at this revision point and later resolved in favor of the OpenAI official SDK; dependency file changes still require separate approval.
 
 ## Required Changes Before Continuing
 
@@ -59,7 +59,7 @@ Pass. No dependency was added and no dependency files were changed.
 ## Optional Improvements
 
 - Add machine-readable provider approval JSON only if Markdown decision packages become hard to review consistently.
-- Add selected-provider implementation tests after dependency style and model decisions are approved.
+- Add selected-provider implementation tests after dependency file changes and model selection are approved.
 
 ## Escalation Requests
 

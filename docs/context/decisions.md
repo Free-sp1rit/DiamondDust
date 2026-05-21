@@ -4,6 +4,30 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-20 — Use OpenAI official SDK for the first provider adapter
+
+- Decision: Adopt the OpenAI official SDK as the future first-provider adapter integration style for `extract_units`.
+- Reason: The first real-provider task is structured extraction, and the official SDK should reduce provider-specific mapping burden while DiamondDust keeps provider types isolated behind the AI adapter boundary.
+- Alternatives: Direct HTTP remains the fallback if SDK boundary risk, dependency footprint, or long-term maintenance concerns later outweigh SDK benefits.
+- Risks: The SDK introduces a production dependency surface and must not leak provider-specific types into domain core, application orchestration, storage adapters, formal vault code, or artifact contracts.
+- Follow-up: Do not modify dependency files, implement the real adapter, read API key values, make network calls, run live smoke, persist raw provider output, or enable non-`extract_units` provider tasks until those actions are separately approved.
+
+### 2026-05-20 — Approve OpenAI API key environment variable name only
+
+- Decision: Approve `DIAMONDDUST_OPENAI_API_KEY` as the environment variable name for the future OpenAI adapter path.
+- Reason: The future adapter needs one explicit, reviewable secret lookup name, while preview/readiness commands must remain key-free.
+- Alternatives: Leave the env var name pending; use provider-default SDK lookup behavior; allow multiple fallback env var names.
+- Risks: Env var name approval can be mistaken for permission to read or persist the key value, so key reading remains disabled until a separately approved real provider run or live smoke.
+- Follow-up: Do not read, log, persist, or request the key value until live-run approval explicitly permits key reading. Keep preview commands key-free.
+
+### 2026-05-20 — Approve First OpenAI Adapter implementation up to pre-live-smoke ready
+
+- Decision: Approve the First OpenAI Adapter Implementation, Pre-Live-Smoke Ready stage, including dependency file changes, OpenAI SDK installation, OpenAI adapter implementation, provider request/response/error mapping, structured output implementation, CLI payload preview, dry-run, real-run safety valves, fake/mock SDK tests, secret redaction tests, no-real-call-by-default tests, and provider-free CI protections.
+- Reason: The project is ready to implement the adapter boundary and safety harness before any API key value is read or any live provider call is made.
+- Alternatives: Keep implementation blocked until live-smoke approval; skip the pre-live-smoke stage and approve live provider integration directly.
+- Risks: Real-run CLI flags or SDK dependency presence may be mistaken for permission to call OpenAI, so the implementation must fail closed before key reads or network calls until separately approved.
+- Follow-up: Product owner must approve the active implementation plan before code starts. Default model, API key value reading, real provider calls, network calls, prompt/source/schema externalization, cost limit, live smoke, raw provider output persistence, patch acceptance, formal apply, and publication remain separately unapproved.
+
 ### 2026-05-16 — Keep provider adapters envelope-only in the v0 skeleton
 
 - Decision: Provider Adapter Boundary Skeleton introduces provider-neutral request, response, error, settings, usage, and fake-provider envelopes for `extract_units` only. Provider adapters return typed envelopes and do not persist artifacts by default.
@@ -50,7 +74,7 @@ Record durable technical and governance decisions here.
 - Reason: Future real-provider extraction needs one testable orchestration seam while preserving the separation between application flow, provider adapters, domain validation, and storage persistence.
 - Alternatives: Let provider adapters build requests and persist run logs; call provider clients directly from CLI code; defer orchestration until real provider integration.
 - Risks: The orchestration result may become an application API surface, and prompt hash traceability must not be mistaken for prompt text persistence.
-- Follow-up: Escalate before deciding how rendered prompts are passed into concrete provider SDK calls, and before enabling real network calls, API key reads, costs, fallback, or raw output retention.
+- Follow-up: Escalate before deciding how rendered prompts are passed into concrete provider SDK calls, and before enabling real network calls, API key value reads, costs, fallback, or raw output retention.
 
 ### 2026-05-17 — Pass rendered prompts through typed provider execution requests
 
@@ -90,7 +114,7 @@ Record durable technical and governance decisions here.
 - Reason: Real provider integration requires explicit product-owner decisions, and the project needs a repeatable way to present those decisions without recording approval or enabling provider behavior.
 - Alternatives: Hand-write escalation requests; persist approval artifacts immediately; start real provider implementation directly.
 - Risks: The draft may be mistaken for approval if copied without review, and requested decision fields may need expansion after the first provider is chosen.
-- Follow-up: Treat escalation drafts as review input only; separately record user approval before SDK dependencies, API key reads, network calls, cost behavior, fallback, prompt externalization, or raw-output retention.
+- Follow-up: Treat escalation drafts as review input only; separately record user approval before SDK dependencies, API key value reads, network calls, cost behavior, fallback, prompt externalization, or raw-output retention.
 
 ### 2026-05-17 — Load provider decision diagnostics from JSON input
 
@@ -458,7 +482,7 @@ Record durable technical and governance decisions here.
 - Reason: The product owner needs to inspect prompt text, source body text, output instructions, schema content, model settings, and safety flags before approving any provider-specific SDK mapping or real network call.
 - Alternatives: Require Python callers to assemble the payload manually; persist payload preview artifacts; wait until a concrete provider adapter exists.
 - Risks: Payload preview output contains prompt/source/schema content, so it must remain an explicit local review action and must not be mistaken for provider execution or provider approval.
-- Follow-up: Keep provider-specific SDK payload mapping, prompt externalization, raw output retention, API key reads, and real provider calls behind separate approval.
+- Follow-up: Keep provider-specific SDK payload mapping, prompt externalization, raw output retention, API key value reads, and real provider calls behind separate approval.
 
 ### 2026-05-19 — Bind provider output to request source identity
 
@@ -478,11 +502,19 @@ Record durable technical and governance decisions here.
 
 ### 2026-05-20 — Approve real-provider implementation preparation only
 
-- Decision: Product owner approved real provider code implementation preparation, selected OpenAI as the first provider target for planning, and kept actual implementation, SDK/dependency changes, API key reading, real network calls, live smoke, raw output retention, patch acceptance, formal apply, and publication unapproved.
+- Decision: Product owner approved real provider code implementation preparation, selected OpenAI as the first provider target for planning, and kept actual implementation, SDK/dependency changes, API key value reading, real network calls, live smoke, raw output retention, patch acceptance, formal apply, and publication unapproved.
 - Reason: DiamondDust can now compare OpenAI SDK vs direct HTTP, refine adapter mapping, CLI safety valves, and CI policy without crossing into real provider execution.
 - Alternatives: Treat OpenAI selection as full implementation approval; keep first provider fully undecided; start SDK implementation immediately.
 - Risks: OpenAI-targeted planning could be mistaken for live-call approval, so the decision package keeps `records_real_provider_approval: false`, `real_provider_calls_approved: false`, and `live_smoke_approval_status: pending`.
-- Follow-up: Complete and review SDK vs direct HTTP comparison, then request separate approval for selected dependency style, default model, API key reading, real network calls, and any live smoke.
+- Follow-up: After the later SDK and API key env var decisions, request separate approval for default model, dependency file changes, API key value reading, real network calls, timeout/retry/cost policy, raw output retention, and any live smoke.
+
+### 2026-05-21 — Implement OpenAI adapter only to pre-live-smoke readiness
+
+- Decision: Add the OpenAI SDK dependency and implement the OpenAI adapter, request/response/usage/error mapping, sanitized CLI payload preview, dry-run, fail-closed future real-run safety valve, fake/mock SDK tests, secret redaction tests, and provider-free CI dependency install behavior.
+- Reason: DiamondDust needs concrete first-provider adapter code ready for owner review while preserving the boundary that no API key value is read, no prompt/source/schema is sent externally, no network call occurs, no raw provider output is persisted, and no formal vault write or patch acceptance is possible.
+- Alternatives: Keep the project at design-only status; implement direct HTTP instead of the approved SDK; wait for live-smoke approval before writing adapter code.
+- Risks: The OpenAI SDK dependency adds a provider-specific package surface, and the future real-run command could be mistaken for live approval if the fail-closed blockers are weakened.
+- Follow-up: Before any live smoke, separately approve default model, API key value reading, prompt/source/schema externalization, per-run cost limit, real provider/network call, live-smoke scope, and whether any raw output hash/metadata retention beyond current defaults is allowed.
 
 ## Template
 

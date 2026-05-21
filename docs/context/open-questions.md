@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-18
+Last updated: 2026-05-21
 
 ## Tooling and Repository Shape
 
@@ -64,16 +64,16 @@ Last updated: 2026-05-18
 - Needed decision: Introduce per-artifact versioning only if run logs, patch packages, review reports, or draft packages evolve independently enough that one shared version becomes misleading.
 - Impact: Affects migration strategy, compatibility checks, and future artifact import/replay behavior.
 
-### 2026-05-10 — Which provider adapter should be implemented first?
+### 2026-05-10 — Which provider adapter details remain before live smoke?
 
-- Context: Gate 4 is provider-neutral and does not call an LLM. On 2026-05-20, OpenAI was selected as the first provider target for planning and adapter mapping only.
-- Needed decision: Select the default model and approve the dependency style, API key reading, real network calls, live-smoke policy, and model policy before actual provider implementation.
+- Context: Gate 4 is provider-neutral and does not call an LLM. On 2026-05-20, OpenAI was selected as the first provider target, the product owner adopted the OpenAI official SDK as the first-provider integration style, and `DIAMONDDUST_OPENAI_API_KEY` was approved as the API key environment variable name. On 2026-05-21, the pre-live-smoke OpenAI adapter implementation was completed with sanitized preview, dry-run, fail-closed real-run guard, fake/mock tests, and provider-free CI defaults.
+- Needed decision: Select the default model and approve API key value reading, real network calls, live-smoke policy, actual prompt/source/schema externalization, cost limit, and model policy before live smoke.
 - Impact: Affects dependencies, cost, auth, prompt design, and run log fields.
 
 ### 2026-05-17 — How should provider execution requests map to the first provider SDK?
 
-- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. A provider integration readiness gate now reports blocked until all required decisions are explicit. A first-provider adapter design and product-owner decision package template now exist. OpenAI-targeted planning is approved, but no real provider SDK mapping exists yet.
-- Needed decision: Before real provider integration, approve the provider adapter decision package items that remain pending, including default model, SDK vs direct HTTP outcome, API key env var reading, request body shape, structured-output mechanism approval, timeout/retry settings, cost limits, fallback behavior, and prompt/raw-output retention behavior.
+- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. A provider integration readiness gate now reports blocked until all required decisions are explicit. A first-provider adapter design, product-owner decision package template, and completed pre-live-smoke OpenAI adapter implementation now exist. OpenAI SDK request mapping is implemented behind fail-closed gates, but no live provider execution is approved.
+- Needed decision: Before live provider integration, approve the remaining live decisions: default model, API key value reading, real network calls, prompt/source/schema externalization, cost limit, live-smoke policy, and raw-output retention beyond `do_not_persist`.
 - Impact: Affects provider SDK coupling, privacy posture, replayability, prompt traceability, cost control, and extraction quality evaluation.
 
 ## Patch Review
