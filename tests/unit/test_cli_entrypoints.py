@@ -731,12 +731,13 @@ def _openai_live_smoke_ready_decisions() -> dict[str, object]:
     decisions.update(
         {
             "first_provider": "openai",
+            "default_model": "gpt-5.5",
             "provider_sdk_dependency": "openai",
             "api_key_env_var": "DIAMONDDUST_OPENAI_API_KEY",
             "structured_output_mechanism": "provider_json_schema_if_supported",
-            "timeout_seconds": 30,
+            "timeout_seconds": 60,
             "max_retries": 0,
-            "raw_output_retention": "do_not_persist",
+            "raw_output_retention": "hash_and_metadata_only",
             "fallback_behavior": "disabled",
             "manual_live_smoke_approved": True,
         }

@@ -4,6 +4,14 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-23 — Approve one manual OpenAI fixture live smoke, not recurring live use
+
+- Decision: Record the product-owner decision package for exactly one future manual OpenAI `extract_units` live smoke using `gpt-5.5`, `DIAMONDDUST_OPENAI_API_KEY`, one small fixture essay, timeout 60 seconds, zero retries, no fallback, USD 1.00 per-run cost limit, and hash/metadata-only raw output retention.
+- Reason: The OpenAI adapter, safety valves, readiness report, and validated extraction artifact path are now sufficient to prepare a controlled first live smoke without widening scope to real user essays or recurring provider use.
+- Alternatives: Keep live smoke blocked until more evaluation tooling exists; approve recurring live smoke; approve a broader real-user essay smoke.
+- Risks: A one-smoke approval could be mistaken for general provider authorization, so the decision package keeps recurring live smoke, real user essay externalization, provider-side tools, raw request/response persistence, patch acceptance, formal apply, and publication explicitly unapproved.
+- Follow-up: Do not run the live smoke until the product owner explicitly asks to execute the blocked live-smoke plan. During execution, read the approved key only inside the live-smoke path, perform exactly one provider/network call, persist only hashes/metadata and typed validated extraction artifacts, and verify no formal vault write occurred.
+
 ### 2026-05-20 — Use OpenAI official SDK for the first provider adapter
 
 - Decision: Adopt the OpenAI official SDK as the future first-provider adapter integration style for `extract_units`.

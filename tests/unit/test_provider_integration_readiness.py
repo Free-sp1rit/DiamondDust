@@ -164,13 +164,14 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
     def test_openai_live_smoke_readiness_blocks_until_live_approval(self) -> None:
         decisions = _ready_decisions(
             first_provider="openai",
+            default_model="gpt-5.5",
             provider_sdk_dependency="openai",
             api_key_env_var="DIAMONDDUST_OPENAI_API_KEY",
             structured_output_mechanism="provider_json_schema_if_supported",
-            timeout_seconds=30,
+            timeout_seconds=60,
             max_retries=0,
             fallback_behavior="disabled",
-            raw_output_retention="do_not_persist",
+            raw_output_retention="hash_and_metadata_only",
             manual_live_smoke_approved=False,
         )
 
@@ -225,6 +226,7 @@ class ProviderIntegrationReadinessTests(unittest.TestCase):
             "OpenAI live smoke requires provider SDK dependency openai",
             report.blockers,
         )
+        self.assertIn("OpenAI live smoke requires default_model gpt-5.5", report.blockers)
 
     def test_escalation_request_renderer_rejects_invalid_input(self) -> None:
         with self.assertRaises(ProviderIntegrationReadinessError):
@@ -379,13 +381,14 @@ def _ready_decisions(**overrides) -> ProviderIntegrationDecisionSet:
 def _openai_live_smoke_ready_decisions() -> ProviderIntegrationDecisionSet:
     return _ready_decisions(
         first_provider="openai",
+        default_model="gpt-5.5",
         provider_sdk_dependency="openai",
         api_key_env_var="DIAMONDDUST_OPENAI_API_KEY",
         structured_output_mechanism="provider_json_schema_if_supported",
-        timeout_seconds=30,
+        timeout_seconds=60,
         max_retries=0,
         fallback_behavior="disabled",
-        raw_output_retention="do_not_persist",
+        raw_output_retention="hash_and_metadata_only",
         manual_live_smoke_approved=True,
     )
 

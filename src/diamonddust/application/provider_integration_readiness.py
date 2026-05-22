@@ -9,6 +9,15 @@ import re
 
 from diamonddust.ai import EXTRACTION_TASK, FIRST_PROVIDER_UNDECIDED
 
+OPENAI_LIVE_SMOKE_MODEL = "gpt-5.5"
+OPENAI_LIVE_SMOKE_API_KEY_ENV_VAR = "DIAMONDDUST_OPENAI_API_KEY"
+OPENAI_LIVE_SMOKE_STRUCTURED_OUTPUT = "provider_json_schema_if_supported"
+OPENAI_LIVE_SMOKE_TIMEOUT_SECONDS = 60
+OPENAI_LIVE_SMOKE_MAX_RETRIES = 0
+OPENAI_LIVE_SMOKE_FALLBACK_BEHAVIOR = "disabled"
+OPENAI_LIVE_SMOKE_RAW_OUTPUT_RETENTION = "hash_and_metadata_only"
+OPENAI_LIVE_SMOKE_COST_LIMIT = 1.0
+
 
 class ProviderIntegrationReadinessError(ValueError):
     """Raised when readiness input has an invalid shape."""
@@ -456,6 +465,7 @@ def render_openai_live_smoke_readiness_markdown(
         "",
         f"- provider_sdk_dependency: {_text_or_pending(decisions.provider_sdk_dependency)}",
         f"- structured_output_mechanism: {_text_or_pending(decisions.structured_output_mechanism)}",
+        f"- cost_limit: {_number_or_pending(decisions.cost_limit)}",
         f"- timeout_seconds: {_number_or_pending(decisions.timeout_seconds)}",
         f"- max_retries: {_number_or_pending(decisions.max_retries)}",
         f"- fallback_behavior: {_text_or_pending(decisions.fallback_behavior)}",
@@ -731,28 +741,45 @@ def _openai_live_smoke_blockers(
     blockers = list(integration_report.blockers)
     if decisions.first_provider != "openai":
         blockers.append("OpenAI live smoke requires first_provider openai")
+    if decisions.default_model != OPENAI_LIVE_SMOKE_MODEL:
+        blockers.append(
+            f"OpenAI live smoke requires default_model {OPENAI_LIVE_SMOKE_MODEL}"
+        )
     if decisions.provider_sdk_dependency != "openai":
         blockers.append("OpenAI live smoke requires provider SDK dependency openai")
-    if decisions.api_key_env_var != "DIAMONDDUST_OPENAI_API_KEY":
+    if decisions.api_key_env_var != OPENAI_LIVE_SMOKE_API_KEY_ENV_VAR:
         blockers.append(
-            "OpenAI live smoke requires api_key_env_var DIAMONDDUST_OPENAI_API_KEY"
+            "OpenAI live smoke requires api_key_env_var "
+            f"{OPENAI_LIVE_SMOKE_API_KEY_ENV_VAR}"
         )
-    if decisions.structured_output_mechanism != "provider_json_schema_if_supported":
+    if decisions.structured_output_mechanism != OPENAI_LIVE_SMOKE_STRUCTURED_OUTPUT:
         blockers.append(
             "OpenAI live smoke requires provider_json_schema_if_supported structured output"
         )
-    if decisions.timeout_seconds != 30:
-        blockers.append("OpenAI live smoke v0 requires timeout_seconds 30")
-    if decisions.max_retries != 0:
-        blockers.append("OpenAI live smoke v0 requires max_retries 0")
-    if decisions.fallback_behavior != "disabled":
-        blockers.append("OpenAI live smoke v0 requires fallback_behavior disabled")
-    if decisions.raw_output_retention != "do_not_persist":
+    if decisions.timeout_seconds != OPENAI_LIVE_SMOKE_TIMEOUT_SECONDS:
         blockers.append(
-            "OpenAI live smoke v0 requires raw_output_retention do_not_persist"
+            "OpenAI live smoke v0 requires timeout_seconds "
+            f"{OPENAI_LIVE_SMOKE_TIMEOUT_SECONDS}"
+        )
+    if decisions.max_retries != OPENAI_LIVE_SMOKE_MAX_RETRIES:
+        blockers.append(
+            f"OpenAI live smoke v0 requires max_retries {OPENAI_LIVE_SMOKE_MAX_RETRIES}"
+        )
+    if decisions.fallback_behavior != OPENAI_LIVE_SMOKE_FALLBACK_BEHAVIOR:
+        blockers.append("OpenAI live smoke v0 requires fallback_behavior disabled")
+    if decisions.raw_output_retention != OPENAI_LIVE_SMOKE_RAW_OUTPUT_RETENTION:
+        blockers.append(
+            "OpenAI live smoke v0 requires raw_output_retention "
+            f"{OPENAI_LIVE_SMOKE_RAW_OUTPUT_RETENTION}"
+        )
+    if decisions.cost_limit != OPENAI_LIVE_SMOKE_COST_LIMIT:
+        blockers.append(
+            f"OpenAI live smoke v0 requires cost_limit {OPENAI_LIVE_SMOKE_COST_LIMIT}"
         )
     if not decisions.manual_live_smoke_approved:
         blockers.append("one manual live smoke must be approved")
+    if decisions.recurring_live_smoke_approved:
+        blockers.append("OpenAI live smoke must not approve recurring live smoke")
     return _dedupe(blockers)
 
 

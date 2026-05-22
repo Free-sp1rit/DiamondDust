@@ -1,13 +1,16 @@
 # Provider Adapter Decision Package Template
 
 This template records product-owner review for the first OpenAI adapter
-implementation boundary up to "pre-live-smoke ready".
+implementation boundary and can be extended with a one-manual-live-smoke
+decision addendum.
 
 This package approves implementation planning for provider adapter code,
 dependency file changes, SDK installation, CLI safety valves, fake/mock tests,
-and provider-free CI protections. It does not approve API key value reads, real
-provider calls, network calls, live smoke, raw provider output persistence,
-patch acceptance, formal apply, or publication.
+and provider-free CI protections. A filled concrete package may separately
+approve exactly one manual live smoke. This template by itself does not approve
+API key value reads, real provider calls, network calls, live smoke, raw
+provider request/response persistence, patch acceptance, formal apply, or
+publication.
 
 Code implementation must wait until the associated implementation plan is
 approved.
@@ -111,6 +114,7 @@ Check only after the product owner explicitly approves the item.
 
 - first_provider: openai
 - default_model: pending_owner_selection
+- default_live_smoke_model: pending_owner_selection
 - provider_region_or_endpoint: default_openai_api
 - provider_account_scope: owner_local_api_account
 - actual_real_provider_adapter_implementation_approved: true
@@ -215,6 +219,7 @@ preview, dry-run, test, CI, or current real-provider-run settings.
 - real_provider_calls_approved: false
 - real_network_calls_approved: false
 - live_smoke_approved: false
+- manual_live_smoke_approved: false
 - recurring_live_smoke_approved: false
 - prompt_text_external_approved: false
 - source_body_external_approved: false
@@ -271,7 +276,7 @@ generate patches, write candidate notes, or formal apply.
 
 ### Timeout, Retry, Cost, And Fallback
 
-- timeout_seconds: 30
+- timeout_seconds: pending
 - timeout_policy_approved: true
 - max_retries: 0
 - retry_policy_approved: true
@@ -287,8 +292,8 @@ generate patches, write candidate notes, or formal apply.
 Decision notes:
 
 No automatic retry or fallback is allowed in v0. Cost-bearing live behavior is
-not approved. Any future live run must require an explicit cost limit before
-live-smoke approval.
+not approved by this template alone. Any future live run must require an
+explicit cost limit before live-smoke approval.
 
 ### Raw Output Retention And Logging
 
@@ -327,9 +332,45 @@ Rules:
 
 Decision notes:
 
-Raw output retention is approved only as `do_not_persist` with hash retention.
-Full raw provider output requires separate explicit approval. Raw provider
-request/response bodies must never enter the formal vault.
+Raw output retention defaults to `do_not_persist` with hash retention available
+as a separately approved live-smoke policy. Full raw provider output requires
+separate explicit approval. Raw provider request/response bodies must never
+enter the formal vault.
+
+### One Manual Live Smoke Addendum
+
+Fill this section only when the product owner explicitly approves a controlled
+manual live smoke.
+
+- live_smoke_approval_status: pending
+- default_live_smoke_model: pending_owner_selection
+- api_key_value_reading_approved: false
+- key_reading_scope: pending
+- real_provider_calls_approved: false
+- real_network_calls_approved: false
+- manual_live_smoke_approved: false
+- recurring_live_smoke_approved: false
+- fixture_scope.source: pending
+- fixture_scope.allow_real_user_essay: false
+- prompt_text_external_approved: false
+- source_body_external_approved: false
+- output_schema_external_approved: false
+- externalization_scope: pending
+- timeout_seconds: pending
+- max_retries: 0
+- fallback_behavior: disabled
+- per_run_cost_limit: pending
+- cost_currency: pending
+- stop_behavior_on_cost_limit: fail_closed
+- raw_output_retention: pending
+- persist_raw_provider_request: false
+- persist_raw_provider_response: false
+- persist_hash: true
+
+For the first approved OpenAI fixture smoke, the expected concrete package
+values are `default_live_smoke_model: gpt-5.5`, `timeout_seconds: 60`,
+`per_run_cost_limit: 1.00`, `cost_currency: USD`, and
+`raw_output_retention: hash_and_metadata_only`.
 
 ## SDK Vs Direct HTTP Comparison Inputs
 

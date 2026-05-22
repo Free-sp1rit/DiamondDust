@@ -688,3 +688,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 240 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, and domain architecture scan reported 0 violations.
 - Dependency impact: No new dependency was added.
 - Follow-up: Revisit extraction artifact fields after real provider smoke feedback, especially source-span auditing and evaluation metrics.
+
+## 2026-05-23 — OpenAI Manual Live Smoke Decision Package Completed
+
+- Scope: Recorded the product-owner decision package for exactly one future manual OpenAI `extract_units` fixture smoke, updated the OpenAI live-smoke readiness policy, and created a blocked execution plan for the future smoke.
+- Outcome: The readiness gate now accepts the approved one-smoke configuration: provider `openai`, model `gpt-5.5`, env var name `DIAMONDDUST_OPENAI_API_KEY`, one small fixture essay, prompt/source/schema externalization for that fixture only, timeout 60 seconds, zero retries, no fallback, USD 1.00 per-run cost limit, and hash/metadata-only raw output retention. The package does not run the smoke, read API keys, call OpenAI, persist raw provider request/response bodies, accept patches, formal apply, or publish.
+- Review: `docs/reviews/milestone-reviews/2026-05-23-openai-live-smoke-decision-package.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider live-smoke decision milestone.
+- Validation: 240 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, and architecture scan reported 0 violations.
+- Dependency impact: No new dependency was added.
+- Follow-up: Execute `docs/exec-plans/blocked/2026-05-23-first-openai-manual-live-smoke.md` only after the product owner explicitly asks to run the smoke.
