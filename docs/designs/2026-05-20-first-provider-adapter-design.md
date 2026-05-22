@@ -1,13 +1,13 @@
 # First Provider Adapter Design
 
-Status: pre-live-smoke implementation planning input.
+Status: pre-live-smoke implementation complete; one manual live-smoke decision recorded.
 
 This document defines the minimum adapter design for DiamondDust's first real
-provider integration. It records approval to plan and implement the OpenAI
-adapter up to a provider-free, pre-live-smoke ready state. It does not approve
-API key value reads, real provider calls, network calls, live smoke,
-prompt/source/schema externalization, raw provider output persistence, patch
-acceptance, formal apply, or publication.
+provider integration. It records the completed OpenAI adapter design and the
+product-owner decision package for one separately executed manual OpenAI live
+smoke. This document does not itself read API key values, make network calls,
+run live smoke, persist raw provider request/response bodies, accept patches,
+formal apply, or publish.
 
 ## Scope
 
@@ -36,8 +36,9 @@ Out of scope:
 Approved for this stage:
 
 - real provider code implementation preparation
-- actual OpenAI provider adapter implementation after implementation plan approval
-- dependency file changes and OpenAI SDK installation after implementation plan approval
+- actual OpenAI provider adapter implementation, now complete up to the
+  pre-live-smoke safety valve
+- dependency file changes and OpenAI SDK installation, now complete
 - decision package revision
 - SDK vs direct HTTP comparison
 - adapter mapping plan design
@@ -52,7 +53,8 @@ Approved for this stage:
 Selected implementation inputs:
 
 - first_provider: openai
-- default_model: pending_owner_selection
+- default_model_for_general_live_calls: pending_owner_selection
+- default_live_smoke_model: gpt-5.5
 - provider_region_or_endpoint: default_openai_api
 - provider_account_scope: owner_local_api_account
 - integration_style: openai_official_sdk
@@ -63,14 +65,23 @@ Selected implementation inputs:
 - structured_output_mechanism: provider_json_schema_if_supported
 - invalid_output_behavior: fail_closed
 
-Still not approved:
+Approved only for one future manual fixture live smoke:
+
+- API key value reading from `DIAMONDDUST_OPENAI_API_KEY`
+- one OpenAI provider call and network call
+- one small fixture essay prompt/source/schema externalization
+- timeout_seconds: 60
+- max_retries: 0
+- fallback_behavior: disabled
+- per_run_cost_limit: USD 1.00
+- raw_output_retention: hash_and_metadata_only
+
+Still not approved outside that one manual smoke:
 
 - direct HTTP implementation
-- API key value reading
-- prompt/source/schema externalization
-- provider network calls
-- real provider calls
-- live smoke
+- recurring live smoke
+- real user essay externalization
+- provider-side tools, web search, file search, or MCP tool calling
 - raw provider output persistence
 - patch acceptance
 - formal vault apply
@@ -80,7 +91,8 @@ Model policy:
 
 - model must be explicit for real runs
 - no hardcoded default model for live calls
-- product owner must approve the default model before live smoke
+- `gpt-5.5` is approved only for the first manual fixture live smoke
+- product owner must separately approve any default model for broader live use
 
 ## Boundary Diagram
 
@@ -99,19 +111,19 @@ Markdown essay
 ```
 
 The concrete adapter sits at the AI adapter boundary. It may import the OpenAI
-SDK only in the AI adapter module during the separately approved implementation
-task. It must not import storage adapters, mutate formal vault files, or construct
+SDK only in the AI adapter module. It must not import storage adapters, mutate
+formal vault files, or construct
 `KnowledgePatch` objects.
 
-## Proposed Future Module Shape
+## Implemented Module Shape
 
-Suggested implementation write scope after plan approval:
+Current implementation and test scope:
 
 - `src/diamonddust/ai/adapters/openai.py`
 - `tests/unit/test_openai_adapter_mapping.py`
 - `tests/unit/test_openai_adapter_errors.py`
 - `tests/unit/test_openai_adapter_safety.py`
-- `docs/reviews/milestone-reviews/<date>-openai-adapter.md`
+- `docs/reviews/milestone-reviews/2026-05-21-openai-adapter-pre-live-smoke.md`
 
 The provider-specific module should expose one adapter class implementing:
 
@@ -154,7 +166,7 @@ provider-neutral boundary, not from domain objects:
    pre-live-smoke stage.
 6. Map `payload.messages` into the selected provider request shape.
 7. Map `payload.output_schema` into the selected structured-output mechanism.
-8. Apply approved timeout (`30` seconds), retry (`0`), and fallback
+8. Apply approved live-smoke timeout (`60` seconds), retry (`0`), and fallback
    (`disabled`) policies.
 9. Parse provider output into structured Python data.
 10. Return `ProviderResult` with `ProviderResponse` or `ProviderError`.
@@ -173,8 +185,10 @@ The adapter must not:
 
 The product owner selected the OpenAI official SDK as the first provider
 adapter integration style. This decision approves the integration style for the
-first-provider pre-live-smoke implementation stage; it still does not approve
-API key value reads, real provider calls, network calls, or live smoke.
+first-provider implementation stage. The SDK decision by itself does not
+approve API key value reads, real provider calls, network calls, or live smoke;
+the separate 2026-05-23 decision package approves those only for one manual
+fixture smoke.
 
 | Criterion | OpenAI Official SDK | Direct HTTP |
 | --- | --- | --- |
@@ -182,7 +196,7 @@ API key value reads, real provider calls, network calls, or live smoke.
 | Request/response mapping complexity | Potentially simpler client calls but may introduce SDK-specific object shapes. | More explicit mapping from `ProviderExecutionPayload` to JSON, with more code owned by DiamondDust. |
 | Provider error handling | SDK may provide typed exceptions, but adapter must normalize them into `ProviderErrorType`. | HTTP status and response parsing are explicit, but DiamondDust must implement classification carefully. |
 | Timeout/retry support | SDK may offer built-in configuration; adapter must ensure it follows approved policy. | Full control, but retry and timeout implementation must be owned locally. |
-| Dependency footprint | Adds a production dependency and SDK release surface. Dependency file changes are approved for the next implementation task after plan approval. | Avoids SDK dependency but may need standard-library or approved HTTP mechanics. |
+| Dependency footprint | Adds a production dependency and SDK release surface. Dependency file changes were approved and implemented in the pre-live-smoke adapter stage. | Avoids SDK dependency but may need standard-library or approved HTTP mechanics. |
 | Testability with fake provider | Requires adapter-local fakes or monkeypatchable SDK client boundaries. | Can test request dictionaries and fake transport boundaries directly. |
 | Security and API key handling | SDK may define auth configuration patterns; adapter must read only the approved env var. | Adapter owns header construction and must avoid leaking secrets in errors/logs. |
 | Long-term maintainability | SDK may track provider API changes, but SDK changes can affect DiamondDust. | Fewer dependencies, but provider API changes become DiamondDust maintenance work. |
@@ -202,9 +216,9 @@ The SDK must stay isolated inside the concrete AI adapter module. Provider SDK
 types must not leak into domain core, application orchestration, storage
 adapters, formal vault code, or user-facing artifact contracts.
 
-Do not read API key values, make network calls, run live smoke, or externalize
-prompt/source/schema content until a separate live-smoke decision explicitly
-approves those actions.
+Outside the one approved manual fixture smoke, do not read API key values, make
+network calls, run live smoke, or externalize prompt/source/schema content until
+a separate decision explicitly approves those actions.
 
 ## CLI Safety Valve Design
 
@@ -335,17 +349,18 @@ Disallowed logging:
 - prompt text by default
 - source body text by default
 
-Prompt hash and output hash are the preferred trace handles. Raw output
-retention is `do_not_persist` for v0; full raw output requires separate
-approval.
+Prompt hash and output hash are the preferred trace handles. For the first
+manual fixture live smoke, raw provider request and response body retention is
+still disallowed; only hashes and safe provider metadata may be retained. Full
+raw output requires separate approval.
 
 ## Configuration And Secrets
 
 The product owner approved `DIAMONDDUST_OPENAI_API_KEY` as the environment
-variable name for the future OpenAI adapter path. This approval does not permit
-reading the key value yet. The adapter may read only that approved variable, and
-only after a separately approved real provider run or live smoke explicitly
-permits key reading.
+variable name for the future OpenAI adapter path. Key value reading is approved
+only for one separately executed manual live smoke using the small fixture essay
+and `gpt-5.5`. Preview, dry-run, readiness, tests, CI, and documentation tasks
+must still not read the key.
 
 Rules:
 
@@ -354,10 +369,10 @@ Rules:
 - Never persist API key values.
 - Never include API key values in errors.
 - Missing key should fail before network execution.
-- Key reading must not happen in preview, readiness, schema, or template
-  commands.
-- Key reading remains disallowed while `key_reading_allowed_in_real_provider_run`
-  is false.
+- Key reading must not happen in preview, dry-run, readiness, schema, template,
+  tests, or CI commands.
+- Key reading outside the one approved manual live-smoke execution remains
+  disallowed.
 
 ## Test Strategy
 
@@ -372,11 +387,12 @@ For the pre-live-smoke implementation:
 - source binding tests should continue to fail mismatched provider output
 - model policy tests should block unapproved real provider execution
 
-After approval for a controlled live smoke:
+For the controlled live smoke now approved as a separate execution step:
 
-- run one manually invoked `extract_units` smoke with a small fixture essay
+- run exactly one manually invoked `extract_units` smoke with a small fixture
+  essay and `gpt-5.5`
 - assert no formal vault write
-- assert no raw provider output persistence
+- assert no raw provider request/response body persistence
 - assert run log captures provider metadata without prompt/raw output text
 - compare output against typed validation and human review expectations
 
@@ -384,16 +400,16 @@ Live provider smoke must be opt-in and must not become default CI.
 
 ## Implementation Gates
 
-Pre-live-smoke implementation may start only after the implementation plan is
-approved. Live execution must not start until the product owner approves:
+Pre-live-smoke implementation is complete. Live execution must still use the
+separate blocked execution plan and must stay within the recorded one-smoke
+decision package:
 
-- default model
-- API key value reading for the approved `DIAMONDDUST_OPENAI_API_KEY` variable
-- real provider calls
-- real network calls
-- sending rendered prompt/source text externally
-- cost limit
-- live smoke
+- model: `gpt-5.5`
+- API key value reading from `DIAMONDDUST_OPENAI_API_KEY`
+- exactly one OpenAI provider/network call
+- one small fixture essay prompt/source/schema externalization
+- per-run cost limit: USD 1.00
+- no retries, no fallback, no recurring smoke
 
 The decision package template is:
 
@@ -405,6 +421,5 @@ explicitly accepted by the product owner.
 
 ## Recommended Next Step
 
-Review and approve the implementation plan for First OpenAI Adapter
-Implementation, Pre-Live-Smoke Ready. Do not implement code until that plan is
-approved.
+Review the one-smoke decision package and, only when ready, explicitly ask
+Codex to execute `docs/exec-plans/blocked/2026-05-23-first-openai-manual-live-smoke.md`.

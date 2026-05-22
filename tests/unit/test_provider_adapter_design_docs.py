@@ -22,13 +22,17 @@ class ProviderAdapterDesignDocsTests(unittest.TestCase):
     def test_adapter_design_preserves_provider_boundaries(self) -> None:
         design = DESIGN_PATH.read_text(encoding="utf-8")
 
-        self.assertIn("Status: pre-live-smoke implementation planning input.", design)
+        self.assertIn(
+            "Status: pre-live-smoke implementation complete; one manual live-smoke decision recorded.",
+            design,
+        )
         self.assertIn("task: `extract_units`", design)
         self.assertIn("ProviderExecutionClient.generate", design)
         self.assertIn("ProviderExecutionRequest", design)
         self.assertIn("ProviderResult", design)
         self.assertIn("first_provider: openai", design)
-        self.assertIn("default_model: pending_owner_selection", design)
+        self.assertIn("default_model_for_general_live_calls: pending_owner_selection", design)
+        self.assertIn("default_live_smoke_model: gpt-5.5", design)
         self.assertIn("api_key_env_var: DIAMONDDUST_OPENAI_API_KEY", design)
         self.assertIn("api_key_env_var_approved: true", design)
         self.assertIn("dependency_file_change_approved: true", design)
@@ -77,6 +81,7 @@ class ProviderAdapterDesignDocsTests(unittest.TestCase):
         self.assertIn("[ ] approved for one manual live smoke run", template)
         self.assertIn("first_provider: openai", template)
         self.assertIn("default_model: pending_owner_selection", template)
+        self.assertIn("default_live_smoke_model: pending_owner_selection", template)
         self.assertIn("integration_style: openai_official_sdk", template)
         self.assertIn("provider_sdk_dependency: openai", template)
         self.assertIn("provider_sdk_dependency_approved: true", template)
@@ -97,11 +102,12 @@ class ProviderAdapterDesignDocsTests(unittest.TestCase):
         self.assertIn("api_key_value_must_not_be_persisted: true", template)
         self.assertIn("structured_output_mechanism_implementation_approved: true", template)
         self.assertIn("provider_json_schema_if_supported", template)
-        self.assertIn("timeout_seconds: 30", template)
+        self.assertIn("timeout_seconds: pending", template)
         self.assertIn("max_retries: 0", template)
         self.assertIn("fallback_behavior: disabled", template)
         self.assertIn("stop_behavior_on_cost_limit: fail_closed", template)
         self.assertIn("raw_output_retention: do_not_persist", template)
+        self.assertIn("raw_output_retention: hash_and_metadata_only", template)
         self.assertIn("persist_hash: true", template)
         self.assertIn("full_raw_output_requires_separate_approval: true", template)
         self.assertIn("key_value_in_package: forbidden", template)
