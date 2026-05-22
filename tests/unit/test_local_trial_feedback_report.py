@@ -23,6 +23,7 @@ class LocalTrialFeedbackReportTests(unittest.TestCase):
                 written_paths=(
                     "_ai_reports/blog-quality/draft_trial.md",
                     "_ai_runs/run_trial.json",
+                    "_ai_suggestions/extractions/run_trial.json",
                     "_ai_reports/local-trials/trial_report.md",
                 )
             ),
@@ -52,6 +53,10 @@ class LocalTrialFeedbackReportTests(unittest.TestCase):
         )
         self.assertIn(
             "`_ai_runs/run_trial.json`: provider-free extraction validation run log",
+            report.content,
+        )
+        self.assertIn(
+            "`_ai_suggestions/extractions/run_trial.json`: typed validated extraction proposal",
             report.content,
         )
         self.assertIn(

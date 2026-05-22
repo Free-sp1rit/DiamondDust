@@ -677,3 +677,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 236 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed, and domain architecture scan reported 0 violations.
 - Dependency impact: No new dependency was added.
 - Follow-up: Before any live smoke, product owner must still approve default model, API key value reading, real provider/network call, prompt/source/output-schema externalization, cost limit, and one manual live smoke.
+
+## 2026-05-22 — Validated Extraction Output Artifact Completed
+
+- Scope: Added `validated_extraction_output` persistence under `_ai_suggestions/extractions/`, exported the storage API, connected successful local trial extraction lineage to the artifact, and updated report reading-order descriptions.
+- Outcome: Successful typed extraction proposals now have a durable AI working artifact between run logs and patch artifacts. Failed or source-mismatched extraction outputs do not persist raw or invalid output artifacts. Local trial run logs point to the extraction artifact before downstream report/outcome artifacts.
+- Review: `docs/reviews/milestone-reviews/2026-05-22-validated-extraction-artifact.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 AI working artifact and storage-format milestone.
+- Validation: 240 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, and domain architecture scan reported 0 violations.
+- Dependency impact: No new dependency was added.
+- Follow-up: Revisit extraction artifact fields after real provider smoke feedback, especially source-span auditing and evaluation metrics.

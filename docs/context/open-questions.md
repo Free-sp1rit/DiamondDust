@@ -46,11 +46,11 @@ Last updated: 2026-05-22
 
 ## AI Pipeline
 
-### 2026-05-15 — Should extraction outputs become separate durable artifacts?
+### 2026-05-15 — Which extraction output artifact fields should grow after v0?
 
-- Context: Local trial AI run logs now point `output_artifacts` at the downstream local trial Markdown report and JSON outcome because no separate extraction output artifact exists. Run logs intentionally do not persist raw model/provider output.
-- Needed decision: Introduce a typed extraction output artifact only if replay, debugging, provider integration, or product-owner feedback requires it.
-- Impact: Affects artifact lineage clarity, raw output retention policy, privacy posture, and whether future run logs can point at extraction artifacts instead of downstream trial reports.
+- Context: On 2026-05-22, DiamondDust introduced `validated_extraction_output` artifacts under `_ai_suggestions/extractions/` for successful typed extraction proposals. Local trial run logs now point to that artifact when one exists, then downstream trial report/outcome artifacts. Run logs and extraction artifacts intentionally do not persist raw model/provider output.
+- Needed decision: Decide later whether real provider runs need additional extraction artifact fields for evaluation, replay, source-span auditing, or product-owner feedback aggregation.
+- Impact: Affects artifact lineage clarity, raw output retention policy, privacy posture, and future provider-backed quality evaluation.
 
 ### 2026-05-12 — When should extraction JSON get a machine-readable schema?
 

@@ -167,6 +167,32 @@ def run_local_trial(
     )
     extraction_result = validate_extraction_output(spec.extraction_output, metadata)
     extraction_valid = extraction_result.is_valid
+    errors.extend(extraction_result.errors)
+
+    declared_source_input_id = _declared_source_input_id(spec.extraction_output)
+    if declared_source_input_id is not None and declared_source_input_id != source_input_id:
+        errors.append(
+            "extraction source_input_id does not match ingested source_id: "
+            f"{declared_source_input_id!r} != {source_input_id!r}"
+        )
+
+    extraction_artifact_path: str | None = None
+    if extraction_result.proposal is not None and not errors:
+        try:
+            from diamonddust.storage.extraction_artifact import (
+                write_validated_extraction_artifact,
+            )
+
+            extraction_artifact = write_validated_extraction_artifact(
+                extraction_result.proposal,
+                vault_root=vault_path,
+                created_at=created_at,
+                context=_local_trial_extraction_artifact_context(spec),
+            )
+            extraction_artifact_path = extraction_artifact.relative_path
+            written_paths.append(extraction_artifact.relative_path)
+        except Exception as exc:
+            errors.append(_stage_error("validated extraction artifact persistence", exc))
 
     try:
         from diamonddust.storage.ai_run_log import write_ai_run_log_artifact
@@ -178,6 +204,7 @@ def run_local_trial(
             context=_local_trial_run_log_context(
                 spec,
                 source_input_id=source_input_id,
+                extraction_artifact_path=extraction_artifact_path,
             ),
         )
         written_paths.append(run_artifact.relative_path)
@@ -200,14 +227,6 @@ def run_local_trial(
             unsupported_claims=unsupported_claims,
             vault_path=vault_path,
             created_at=created_at,
-        )
-
-    errors.extend(extraction_result.errors)
-    declared_source_input_id = _declared_source_input_id(spec.extraction_output)
-    if declared_source_input_id is not None and declared_source_input_id != source_input_id:
-        errors.append(
-            "extraction source_input_id does not match ingested source_id: "
-            f"{declared_source_input_id!r} != {source_input_id!r}"
         )
 
     if extraction_result.proposal is None or errors:
@@ -454,7 +473,12 @@ def _draft_generation_handoff(patch: KnowledgePatch) -> PatchReviewResult:
     return review_patch(patch, PatchReviewDecision.ACCEPTED)
 
 
-def _local_trial_run_log_context(spec: LocalTrialSpec, *, source_input_id: str | None):
+def _local_trial_run_log_context(
+    spec: LocalTrialSpec,
+    *,
+    source_input_id: str | None,
+    extraction_artifact_path: str | None = None,
+):
     from diamonddust.storage.ai_run_log import (
         AIRunLogArtifactContext,
         AIRunMetricsScope,
@@ -466,6 +490,26 @@ def _local_trial_run_log_context(spec: LocalTrialSpec, *, source_input_id: str |
     )
 
     _require_non_empty("source_input_id", source_input_id)
+    output_artifacts: list[AIRunOutputArtifact] = []
+    if extraction_artifact_path is not None:
+        output_artifacts.append(
+            AIRunOutputArtifact(
+                artifact_type="validated_extraction_output",
+                path=extraction_artifact_path,
+            )
+        )
+    output_artifacts.extend(
+        (
+            AIRunOutputArtifact(
+                artifact_type="local_trial_feedback_report",
+                path=f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{spec.trial_id}.md",
+            ),
+            AIRunOutputArtifact(
+                artifact_type="local_trial_outcome",
+                path=f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{spec.trial_id}.json",
+            ),
+        )
+    )
     return AIRunLogArtifactContext(
         trial_id=spec.trial_id,
         stage_label=LOCAL_TRIAL_STAGE_LABEL,
@@ -479,16 +523,20 @@ def _local_trial_run_log_context(spec: LocalTrialSpec, *, source_input_id: str |
             reason=LOCAL_TRIAL_METRICS_SCOPE_REASON,
         ),
         source_input_id=source_input_id,
-        output_artifacts=(
-            AIRunOutputArtifact(
-                artifact_type="local_trial_feedback_report",
-                path=f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{spec.trial_id}.md",
-            ),
-            AIRunOutputArtifact(
-                artifact_type="local_trial_outcome",
-                path=f"{AI_LOCAL_TRIAL_REPORTS_DIR}/{spec.trial_id}.json",
-            ),
-        ),
+        output_artifacts=tuple(output_artifacts),
+        not_validated=LOCAL_TRIAL_NOT_VALIDATED,
+    )
+
+
+def _local_trial_extraction_artifact_context(spec: LocalTrialSpec):
+    from diamonddust.storage.extraction_artifact import ExtractionArtifactContext
+    from diamonddust.storage.local_trial_report import LOCAL_TRIAL_STAGE_LABEL
+
+    return ExtractionArtifactContext(
+        stage_label=LOCAL_TRIAL_STAGE_LABEL,
+        run_scope=LOCAL_TRIAL_RUN_SCOPE,
+        real_provider_call=False,
+        fixture_driven=True,
         not_validated=LOCAL_TRIAL_NOT_VALIDATED,
     )
 

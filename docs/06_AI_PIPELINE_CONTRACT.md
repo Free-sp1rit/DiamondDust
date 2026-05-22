@@ -147,6 +147,22 @@ Rules:
 - Provider errors must fail closed and produce failed validation results.
 - Real provider execution still requires separate approval.
 
+## Validated Extraction Output Artifact
+
+After `extract_units` output passes source binding and typed runtime validation,
+the application/storage boundary may persist a `validated_extraction_output`
+artifact under `_ai_suggestions/extractions/`.
+
+Rules:
+
+- The artifact stores typed `ExtractionProposal` data, not raw provider output.
+- Failed, malformed, or source-mismatched output must not be persisted as a
+  validated extraction artifact.
+- The artifact is reviewable AI working data and must not be treated as formal
+  knowledge, patch acceptance, formal apply, or publication approval.
+- Run logs may reference the artifact through `output_artifacts`.
+- Downstream `KnowledgePatch` construction remains deterministic and separate.
+
 ## Provider Execution Request
 
 The provider execution request is the typed input contract for concrete provider

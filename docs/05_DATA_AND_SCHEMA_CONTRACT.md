@@ -487,6 +487,43 @@ Patch files must include:
 - `risks`
 - `requires_user_review`
 
+## Validated Extraction Output Artifacts
+
+Typed extraction proposals may be persisted under:
+
+```text
+_ai_suggestions/extractions/
+```
+
+These artifacts are AI working artifacts, not formal knowledge files.
+
+Each validated extraction artifact must include:
+
+- `artifact_type: validated_extraction_output`
+- `artifact_schema_version`
+- `artifact_id`
+- `run_id`
+- `task`
+- `provider`
+- `model`
+- `prompt_version`
+- `schema_version`
+- `source_input_id`
+- `input_hash`
+- `output_hash`
+- `validation_status: passed`
+- `unit_candidates`
+- `relation_candidates`
+- explicit boundary flags
+
+Rules:
+
+- Persist only extraction proposals that have passed typed runtime validation.
+- Do not persist malformed, failed, or raw provider output as extraction artifacts.
+- Validated extraction artifacts must not allow formal writes, patch acceptance, formal apply, or publication.
+- Validated extraction artifacts may be referenced by AI run log `output_artifacts`.
+- Raw provider request/response bodies must not be stored in this artifact.
+
 ## AI Run Persistence
 
 AI run records should be persisted under:
@@ -538,7 +575,7 @@ Rules:
 - Provider envelope metadata such as provider request id, retry count, and token usage may be persisted only as typed run-log context recorded by the application pipeline and rendered by the storage adapter.
 - Provider-free local trial run artifacts should mark `run_scope: provider_free_fixture`, `real_provider_call: false`, `fixture_driven: true`, and `prompt_used: false` while preserving the task contract `prompt_version`.
 - When provider metrics are not produced, local trial run artifacts should keep `cost` and `latency` unset and include `metrics_scope` explaining that cost and latency are not applicable.
-- Local trial run artifacts should preserve `source_input_id`, point `output_artifacts` at the generated downstream trial report/outcome artifacts, and list run-specific `not_validated` limits such as real LLM extraction quality, real parser source-span accuracy, provider latency, and provider cost.
+- Local trial run artifacts should preserve `source_input_id`, point `output_artifacts` at the generated validated extraction artifact when one exists, then downstream trial report/outcome artifacts, and list run-specific `not_validated` limits such as real LLM extraction quality, real parser source-span accuracy, provider latency, and provider cost.
 - Run log `output_artifacts` must point only to AI working artifacts, not formal vault paths.
 
 ## Formal Write Rule

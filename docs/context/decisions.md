@@ -524,6 +524,14 @@ Record durable technical and governance decisions here.
 - Risks: The diagnostic decision JSON shape gains new fields, so older decision files default these approvals to `false` and remain blocked until updated.
 - Follow-up: Use `diamonddust openai-live-smoke-readiness` before any live smoke. The report is diagnostic only and still does not approve or execute live provider calls.
 
+### 2026-05-22 — Persist validated extraction output as an AI working artifact
+
+- Decision: Add `validated_extraction_output` JSON artifacts under `_ai_suggestions/extractions/` for extraction proposals that pass typed runtime validation and source consistency checks.
+- Reason: Real-provider preparation needs durable lineage between AI run logs and downstream patch artifacts without persisting raw provider output. A validated extraction artifact gives reviewers a typed intermediate artifact before patch generation.
+- Alternatives: Keep only run-log hashes and downstream patch JSON; persist raw provider output; wait until a live provider call exists before defining the artifact.
+- Risks: The artifact could be mistaken for formal knowledge or patch acceptance, so the persisted payload includes explicit boundaries and remains under `_ai_suggestions/`.
+- Follow-up: Revisit extraction artifact fields after real provider smoke feedback, especially source-span auditing, quality metrics, and replay needs.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

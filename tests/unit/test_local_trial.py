@@ -42,6 +42,10 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertEqual(result.draft_id, "draft_trial_local_ab12cd")
             self.assertEqual(result.errors, ())
             self.assertTrue(any(path.startswith("_ai_runs/") for path in result.written_paths))
+            self.assertIn(
+                "_ai_suggestions/extractions/run_trial_local_ab12cd_local_trial.json",
+                result.written_paths,
+            )
             self.assertTrue(any(path.startswith("_ai_suggestions/patches/") for path in result.written_paths))
             self.assertTrue(any(path.startswith("_ai_reports/patch-reviews/") for path in result.written_paths))
             self.assertIn(
@@ -91,6 +95,10 @@ class LocalTrialHarnessTests(unittest.TestCase):
                 run_log["output_artifacts"],
                 [
                     {
+                        "artifact_type": "validated_extraction_output",
+                        "path": "_ai_suggestions/extractions/run_trial_local_ab12cd_local_trial.json",
+                    },
+                    {
                         "artifact_type": "local_trial_feedback_report",
                         "path": "_ai_reports/local-trials/trial_local_ab12cd.md",
                     },
@@ -100,6 +108,29 @@ class LocalTrialHarnessTests(unittest.TestCase):
                     },
                 ],
             )
+            extraction_artifact = json.loads(
+                (
+                    vault_root
+                    / "_ai_suggestions/extractions/run_trial_local_ab12cd_local_trial.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                extraction_artifact["artifact_type"],
+                "validated_extraction_output",
+            )
+            self.assertEqual(extraction_artifact["source_input_id"], SOURCE_ID)
+            self.assertEqual(extraction_artifact["validation_status"], "passed")
+            self.assertEqual(extraction_artifact["unit_candidate_count"], 2)
+            self.assertFalse(
+                extraction_artifact["boundaries"]["raw_provider_output_persisted"]
+            )
+            self.assertFalse(extraction_artifact["boundaries"]["formal_write_allowed"])
+            self.assertFalse(
+                extraction_artifact["boundaries"]["patch_generation_performed"]
+            )
+            self.assertFalse(extraction_artifact["real_provider_call"])
+            self.assertTrue(extraction_artifact["fixture_driven"])
+            self.assertNotIn("raw_output", extraction_artifact)
             feedback_report = (
                 vault_root / "_ai_reports/local-trials/trial_local_ab12cd.md"
             ).read_text(encoding="utf-8")
@@ -111,6 +142,7 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertIn("formal_write_performed: false", feedback_report)
             self.assertIn("## Artifact Reading Order", feedback_report)
             self.assertIn("human review entrypoint", feedback_report)
+            self.assertIn("typed validated extraction proposal", feedback_report)
             self.assertIn("raw KnowledgePatch proposal", feedback_report)
             outcome = json.loads(
                 (
@@ -216,6 +248,12 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertTrue(result.feedback_report_written)
             self.assertEqual(len(result.written_paths), 3)
             self.assertTrue(result.written_paths[0].startswith("_ai_runs/"))
+            self.assertFalse(
+                any(
+                    path.startswith("_ai_suggestions/extractions/")
+                    for path in result.written_paths
+                )
+            )
             self.assertIn(
                 "_ai_reports/local-trials/trial_local_ab12cd.md",
                 result.written_paths,
@@ -235,6 +273,10 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertEqual(run_log["run_scope"], "provider_free_fixture")
             self.assertFalse(run_log["real_provider_call"])
             self.assertTrue(run_log["fixture_driven"])
+            self.assertNotIn(
+                "_ai_suggestions/extractions/run_trial_local_ab12cd_local_trial.json",
+                json.dumps(run_log.get("output_artifacts", [])),
+            )
             self.assertFalse(run_log["metrics_scope"]["cost_applicable"])
             self.assertFalse(run_log["metrics_scope"]["latency_applicable"])
             feedback_report = (
@@ -283,6 +325,12 @@ class LocalTrialHarnessTests(unittest.TestCase):
             self.assertTrue(result.ai_run_log_written)
             self.assertFalse(result.review_package_written)
             self.assertTrue(result.feedback_report_written)
+            self.assertFalse(
+                any(
+                    path.startswith("_ai_suggestions/extractions/")
+                    for path in result.written_paths
+                )
+            )
             self.assertIn("does not match ingested source_id", result.errors[0])
             self.assertIn(
                 "_ai_reports/local-trials/trial_local_ab12cd.md",
