@@ -36,6 +36,15 @@ from diamonddust.storage.candidate_markdown import (
     render_candidate_manifest_content,
     write_candidate_markdown_export,
 )
+from diamonddust.storage.extraction_artifact import (
+    AI_EXTRACTION_OUTPUTS_DIR,
+    ExtractionArtifactContext,
+    ExtractionArtifactPersistenceError,
+    ValidatedExtractionArtifact,
+    render_validated_extraction_artifact,
+    validated_extraction_artifact_path,
+    write_validated_extraction_artifact,
+)
 from diamonddust.storage.formal_vault import (
     FORMAL_VAULT_DIRS,
     FormalVaultApplyPlan,
@@ -86,6 +95,7 @@ from diamonddust.storage.review_package import (
 
 __all__ = [
     "AI_CANDIDATE_NOTES_DIR",
+    "AI_EXTRACTION_OUTPUTS_DIR",
     "AI_BLOG_DRAFTS_DIR",
     "AI_BLOG_QUALITY_REPORTS_DIR",
     "AI_LOCAL_TRIAL_REPORTS_DIR",
@@ -110,6 +120,8 @@ __all__ = [
     "CandidateMarkdownExport",
     "CandidateMarkdownFile",
     "CandidateMarkdownManifest",
+    "ExtractionArtifactContext",
+    "ExtractionArtifactPersistenceError",
     "FORMAL_VAULT_DIRS",
     "FormalVaultApplyPlan",
     "FormalVaultApplyPlanError",
@@ -131,6 +143,7 @@ __all__ = [
     "ReviewPackage",
     "ReviewPackageError",
     "ReviewReportError",
+    "ValidatedExtractionArtifact",
     "compute_content_hash",
     "check_formal_vault_conflicts",
     "ingest_markdown_text",
@@ -141,6 +154,7 @@ __all__ = [
     "render_blog_quality_report",
     "render_candidate_markdown",
     "render_candidate_manifest_content",
+    "render_validated_extraction_artifact",
     "render_local_trial_feedback_report",
     "render_local_trial_outcome",
     "render_patch_json_artifact",
@@ -148,8 +162,10 @@ __all__ = [
     "write_candidate_markdown_export",
     "write_ai_run_log_artifact",
     "write_blog_draft_package",
+    "write_validated_extraction_artifact",
     "write_local_trial_feedback_report",
     "write_local_trial_outcome",
     "write_review_package",
     "write_patch_review_report",
+    "validated_extraction_artifact_path",
 ]

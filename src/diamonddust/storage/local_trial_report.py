@@ -317,6 +317,7 @@ def _artifact_reading_order(written_paths: tuple[str, ...]) -> list[str]:
     preferred_markers = (
         "_ai_reports/local-trials/",
         "_ai_runs/",
+        "_ai_suggestions/extractions/",
         "_ai_suggestions/patches/",
         "_ai_suggestions/candidate-notes/",
         "_ai_reports/patch-reviews/",
@@ -341,6 +342,8 @@ def _artifact_purpose(path: str) -> str:
         return "machine-readable trial pipeline outcome summary"
     if path.startswith("_ai_runs/"):
         return "provider-free extraction validation run log with scope and trace hashes"
+    if path.startswith("_ai_suggestions/extractions/"):
+        return "typed validated extraction proposal used before patch generation"
     if path.startswith("_ai_suggestions/patches/"):
         return "raw KnowledgePatch proposal for review before formal writes"
     if path.startswith("_ai_suggestions/candidate-notes/") and path.endswith("/manifest.md"):
