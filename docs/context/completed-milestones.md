@@ -699,3 +699,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 240 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, and architecture scan reported 0 violations.
 - Dependency impact: No new dependency was added.
 - Follow-up: Execute `docs/exec-plans/blocked/2026-05-23-first-openai-manual-live-smoke.md` only after the product owner explicitly asks to run the smoke.
+
+## 2026-05-23 — OpenAI Live Smoke Execution Path Completed
+
+- Scope: Implemented the controlled `openai-extract-units` live-smoke execution path, live-smoke CLI flags, provider-approved model policy handoff, AI run-log persistence, validated extraction artifact persistence on successful validation, and provider-free regression tests.
+- Outcome: The command remains blocked by default and reaches API key reading/provider execution only when all one-smoke approval flags, the approved `gpt-5.5` model, approved fixture path, 60-second timeout, zero retries, disabled fallback, USD 1.00 cost limit, and hash/metadata-only retention are present. Preview, dry-run, readiness, tests, and CI remain provider-free and secret-free.
+- Review: `docs/reviews/milestone-reviews/2026-05-23-openai-live-smoke-execution-path.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider execution safety milestone.
+- Validation: 242 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, and architecture scan reported 0 violations.
+- Dependency impact: No new dependency was added.
+- Follow-up: Run the blocked first OpenAI manual live smoke only after explicit product-owner instruction, then review provider output quality before expanding scope.

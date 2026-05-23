@@ -12,6 +12,14 @@ Record durable technical and governance decisions here.
 - Risks: A one-smoke approval could be mistaken for general provider authorization, so the decision package keeps recurring live smoke, real user essay externalization, provider-side tools, raw request/response persistence, patch acceptance, formal apply, and publication explicitly unapproved.
 - Follow-up: Do not run the live smoke until the product owner explicitly asks to execute the blocked live-smoke plan. During execution, read the approved key only inside the live-smoke path, perform exactly one provider/network call, persist only hashes/metadata and typed validated extraction artifacts, and verify no formal vault write occurred.
 
+### 2026-05-23 — Implement controlled OpenAI live-smoke execution path
+
+- Decision: Extend `openai-extract-units` from a fail-closed safety valve into a controlled one-smoke execution path that remains blocked by default and only reaches key reading/provider execution when all approved live-smoke flags, model, fixture, timeout, cost, and retention constraints are present.
+- Reason: The project needs an executable path for the first manual provider smoke, but preview, dry-run, readiness, tests, and CI must remain provider-free and secret-free.
+- Alternatives: Keep the live smoke blocked until manual scripting; run OpenAI directly outside DiamondDust; broaden the command into a general provider execution CLI.
+- Risks: A live CLI path can be mistaken for recurring provider approval, so the command enforces the approved fixture, `gpt-5.5`, 60-second timeout, zero retries, USD 1.00 cost limit, and hash/metadata-only retention.
+- Follow-up: Run the blocked live-smoke plan only when explicitly requested. After the smoke, review provider output quality before expanding beyond the fixture.
+
 ### 2026-05-20 — Use OpenAI official SDK for the first provider adapter
 
 - Decision: Adopt the OpenAI official SDK as the future first-provider adapter integration style for `extract_units`.

@@ -258,14 +258,21 @@ diamonddust openai-extract-units \
   --run-id <run-id> \
   --model <owner-approved-model> \
   --api-key-env-var DIAMONDDUST_OPENAI_API_KEY \
-  --real-provider-call-approved
+  --timeout-seconds 60 \
+  --cost-limit 1.0 \
+  --real-provider-call-approved \
+  --api-key-value-reading-approved \
+  --real-network-call-approved \
+  --live-smoke-approved \
+  --prompt-source-schema-externalization-approved \
+  --cost-limit-approved
 ```
 
-The current `openai-extract-units` command is a safety valve only. It records
-that a real-call flag was requested, but it still builds the provider request
-with real provider calls disabled and returns blocked output before any API key
-value read, prompt/source/schema externalization, client construction, or
-network call.
+The current `openai-extract-units` command remains blocked by default. It enters
+the real execution path only when all one-manual-smoke approval flags, the
+approved `gpt-5.5` model, the approved fixture essay, the 60-second timeout, and
+the USD 1.00 cost limit are present. Preview, dry-run, readiness, tests, and CI
+still do not read API key values or call providers.
 
 ## CI Policy Design
 

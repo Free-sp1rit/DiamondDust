@@ -11,6 +11,12 @@ The product owner approved the decision package for one manual live smoke. This
 execution plan is intentionally blocked until the product owner explicitly asks
 Codex to execute the live smoke after reviewing the decision package.
 
+The CLI execution path is implemented on the
+`feat/openai-live-smoke-execution` branch: `openai-extract-units` remains
+blocked by default and enters live execution only with all one-smoke approval
+flags, the approved model, the approved fixture path, and the approved cost and
+timeout policy.
+
 ## Blocker
 
 - Awaiting explicit instruction to execute the live smoke.
@@ -39,10 +45,10 @@ Codex to execute the live smoke after reviewing the decision package.
 
 ## Proposed Execution Steps
 
-1. Sync `main` and create a dedicated live-smoke branch.
+1. Sync `main` and create or reuse a dedicated live-smoke branch.
 2. Confirm `DIAMONDDUST_OPENAI_API_KEY` is present without printing its value.
-3. Use the smallest approved fixture essay.
-4. Build the provider request and rendered prompt for `extract_units`.
+3. Use `tests/fixtures/local_trial/trial-essay.md`.
+4. Run `diamonddust openai-extract-units` with all approved one-smoke flags.
 5. Execute one OpenAI call through the approved adapter path.
 6. Validate provider output with source binding and typed runtime validation.
 7. Persist run log, validated extraction artifact, and reviewable AI working
