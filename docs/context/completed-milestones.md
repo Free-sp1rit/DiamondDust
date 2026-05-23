@@ -710,3 +710,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 242 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, and architecture scan reported 0 violations.
 - Dependency impact: No new dependency was added.
 - Follow-up: Run the blocked first OpenAI manual live smoke only after explicit product-owner instruction, then review provider output quality before expanding scope.
+
+## 2026-05-23 — DeepSeek Provider Adapter Completed
+
+- Scope: Implemented the DeepSeek OpenAI-compatible adapter, Chat Completions JSON Output mapping, response/usage/error mapping, sanitized payload preview, provider-free dry-run, fail-closed extract path, and fake/mock safety tests.
+- Outcome: `deepseek-payload-preview`, `deepseek-dry-run`, and `deepseek-extract-units` now exist. Default DeepSeek paths do not read `DIAMONDDUST_DEEPSEEK_API_KEY`, do not call providers, do not persist raw provider request/response bodies, and do not write formal vault files. Any future real path requires explicit approval flags, an explicit model, official base URL, zero retries, cost limit approval, and prompt/source/schema externalization approval.
+- Review: `docs/reviews/milestone-reviews/2026-05-23-deepseek-provider-adapter.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 second-provider adapter milestone.
+- Validation: 259 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, and architecture scan reported 0 violations.
+- Dependency impact: No new dependency was added; the existing OpenAI SDK dependency is reused behind the DeepSeek adapter because DeepSeek documents OpenAI-compatible access.
+- Follow-up: Create a DeepSeek-specific live-smoke decision package before reading a DeepSeek key value or calling the provider.

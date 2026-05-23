@@ -4,6 +4,14 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-23 — Add DeepSeek adapter using OpenAI-compatible SDK boundary
+
+- Decision: Implement DeepSeek as a second concrete provider adapter for `extract_units` using DeepSeek's documented OpenAI-compatible API through the existing OpenAI SDK dependency, with base URL `https://api.deepseek.com` and API key env var name `DIAMONDDUST_DEEPSEEK_API_KEY`.
+- Reason: The product owner requested DeepSeek API-key call support, and DeepSeek's official docs support OpenAI SDK-compatible access. Reusing the existing SDK avoids adding another production dependency while keeping provider-specific behavior isolated to the AI adapter layer.
+- Alternatives: Add a separate DeepSeek SDK or use direct HTTP. Both would increase dependency or locally maintained protocol surface before DeepSeek quality is validated.
+- Risks: DeepSeek JSON Output mode is prompt-guided and weaker than provider-side strict JSON Schema, so DiamondDust typed runtime validation remains the acceptance boundary before output can become domain data.
+- Follow-up: Do not run DeepSeek live calls until model, cost, key reading, network call, and prompt/source/schema externalization scope are explicitly approved for the run. Consider a DeepSeek-specific readiness package if it becomes a durable provider option.
+
 ### 2026-05-23 — Approve one manual OpenAI fixture live smoke, not recurring live use
 
 - Decision: Record the product-owner decision package for exactly one future manual OpenAI `extract_units` live smoke using `gpt-5.5`, `DIAMONDDUST_OPENAI_API_KEY`, one small fixture essay, timeout 60 seconds, zero retries, no fallback, USD 1.00 per-run cost limit, and hash/metadata-only raw output retention.

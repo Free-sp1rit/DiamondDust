@@ -72,9 +72,15 @@ Last updated: 2026-05-23
 
 ### 2026-05-17 — How should provider execution requests map to the first provider SDK?
 
-- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. A provider integration readiness gate now reports blocked until all required decisions are explicit. A first-provider adapter design, product-owner decision package template, completed pre-live-smoke OpenAI adapter implementation, and OpenAI live-smoke readiness report now exist. OpenAI SDK request mapping is implemented behind fail-closed gates, and one future manual fixture smoke is approved and has a controlled CLI execution path but has not been run.
+- Context: Concrete provider adapters now receive a typed provider execution request containing both `ProviderRequest` and `RenderedPrompt`. A provider integration readiness gate now reports blocked until all required decisions are explicit. A first-provider adapter design, product-owner decision package template, completed pre-live-smoke OpenAI adapter implementation, and OpenAI live-smoke readiness report now exist. OpenAI SDK request mapping is implemented behind fail-closed gates, and one future manual fixture smoke is approved and has a controlled CLI execution path but has not been run. DeepSeek mapping now exists as a second provider path using OpenAI-compatible Chat Completions JSON Output mode and the existing OpenAI SDK dependency.
 - Needed decision: After the first manual smoke, decide whether the OpenAI request mapping, structured-output mechanism, cost metadata, source binding, and validated extraction artifact shape are sufficient for follow-up real-provider evaluation.
 - Impact: Affects provider SDK coupling, privacy posture, replayability, prompt traceability, cost control, and extraction quality evaluation.
+
+### 2026-05-23 — Should DeepSeek get a controlled live-smoke decision package?
+
+- Context: DeepSeek adapter code, sanitized preview, dry-run, fail-closed extract path, and fake/mock tests now exist. No DeepSeek API key value has been read and no DeepSeek network call has been executed. DeepSeek JSON Output mode uses `response_format={"type": "json_object"}` and depends on typed runtime validation for schema acceptance.
+- Needed decision: Decide whether to create a DeepSeek-specific manual live-smoke decision package, including model, fixture or real-user essay scope, cost limit, API key value reading, network call approval, and source externalization scope.
+- Impact: Affects external provider cost, privacy, provider comparison, extraction quality evaluation, and whether DeepSeek becomes a durable alternative to OpenAI.
 
 ## Patch Review
 

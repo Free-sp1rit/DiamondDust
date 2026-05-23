@@ -34,6 +34,16 @@ from diamonddust.ai.adapters.openai import (
     build_sanitized_openai_request_preview,
     live_execution_blockers,
 )
+from diamonddust.ai.adapters.deepseek import (
+    DEEPSEEK_API_KEY_ENV_VAR,
+    DEEPSEEK_BASE_URL,
+    DEEPSEEK_PROVIDER,
+    DeepSeekAdapterConfig,
+    DeepSeekExecutionClient,
+    build_deepseek_dry_run_report,
+    build_sanitized_deepseek_request_preview,
+    live_execution_blockers as deepseek_live_execution_blockers,
+)
 from diamonddust.application import (
     ExtractUnitsProviderRequestSpec,
     LocalTrialResult,
@@ -85,6 +95,16 @@ OPENAI_LIVE_SMOKE_NOT_VALIDATED = (
     "publication",
     "recurring_live_smoke",
     "real_user_essay_externalization",
+)
+DEEPSEEK_RUN_STAGE_LABEL = "deepseek_manual_extract_units"
+DEEPSEEK_RUN_SCOPE = "deepseek_extract_units_manual"
+DEEPSEEK_RAW_OUTPUT_RETENTION = "hash_and_metadata_only"
+DEEPSEEK_NOT_VALIDATED = (
+    "patch_acceptance",
+    "formal_vault_apply",
+    "publication",
+    "recurring_live_smoke",
+    "provider_output_quality_acceptance",
 )
 
 
@@ -143,6 +163,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "openai-extract-units":
         return _run_openai_extract_units_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+    if args.command == "deepseek-payload-preview":
+        return _run_deepseek_payload_preview_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+    if args.command == "deepseek-dry-run":
+        return _run_deepseek_dry_run_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+    if args.command == "deepseek-extract-units":
+        return _run_deepseek_extract_units_command(
             args,
             stdout=sys.stdout,
             stderr=sys.stderr,
@@ -302,6 +340,61 @@ def _build_parser() -> argparse.ArgumentParser:
         "--raw-output-retention",
         default="hash_and_metadata_only",
     )
+
+    deepseek_payload_preview = subparsers.add_parser(
+        "deepseek-payload-preview",
+        help=(
+            "print a sanitized DeepSeek extract_units request preview "
+            "without key reads or provider calls"
+        ),
+    )
+    _add_deepseek_extract_arguments(deepseek_payload_preview)
+
+    deepseek_dry_run = subparsers.add_parser(
+        "deepseek-dry-run",
+        help=(
+            "check the future DeepSeek extract_units path without key reads "
+            "or provider calls"
+        ),
+    )
+    _add_deepseek_extract_arguments(deepseek_dry_run)
+
+    deepseek_extract_units = subparsers.add_parser(
+        "deepseek-extract-units",
+        help=(
+            "controlled DeepSeek extract_units path; blocked by default "
+            "before key reads or provider calls"
+        ),
+    )
+    _add_deepseek_extract_arguments(deepseek_extract_units)
+    deepseek_extract_units.add_argument("--vault-root", default=DEFAULT_VAULT_ROOT)
+    deepseek_extract_units.add_argument("--created-at", default=_utc_now())
+    deepseek_extract_units.add_argument(
+        "--real-provider-call-approved",
+        action="store_true",
+        help="enable the real-provider request flag for this invocation",
+    )
+    deepseek_extract_units.add_argument(
+        "--api-key-value-reading-approved",
+        action="store_true",
+        help="allow DeepSeek key reading only in the approved real path",
+    )
+    deepseek_extract_units.add_argument(
+        "--real-network-call-approved",
+        action="store_true",
+        help="allow DeepSeek network execution for this invocation",
+    )
+    deepseek_extract_units.add_argument(
+        "--prompt-source-schema-externalization-approved",
+        action="store_true",
+        help="allow prompt/source/schema externalization for this invocation",
+    )
+    deepseek_extract_units.add_argument("--cost-limit", type=float)
+    deepseek_extract_units.add_argument("--cost-limit-approved", action="store_true")
+    deepseek_extract_units.add_argument(
+        "--raw-output-retention",
+        default=DEEPSEEK_RAW_OUTPUT_RETENTION,
+    )
     return parser
 
 
@@ -311,6 +404,25 @@ def _add_openai_extract_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--model", required=True)
     command.add_argument("--root")
     command.add_argument("--api-key-env-var", default=OPENAI_API_KEY_ENV_VAR)
+    command.add_argument(
+        "--prompt-version",
+        default=EXTRACT_UNITS_PROMPT_VERSION,
+    )
+    command.add_argument(
+        "--schema-version",
+        default=EXTRACTION_OUTPUT_SCHEMA_VERSION,
+    )
+    command.add_argument("--timeout-seconds", type=int, default=30)
+    command.add_argument("--max-retries", type=int, default=0)
+
+
+def _add_deepseek_extract_arguments(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--essay", required=True)
+    command.add_argument("--run-id", required=True)
+    command.add_argument("--model", required=True)
+    command.add_argument("--root")
+    command.add_argument("--api-key-env-var", default=DEEPSEEK_API_KEY_ENV_VAR)
+    command.add_argument("--base-url", default=DEEPSEEK_BASE_URL)
     command.add_argument(
         "--prompt-version",
         default=EXTRACT_UNITS_PROMPT_VERSION,
@@ -900,6 +1012,398 @@ def _openai_live_run_log_context(
         prompt_hash=orchestration.rendered_prompt.prompt_hash,
         output_artifacts=output_artifacts,
         not_validated=OPENAI_LIVE_SMOKE_NOT_VALIDATED,
+        provider_request_id=base.provider_request_id,
+        retry_count=base.retry_count,
+        token_usage=base.token_usage,
+    )
+
+
+def _run_deepseek_payload_preview_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        execution_request = _build_deepseek_execution_request_from_args(
+            args,
+            real_provider_calls_enabled=False,
+        )
+        config = _deepseek_config_from_args(args)
+        preview = build_sanitized_deepseek_request_preview(
+            execution_request,
+            config=config,
+        )
+        stdout.write(json.dumps(preview, indent=2, sort_keys=True))
+        stdout.write("\n")
+    except Exception as exc:
+        print(f"DeepSeek payload preview failed: {exc}", file=stderr)
+        return 1
+    return 0
+
+
+def _run_deepseek_dry_run_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        execution_request = _build_deepseek_execution_request_from_args(
+            args,
+            real_provider_calls_enabled=False,
+        )
+        config = _deepseek_config_from_args(args)
+        report = build_deepseek_dry_run_report(execution_request, config=config)
+        stdout.write(json.dumps(report, indent=2, sort_keys=True))
+        stdout.write("\n")
+    except Exception as exc:
+        print(f"DeepSeek dry run failed: {exc}", file=stderr)
+        return 1
+    return 0
+
+
+def _run_deepseek_extract_units_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        config = _deepseek_config_from_args(args)
+        if _deepseek_live_execution_requested(args):
+            return _run_deepseek_live_extract_units_command(
+                args,
+                config=config,
+                stdout=stdout,
+            )
+
+        execution_request = _build_deepseek_execution_request_from_args(
+            args,
+            real_provider_calls_enabled=False,
+        )
+        result = DeepSeekExecutionClient(config=config).generate(execution_request)
+        output: dict[str, object] = {
+            "command": "deepseek-extract-units",
+            "provider": DEEPSEEK_PROVIDER,
+            "run_id": execution_request.provider_request.run_id,
+            "requested_real_provider_call": args.real_provider_call_approved,
+            "succeeded": result.succeeded,
+            "provider_called": False,
+            "network_call": False,
+            "api_key_value_read": False,
+            "raw_provider_request_persisted": False,
+            "raw_provider_response_persisted": False,
+            "blockers": list(
+                deepseek_live_execution_blockers(execution_request, config)
+            ),
+        }
+        if result.error is not None:
+            output["error"] = dict(result.error.to_mapping())
+        if result.response is not None:
+            output["provider_request_id"] = result.response.provider_request_id
+            output["output_hash"] = result.response.output_hash
+            output["raw_output_persisted"] = result.response.raw_output_persisted
+        stdout.write(json.dumps(output, indent=2, sort_keys=True))
+        stdout.write("\n")
+    except Exception as exc:
+        print(f"DeepSeek extract_units failed before execution: {exc}", file=stderr)
+        return 1
+    return 0 if result.succeeded else 1
+
+
+def _run_deepseek_live_extract_units_command(
+    args: argparse.Namespace,
+    *,
+    config: DeepSeekAdapterConfig,
+    stdout: TextIO,
+) -> int:
+    preflight_blockers = _deepseek_preflight_blockers(args)
+    if preflight_blockers:
+        stdout.write(
+            json.dumps(
+                {
+                    "command": "deepseek-extract-units",
+                    "stage_label": DEEPSEEK_RUN_STAGE_LABEL,
+                    "provider": DEEPSEEK_PROVIDER,
+                    "run_id": args.run_id,
+                    "succeeded": False,
+                    "provider_called": False,
+                    "network_call": False,
+                    "api_key_value_read": False,
+                    "raw_provider_request_persisted": False,
+                    "raw_provider_response_persisted": False,
+                    "blockers": preflight_blockers,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        stdout.write("\n")
+        return 1
+
+    if not os.environ.get(config.api_key_env_var):
+        stdout.write(
+            json.dumps(
+                {
+                    "command": "deepseek-extract-units",
+                    "stage_label": DEEPSEEK_RUN_STAGE_LABEL,
+                    "provider": DEEPSEEK_PROVIDER,
+                    "run_id": args.run_id,
+                    "succeeded": False,
+                    "provider_called": False,
+                    "network_call": False,
+                    "api_key_value_read": True,
+                    "raw_provider_request_persisted": False,
+                    "raw_provider_response_persisted": False,
+                    "blockers": [
+                        "approved API key environment variable is not set"
+                    ],
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        stdout.write("\n")
+        return 1
+
+    essay = read_markdown_essay(args.essay, root=args.root)
+    spec = ExtractUnitsProviderRequestSpec(
+        run_id=args.run_id,
+        provider=DEEPSEEK_PROVIDER,
+        model=args.model,
+        prompt_version=args.prompt_version,
+        schema_version=args.schema_version,
+        timeout_seconds=args.timeout_seconds,
+        max_retries=args.max_retries,
+        real_provider_calls_enabled=args.real_provider_call_approved,
+    )
+    provider = DeepSeekExecutionClient(config=config)
+    orchestration = run_extract_units_provider_orchestration(
+        provider,
+        essay,
+        spec,
+        model_policy=_deepseek_model_policy(args),
+    )
+    artifacts = _persist_deepseek_artifacts(
+        orchestration,
+        vault_root=args.vault_root,
+        created_at=args.created_at,
+    )
+    result = orchestration.extraction_run.provider_result
+    output: dict[str, object] = {
+        "command": "deepseek-extract-units",
+        "stage_label": DEEPSEEK_RUN_STAGE_LABEL,
+        "provider": DEEPSEEK_PROVIDER,
+        "run_id": orchestration.request.run_id,
+        "source_input_id": orchestration.rendered_prompt.source_input_id,
+        "requested_real_provider_call": args.real_provider_call_approved,
+        "succeeded": orchestration.is_valid,
+        "provider_called": True,
+        "network_call": True,
+        "api_key_value_read": True,
+        "raw_provider_request_persisted": False,
+        "raw_provider_response_persisted": False,
+        "prompt_hash": orchestration.rendered_prompt.prompt_hash,
+        "output_hash": orchestration.run_log.output_hash,
+        "validation_status": orchestration.run_log.validation_status.value,
+        "errors": list(orchestration.errors),
+        "written_paths": artifacts,
+        "formal_write_performed": False,
+        "patch_acceptance": False,
+        "publication_performed": False,
+    }
+    if result.response is not None:
+        output["provider_request_id"] = result.response.provider_request_id
+        output["raw_output_persisted"] = result.response.raw_output_persisted
+    if result.error is not None:
+        output["error"] = dict(result.error.to_mapping())
+    stdout.write(json.dumps(output, indent=2, sort_keys=True))
+    stdout.write("\n")
+    return 0 if orchestration.is_valid else 1
+
+
+def _build_deepseek_execution_request_from_args(
+    args: argparse.Namespace,
+    *,
+    real_provider_calls_enabled: bool,
+) -> ProviderExecutionRequest:
+    essay = read_markdown_essay(args.essay, root=args.root)
+    provider_request = build_extract_units_provider_request(
+        essay,
+        ExtractUnitsProviderRequestSpec(
+            run_id=args.run_id,
+            provider=DEEPSEEK_PROVIDER,
+            model=args.model,
+            prompt_version=args.prompt_version,
+            schema_version=args.schema_version,
+            timeout_seconds=args.timeout_seconds,
+            max_retries=args.max_retries,
+            real_provider_calls_enabled=real_provider_calls_enabled,
+        ),
+    )
+    rendered_prompt = render_extract_units_prompt(provider_request)
+    return ProviderExecutionRequest(
+        provider_request=provider_request,
+        rendered_prompt=rendered_prompt,
+    )
+
+
+def _deepseek_config_from_args(args: argparse.Namespace) -> DeepSeekAdapterConfig:
+    return DeepSeekAdapterConfig(
+        api_key_env_var=args.api_key_env_var,
+        base_url=args.base_url,
+        timeout_seconds=args.timeout_seconds,
+        max_retries=args.max_retries,
+        api_key_value_reading_approved=getattr(
+            args,
+            "api_key_value_reading_approved",
+            False,
+        ),
+        real_provider_calls_approved=getattr(
+            args,
+            "real_provider_call_approved",
+            False,
+        ),
+        real_network_calls_approved=getattr(
+            args,
+            "real_network_call_approved",
+            False,
+        ),
+        prompt_source_schema_externalization_approved=getattr(
+            args,
+            "prompt_source_schema_externalization_approved",
+            False,
+        ),
+        cost_limit=getattr(args, "cost_limit", None),
+        cost_limit_approved=getattr(args, "cost_limit_approved", False),
+    )
+
+
+def _deepseek_live_execution_requested(args: argparse.Namespace) -> bool:
+    return any(
+        (
+            getattr(args, "api_key_value_reading_approved", False),
+            getattr(args, "real_network_call_approved", False),
+            getattr(args, "prompt_source_schema_externalization_approved", False),
+            getattr(args, "cost_limit_approved", False),
+        )
+    )
+
+
+def _deepseek_preflight_blockers(args: argparse.Namespace) -> list[str]:
+    blockers: list[str] = []
+    if args.api_key_env_var != DEEPSEEK_API_KEY_ENV_VAR:
+        blockers.append(f"api_key_env_var must be {DEEPSEEK_API_KEY_ENV_VAR}")
+    if args.base_url != DEEPSEEK_BASE_URL:
+        blockers.append(f"base_url must be {DEEPSEEK_BASE_URL}")
+    if args.max_retries != 0:
+        blockers.append("max_retries must be 0")
+    if args.cost_limit is None or args.cost_limit <= 0:
+        blockers.append("cost_limit must be positive")
+    if args.raw_output_retention != DEEPSEEK_RAW_OUTPUT_RETENTION:
+        blockers.append(
+            "raw_output_retention must be " f"{DEEPSEEK_RAW_OUTPUT_RETENTION}"
+        )
+    required_flags = {
+        "real_provider_call_approved": args.real_provider_call_approved,
+        "api_key_value_reading_approved": args.api_key_value_reading_approved,
+        "real_network_call_approved": args.real_network_call_approved,
+        "prompt_source_schema_externalization_approved": (
+            args.prompt_source_schema_externalization_approved
+        ),
+        "cost_limit_approved": args.cost_limit_approved,
+    }
+    for name, approved in required_flags.items():
+        if not approved:
+            blockers.append(f"{name} must be approved")
+    return blockers
+
+
+def _deepseek_model_policy(args: argparse.Namespace) -> ModelPolicy:
+    return ModelPolicy(
+        first_provider=DEEPSEEK_PROVIDER,
+        real_provider_calls_approved=args.real_provider_call_approved,
+        api_key_env_var_policy=APIKeyEnvVarPolicy(
+            env_var_name=args.api_key_env_var,
+            read_allowed=args.api_key_value_reading_approved,
+        ),
+        retry_policy=RetryPolicy(max_retries=args.max_retries),
+        timeout_policy=TimeoutPolicy(
+            default_timeout_seconds=args.timeout_seconds,
+            maximum_timeout_seconds=args.timeout_seconds,
+        ),
+        cost_policy=CostPolicy(cost_limit=args.cost_limit),
+    )
+
+
+def _persist_deepseek_artifacts(
+    orchestration,
+    *,
+    vault_root: str,
+    created_at: str,
+) -> list[str]:
+    extraction_artifact_path: str | None = None
+    if orchestration.validation_result.proposal is not None:
+        extraction_artifact = write_validated_extraction_artifact(
+            orchestration.validation_result.proposal,
+            vault_root=vault_root,
+            created_at=created_at,
+            context=ExtractionArtifactContext(
+                stage_label=DEEPSEEK_RUN_STAGE_LABEL,
+                run_scope=DEEPSEEK_RUN_SCOPE,
+                real_provider_call=True,
+                fixture_driven=False,
+                prompt_hash=orchestration.rendered_prompt.prompt_hash,
+                not_validated=DEEPSEEK_NOT_VALIDATED,
+            ),
+        )
+        extraction_artifact_path = extraction_artifact.relative_path
+
+    run_log_artifact = write_ai_run_log_artifact(
+        orchestration.run_log,
+        vault_root=vault_root,
+        created_at=created_at,
+        context=_deepseek_run_log_context(
+            orchestration,
+            extraction_artifact_path=extraction_artifact_path,
+        ),
+    )
+    paths = [run_log_artifact.relative_path]
+    if extraction_artifact_path is not None:
+        paths.insert(0, extraction_artifact_path)
+    return paths
+
+
+def _deepseek_run_log_context(
+    orchestration,
+    *,
+    extraction_artifact_path: str | None,
+) -> AIRunLogArtifactContext:
+    base = orchestration.run_log_context
+    output_artifacts = ()
+    if extraction_artifact_path is not None:
+        output_artifacts = (
+            AIRunOutputArtifact(
+                artifact_type="validated_extraction_output",
+                path=extraction_artifact_path,
+            ),
+        )
+    return AIRunLogArtifactContext(
+        stage_label=DEEPSEEK_RUN_STAGE_LABEL,
+        run_scope=DEEPSEEK_RUN_SCOPE,
+        real_provider_call=True,
+        fixture_driven=False,
+        prompt_used=True,
+        metrics_scope=AIRunMetricsScope(
+            cost_applicable=True,
+            latency_applicable=True,
+            reason=DEEPSEEK_RUN_SCOPE,
+        ),
+        source_input_id=orchestration.rendered_prompt.source_input_id,
+        prompt_hash=orchestration.rendered_prompt.prompt_hash,
+        output_artifacts=output_artifacts,
+        not_validated=DEEPSEEK_NOT_VALIDATED,
         provider_request_id=base.provider_request_id,
         retry_count=base.retry_count,
         token_usage=base.token_usage,
