@@ -693,6 +693,59 @@ class CLIEntrypointTests(unittest.TestCase):
             report["blockers"],
         )
 
+    def test_openai_extract_units_live_preflight_blocks_unapproved_fixture(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_OPENAI_API_KEY"] = "DO_NOT_RENDER_THIS_OPENAI_SECRET"
+        with TemporaryDirectory() as tmp:
+            essay_path = _write_openai_preview_essay(tmp)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "openai-extract-units",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_openai_live_preflight_ab12cd",
+                    "--model",
+                    "gpt-5.5",
+                    "--root",
+                    tmp,
+                    "--timeout-seconds",
+                    "60",
+                    "--cost-limit",
+                    "1.0",
+                    "--real-provider-call-approved",
+                    "--api-key-value-reading-approved",
+                    "--real-network-call-approved",
+                    "--live-smoke-approved",
+                    "--prompt-source-schema-externalization-approved",
+                    "--cost-limit-approved",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stderr, "")
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_OPENAI_SECRET", result.stderr)
+        report = json.loads(result.stdout)
+        self.assertFalse(report["succeeded"])
+        self.assertFalse(report["provider_called"])
+        self.assertFalse(report["network_call"])
+        self.assertFalse(report["api_key_value_read"])
+        self.assertIn(
+            "essay must be the approved fixture tests/fixtures/local_trial/trial-essay.md",
+            report["blockers"],
+        )
+
 
 def _ready_provider_decisions() -> dict[str, object]:
     return {

@@ -6,15 +6,21 @@ import argparse
 from datetime import UTC, datetime
 from importlib import resources
 import json
+import os
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 from typing import Sequence, TextIO
 
 from diamonddust.ai import (
+    APIKeyEnvVarPolicy,
+    CostPolicy,
     EXTRACTION_OUTPUT_SCHEMA_VERSION,
     EXTRACT_UNITS_PROMPT_VERSION,
+    ModelPolicy,
     ProviderExecutionRequest,
+    RetryPolicy,
+    TimeoutPolicy,
     build_provider_execution_payload,
     extraction_output_json_schema,
     render_extract_units_prompt,
@@ -42,10 +48,19 @@ from diamonddust.application import (
     render_provider_integration_decision_package_markdown,
     render_provider_integration_escalation_request_markdown,
     render_provider_integration_readiness_markdown,
+    run_extract_units_provider_orchestration,
     run_local_trial,
 )
 from diamonddust.application.blog_draft import BlogMode
-from diamonddust.storage import read_markdown_essay
+from diamonddust.storage import (
+    AIRunLogArtifactContext,
+    AIRunMetricsScope,
+    AIRunOutputArtifact,
+    ExtractionArtifactContext,
+    read_markdown_essay,
+    write_ai_run_log_artifact,
+    write_validated_extraction_artifact,
+)
 
 
 FIXTURE_TRIAL_ID = "trial_fixture_ab12cd"
@@ -57,6 +72,20 @@ FIXTURE_TITLE = "Reviewable Local Trial Artifacts"
 FIXTURE_AUDIENCE = "product owner"
 FIXTURE_READER_PROBLEM = "inspecting generated artifacts before formal writes"
 DEFAULT_VAULT_ROOT = "knowledge-vault"
+OPENAI_LIVE_SMOKE_STAGE_LABEL = "first_openai_manual_live_smoke"
+OPENAI_LIVE_SMOKE_RUN_SCOPE = "openai_fixture_live_smoke"
+OPENAI_LIVE_SMOKE_MODEL = "gpt-5.5"
+OPENAI_LIVE_SMOKE_TIMEOUT_SECONDS = 60
+OPENAI_LIVE_SMOKE_COST_LIMIT = 1.0
+OPENAI_LIVE_SMOKE_RAW_OUTPUT_RETENTION = "hash_and_metadata_only"
+OPENAI_LIVE_SMOKE_FIXTURE_SUFFIX = "tests/fixtures/local_trial/trial-essay.md"
+OPENAI_LIVE_SMOKE_NOT_VALIDATED = (
+    "patch_acceptance",
+    "formal_vault_apply",
+    "publication",
+    "recurring_live_smoke",
+    "real_user_essay_externalization",
+)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -235,15 +264,43 @@ def _build_parser() -> argparse.ArgumentParser:
     openai_extract_units = subparsers.add_parser(
         "openai-extract-units",
         help=(
-            "future OpenAI extract_units safety valve; fails closed before "
-            "key reads or provider calls in this stage"
+            "controlled OpenAI extract_units live-smoke path; blocked by "
+            "default before key reads or provider calls"
         ),
     )
     _add_openai_extract_arguments(openai_extract_units)
+    openai_extract_units.add_argument("--vault-root", default=DEFAULT_VAULT_ROOT)
+    openai_extract_units.add_argument("--created-at", default=_utc_now())
     openai_extract_units.add_argument(
         "--real-provider-call-approved",
         action="store_true",
-        help="future safety flag; still blocked without separate live-smoke approval",
+        help="enable the real-provider request flag for the approved smoke",
+    )
+    openai_extract_units.add_argument(
+        "--api-key-value-reading-approved",
+        action="store_true",
+        help="allow key reading only inside the approved live-smoke path",
+    )
+    openai_extract_units.add_argument(
+        "--real-network-call-approved",
+        action="store_true",
+        help="allow network execution only for the approved live smoke",
+    )
+    openai_extract_units.add_argument(
+        "--live-smoke-approved",
+        action="store_true",
+        help="record one-manual-live-smoke approval for this invocation",
+    )
+    openai_extract_units.add_argument(
+        "--prompt-source-schema-externalization-approved",
+        action="store_true",
+        help="allow fixture prompt/source/schema externalization for this smoke",
+    )
+    openai_extract_units.add_argument("--cost-limit", type=float)
+    openai_extract_units.add_argument("--cost-limit-approved", action="store_true")
+    openai_extract_units.add_argument(
+        "--raw-output-retention",
+        default="hash_and_metadata_only",
     )
     return parser
 
@@ -499,11 +556,18 @@ def _run_openai_extract_units_command(
     stderr: TextIO,
 ) -> int:
     try:
+        config = _openai_config_from_args(args)
+        if _openai_live_execution_requested(args):
+            return _run_openai_live_extract_units_command(
+                args,
+                config=config,
+                stdout=stdout,
+            )
+
         execution_request = _build_openai_execution_request_from_args(
             args,
             real_provider_calls_enabled=False,
         )
-        config = _openai_config_from_args(args)
         result = OpenAIExecutionClient(config=config).generate(execution_request)
         output: dict[str, object] = {
             "command": "openai-extract-units",
@@ -530,6 +594,118 @@ def _run_openai_extract_units_command(
         print(f"OpenAI extract_units failed before execution: {exc}", file=stderr)
         return 1
     return 0 if result.succeeded else 1
+
+
+def _run_openai_live_extract_units_command(
+    args: argparse.Namespace,
+    *,
+    config: OpenAIAdapterConfig,
+    stdout: TextIO,
+) -> int:
+    preflight_blockers = _openai_live_smoke_preflight_blockers(args)
+    if preflight_blockers:
+        stdout.write(
+            json.dumps(
+                {
+                    "command": "openai-extract-units",
+                    "stage_label": OPENAI_LIVE_SMOKE_STAGE_LABEL,
+                    "provider": OPENAI_PROVIDER,
+                    "run_id": args.run_id,
+                    "succeeded": False,
+                    "provider_called": False,
+                    "network_call": False,
+                    "api_key_value_read": False,
+                    "raw_provider_request_persisted": False,
+                    "raw_provider_response_persisted": False,
+                    "blockers": preflight_blockers,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        stdout.write("\n")
+        return 1
+
+    if not os.environ.get(config.api_key_env_var):
+        stdout.write(
+            json.dumps(
+                {
+                    "command": "openai-extract-units",
+                    "stage_label": OPENAI_LIVE_SMOKE_STAGE_LABEL,
+                    "provider": OPENAI_PROVIDER,
+                    "run_id": args.run_id,
+                    "succeeded": False,
+                    "provider_called": False,
+                    "network_call": False,
+                    "api_key_value_read": True,
+                    "raw_provider_request_persisted": False,
+                    "raw_provider_response_persisted": False,
+                    "blockers": [
+                        "approved API key environment variable is not set"
+                    ],
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        stdout.write("\n")
+        return 1
+
+    essay = read_markdown_essay(args.essay, root=args.root)
+    spec = ExtractUnitsProviderRequestSpec(
+        run_id=args.run_id,
+        provider=OPENAI_PROVIDER,
+        model=args.model,
+        prompt_version=args.prompt_version,
+        schema_version=args.schema_version,
+        timeout_seconds=args.timeout_seconds,
+        max_retries=args.max_retries,
+        real_provider_calls_enabled=args.real_provider_call_approved,
+    )
+    provider = OpenAIExecutionClient(config=config)
+    orchestration = run_extract_units_provider_orchestration(
+        provider,
+        essay,
+        spec,
+        model_policy=_openai_live_model_policy(args),
+    )
+    artifacts = _persist_openai_live_smoke_artifacts(
+        orchestration,
+        vault_root=args.vault_root,
+        created_at=args.created_at,
+    )
+    result = orchestration.extraction_run.provider_result
+    output: dict[str, object] = {
+        "command": "openai-extract-units",
+        "stage_label": OPENAI_LIVE_SMOKE_STAGE_LABEL,
+        "provider": OPENAI_PROVIDER,
+        "run_id": orchestration.request.run_id,
+        "source_input_id": orchestration.rendered_prompt.source_input_id,
+        "requested_real_provider_call": args.real_provider_call_approved,
+        "live_smoke_approved": args.live_smoke_approved,
+        "succeeded": orchestration.is_valid,
+        "provider_called": True,
+        "network_call": True,
+        "api_key_value_read": True,
+        "raw_provider_request_persisted": False,
+        "raw_provider_response_persisted": False,
+        "prompt_hash": orchestration.rendered_prompt.prompt_hash,
+        "output_hash": orchestration.run_log.output_hash,
+        "validation_status": orchestration.run_log.validation_status.value,
+        "errors": list(orchestration.errors),
+        "written_paths": artifacts,
+        "formal_write_performed": False,
+        "patch_acceptance": False,
+        "publication_performed": False,
+    }
+    if result.response is not None:
+        output["provider_request_id"] = result.response.provider_request_id
+        output["raw_output_persisted"] = result.response.raw_output_persisted
+    if result.error is not None:
+        output["error"] = dict(result.error.to_mapping())
+    stdout.write(json.dumps(output, indent=2, sort_keys=True))
+    stdout.write("\n")
+    return 0 if orchestration.is_valid else 1
 
 
 def _build_openai_execution_request_from_args(
@@ -563,6 +739,170 @@ def _openai_config_from_args(args: argparse.Namespace) -> OpenAIAdapterConfig:
         api_key_env_var=args.api_key_env_var,
         timeout_seconds=args.timeout_seconds,
         max_retries=args.max_retries,
+        api_key_value_reading_approved=getattr(
+            args,
+            "api_key_value_reading_approved",
+            False,
+        ),
+        real_provider_calls_approved=getattr(
+            args,
+            "real_provider_call_approved",
+            False,
+        ),
+        real_network_calls_approved=getattr(
+            args,
+            "real_network_call_approved",
+            False,
+        ),
+        live_smoke_approved=getattr(args, "live_smoke_approved", False),
+        prompt_source_schema_externalization_approved=getattr(
+            args,
+            "prompt_source_schema_externalization_approved",
+            False,
+        ),
+        cost_limit=getattr(args, "cost_limit", None),
+        cost_limit_approved=getattr(args, "cost_limit_approved", False),
+    )
+
+
+def _openai_live_execution_requested(args: argparse.Namespace) -> bool:
+    return any(
+        (
+            getattr(args, "api_key_value_reading_approved", False),
+            getattr(args, "real_network_call_approved", False),
+            getattr(args, "live_smoke_approved", False),
+            getattr(args, "prompt_source_schema_externalization_approved", False),
+            getattr(args, "cost_limit_approved", False),
+        )
+    )
+
+
+def _openai_live_smoke_preflight_blockers(args: argparse.Namespace) -> list[str]:
+    blockers: list[str] = []
+    if args.model != OPENAI_LIVE_SMOKE_MODEL:
+        blockers.append(f"model must be {OPENAI_LIVE_SMOKE_MODEL}")
+    if args.api_key_env_var != OPENAI_API_KEY_ENV_VAR:
+        blockers.append(f"api_key_env_var must be {OPENAI_API_KEY_ENV_VAR}")
+    if args.timeout_seconds != OPENAI_LIVE_SMOKE_TIMEOUT_SECONDS:
+        blockers.append(
+            f"timeout_seconds must be {OPENAI_LIVE_SMOKE_TIMEOUT_SECONDS}"
+        )
+    if args.max_retries != 0:
+        blockers.append("max_retries must be 0")
+    if args.cost_limit != OPENAI_LIVE_SMOKE_COST_LIMIT:
+        blockers.append(f"cost_limit must be {OPENAI_LIVE_SMOKE_COST_LIMIT}")
+    if args.raw_output_retention != OPENAI_LIVE_SMOKE_RAW_OUTPUT_RETENTION:
+        blockers.append(
+            "raw_output_retention must be "
+            f"{OPENAI_LIVE_SMOKE_RAW_OUTPUT_RETENTION}"
+        )
+    if not Path(args.essay).as_posix().endswith(OPENAI_LIVE_SMOKE_FIXTURE_SUFFIX):
+        blockers.append(
+            f"essay must be the approved fixture {OPENAI_LIVE_SMOKE_FIXTURE_SUFFIX}"
+        )
+    required_flags = {
+        "real_provider_call_approved": args.real_provider_call_approved,
+        "api_key_value_reading_approved": args.api_key_value_reading_approved,
+        "real_network_call_approved": args.real_network_call_approved,
+        "live_smoke_approved": args.live_smoke_approved,
+        "prompt_source_schema_externalization_approved": (
+            args.prompt_source_schema_externalization_approved
+        ),
+        "cost_limit_approved": args.cost_limit_approved,
+    }
+    for name, approved in required_flags.items():
+        if not approved:
+            blockers.append(f"{name} must be approved")
+    return blockers
+
+
+def _openai_live_model_policy(args: argparse.Namespace) -> ModelPolicy:
+    return ModelPolicy(
+        first_provider=OPENAI_PROVIDER,
+        real_provider_calls_approved=args.real_provider_call_approved,
+        api_key_env_var_policy=APIKeyEnvVarPolicy(
+            env_var_name=args.api_key_env_var,
+            read_allowed=args.api_key_value_reading_approved,
+        ),
+        retry_policy=RetryPolicy(max_retries=args.max_retries),
+        timeout_policy=TimeoutPolicy(
+            default_timeout_seconds=args.timeout_seconds,
+            maximum_timeout_seconds=args.timeout_seconds,
+        ),
+        cost_policy=CostPolicy(cost_limit=args.cost_limit),
+    )
+
+
+def _persist_openai_live_smoke_artifacts(
+    orchestration,
+    *,
+    vault_root: str,
+    created_at: str,
+) -> list[str]:
+    extraction_artifact_path: str | None = None
+    if orchestration.validation_result.proposal is not None:
+        extraction_artifact = write_validated_extraction_artifact(
+            orchestration.validation_result.proposal,
+            vault_root=vault_root,
+            created_at=created_at,
+            context=ExtractionArtifactContext(
+                stage_label=OPENAI_LIVE_SMOKE_STAGE_LABEL,
+                run_scope=OPENAI_LIVE_SMOKE_RUN_SCOPE,
+                real_provider_call=True,
+                fixture_driven=True,
+                prompt_hash=orchestration.rendered_prompt.prompt_hash,
+                not_validated=OPENAI_LIVE_SMOKE_NOT_VALIDATED,
+            ),
+        )
+        extraction_artifact_path = extraction_artifact.relative_path
+
+    run_log_artifact = write_ai_run_log_artifact(
+        orchestration.run_log,
+        vault_root=vault_root,
+        created_at=created_at,
+        context=_openai_live_run_log_context(
+            orchestration,
+            extraction_artifact_path=extraction_artifact_path,
+        ),
+    )
+    paths = [run_log_artifact.relative_path]
+    if extraction_artifact_path is not None:
+        paths.insert(0, extraction_artifact_path)
+    return paths
+
+
+def _openai_live_run_log_context(
+    orchestration,
+    *,
+    extraction_artifact_path: str | None,
+) -> AIRunLogArtifactContext:
+    base = orchestration.run_log_context
+    output_artifacts = ()
+    if extraction_artifact_path is not None:
+        output_artifacts = (
+            AIRunOutputArtifact(
+                artifact_type="validated_extraction_output",
+                path=extraction_artifact_path,
+            ),
+        )
+    return AIRunLogArtifactContext(
+        stage_label=OPENAI_LIVE_SMOKE_STAGE_LABEL,
+        run_scope=OPENAI_LIVE_SMOKE_RUN_SCOPE,
+        real_provider_call=True,
+        fixture_driven=True,
+        prompt_used=True,
+        metrics_scope=AIRunMetricsScope(
+            cost_applicable=True,
+            latency_applicable=True,
+            reason=OPENAI_LIVE_SMOKE_RUN_SCOPE,
+        ),
+        source_input_id=orchestration.rendered_prompt.source_input_id,
+        prompt_hash=orchestration.rendered_prompt.prompt_hash,
+        output_artifacts=output_artifacts,
+        not_validated=OPENAI_LIVE_SMOKE_NOT_VALIDATED,
+        provider_request_id=base.provider_request_id,
+        retry_count=base.retry_count,
+        token_usage=base.token_usage,
     )
 
 
