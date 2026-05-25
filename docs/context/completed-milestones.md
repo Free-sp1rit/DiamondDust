@@ -732,3 +732,14 @@ Record completed development milestones and links to reviews here.
 - Validation: See milestone review for final validation results.
 - Dependency impact: No dependency was added or changed.
 - Follow-up: Re-run a controlled DeepSeek fixture smoke after review if product owner wants live confirmation; keep raw provider request/response persistence, formal apply, patch acceptance, publication, provider tools, and broad user-essay externalization out of scope.
+
+## 2026-05-25 — Extraction Unit ID And Enum Prompt Hardening Completed
+
+- Scope: Hardened `extract_units.v1` prompt/schema guidance after controlled DeepSeek fixture smokes reached the provider but failed typed validation because a unit candidate omitted `id` and then emitted an enum field as a non-string value.
+- Outcome: The prompt now includes a request-derived `unit_id_prefix`, explicit required-id instructions, enum-as-string guidance, and fallback guidance to omit incomplete candidates rather than returning objects without ids. The embedded schema describes candidate id expectations, and validation errors now include candidate indexes such as `unit_candidates[0]`.
+- Review: `docs/reviews/milestone-reviews/2026-05-25-extraction-unit-id-prompt-hardening.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider prompt/schema hardening milestone.
+- Validation: See milestone review for final validation results.
+- Dependency impact: No dependency was added or changed.
+- Follow-up: Re-run a controlled DeepSeek fixture smoke to determine whether the provider can now produce a validated extraction artifact before testing real notes.

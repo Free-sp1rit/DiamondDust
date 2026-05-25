@@ -186,13 +186,29 @@ def compute_ai_output_hash(raw_output: object) -> str:
 def _knowledge_units_from_output(value: object) -> tuple[KnowledgeUnit, ...]:
     if not isinstance(value, (list, tuple)):
         raise ExtractionValidationError("unit_candidates must be a list or tuple")
-    return tuple(KnowledgeUnit.from_mapping(item) for item in value)
+    units: list[KnowledgeUnit] = []
+    for index, item in enumerate(value):
+        try:
+            units.append(KnowledgeUnit.from_mapping(item))
+        except ValidationError as exc:
+            raise ExtractionValidationError(
+                f"unit_candidates[{index}]: {exc}"
+            ) from exc
+    return tuple(units)
 
 
 def _relations_from_output(value: object) -> tuple[Relation, ...]:
     if not isinstance(value, (list, tuple)):
         raise ExtractionValidationError("relation_candidates must be a list or tuple")
-    return tuple(Relation.from_mapping(item) for item in value)
+    relations: list[Relation] = []
+    for index, item in enumerate(value):
+        try:
+            relations.append(Relation.from_mapping(item))
+        except ValidationError as exc:
+            raise ExtractionValidationError(
+                f"relation_candidates[{index}]: {exc}"
+            ) from exc
+    return tuple(relations)
 
 
 def _require_preserved_source_refs(

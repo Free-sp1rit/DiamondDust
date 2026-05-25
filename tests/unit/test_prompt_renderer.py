@@ -44,11 +44,20 @@ class PromptRendererTests(unittest.TestCase):
         )
         self.assertTrue(prompt.prompt_hash.startswith("sha256:"))
         self.assertIn("Return structured JSON only.", prompt.system_prompt)
+        self.assertIn("Do not omit required fields.", prompt.system_prompt)
         self.assertIn("Do not generate KnowledgePatch", prompt.system_prompt)
         self.assertIn("source_input_id as immutable request context", prompt.system_prompt)
         self.assertIn("source_input_id: raw_essay_prompt_renderer_ab12cd", prompt.user_prompt)
         self.assertIn(
+            "unit_id_prefix: unit_raw_essay_prompt_renderer_ab12cd_",
+            prompt.user_prompt,
+        )
+        self.assertIn(
             "top-level source_input_id must be exactly: raw_essay_prompt_renderer_ab12cd",
+            prompt.user_prompt,
+        )
+        self.assertIn(
+            "every unit candidate id must be non-empty and begin with: unit_raw_essay_prompt_renderer_ab12cd_",
             prompt.user_prompt,
         )
         self.assertIn(
@@ -63,6 +72,26 @@ class PromptRendererTests(unittest.TestCase):
         self.assertIn("relation_candidates may be empty", prompt.output_instructions)
         self.assertIn(
             "source_input_id value must exactly equal the source_input_id",
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            "Every unit_candidates item must include a non-empty id field.",
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            "unit_raw_essay_prompt_renderer_ab12cd_<short_label>",
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            "All enum-valued fields must be JSON strings",
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            'unit_candidates[].type must be one of: "raw_essay", "question", "evidence", "concept", "claim", "synthesis", "map", "article"',
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            'unit_candidates[].status must be one of: "seedling", "budding", "evergreen", "outdated", "superseded"',
             prompt.output_instructions,
         )
         self.assertIn("source_ref fields exactly", prompt.output_instructions)

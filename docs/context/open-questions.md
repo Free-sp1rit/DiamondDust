@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-23
+Last updated: 2026-05-25
 
 ## Tooling and Repository Shape
 
@@ -76,10 +76,10 @@ Last updated: 2026-05-23
 - Needed decision: After the first manual smoke, decide whether the OpenAI request mapping, structured-output mechanism, cost metadata, source binding, and validated extraction artifact shape are sufficient for follow-up real-provider evaluation.
 - Impact: Affects provider SDK coupling, privacy posture, replayability, prompt traceability, cost control, and extraction quality evaluation.
 
-### 2026-05-23 — Should DeepSeek get a controlled live-smoke decision package?
+### 2026-05-23 — What should DeepSeek use for schema-constrained extraction?
 
-- Context: DeepSeek adapter code, sanitized preview, dry-run, fail-closed extract path, and fake/mock tests now exist. No DeepSeek API key value has been read and no DeepSeek network call has been executed. DeepSeek JSON Output mode uses `response_format={"type": "json_object"}` and depends on typed runtime validation for schema acceptance.
-- Needed decision: Decide whether to create a DeepSeek-specific manual live-smoke decision package, including model, fixture or real-user essay scope, cost limit, API key value reading, network call approval, and source externalization scope.
+- Context: DeepSeek adapter code, sanitized preview, dry-run, fail-closed extract path, fake/mock tests, and controlled fixture smoke commands now exist. On 2026-05-25, controlled fixture smokes reached DeepSeek and returned provider request ids, but typed validation still failed after prompt hardening: first top-level source identity, then missing unit id, then non-string enum, then non-array `unit_candidates`. DeepSeek JSON Output mode uses `response_format={"type": "json_object"}` and does not provide the same strict JSON Schema enforcement expected from stronger structured-output mechanisms.
+- Needed decision: Decide whether to keep iterating prompt guidance, try a different DeepSeek model or API mechanism, add a narrow safe normalization layer for common JSON-mode shape drift, or prioritize providers with strict schema output before testing real notes.
 - Impact: Affects external provider cost, privacy, provider comparison, extraction quality evaluation, and whether DeepSeek becomes a durable alternative to OpenAI.
 
 ## Patch Review
