@@ -4,6 +4,14 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-25 — Harden extraction prompt guidance for candidate ids and enums
+
+- Decision: The `extract_units.v1` prompt now includes a request-derived `unit_id_prefix`, explicit instructions that every `unit_candidates` item must include a non-empty id, and explicit guidance that enum-valued fields must be JSON strings. The embedded output schema also describes the candidate id expectation, and extraction validation errors identify the failing candidate index.
+- Reason: DeepSeek JSON Output mode reached the provider but returned incomplete or wrongly typed unit candidate fields. Prompt-guided providers need more explicit candidate identity and enum-string instructions, while typed validation must remain fail-closed.
+- Alternatives: Auto-fill missing ids in application code; require a schema version change; persist raw provider output for manual patching.
+- Risks: Prompt guidance may still not guarantee compliance for JSON-mode providers, and id/enum convention tuning may be needed after more provider samples.
+- Follow-up: Re-run a controlled DeepSeek fixture smoke and review whether the provider can now produce a validated extraction artifact.
+
 ### 2026-05-25 — Bind top-level provider source identity from request context
 
 - Decision: The application provider extraction handoff treats the request payload `source_input_id` as authoritative top-level lineage and binds that value into structured provider output before typed validation.

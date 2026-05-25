@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import re
 from textwrap import dedent
 from types import MappingProxyType
 from typing import Mapping
@@ -105,6 +106,7 @@ def render_extract_units_prompt(
     body_content_hash = _expect_str(payload, "body_content_hash")
     frontmatter = _expect_mapping(payload, "frontmatter")
     source_ref = _expect_mapping(payload, "source_ref")
+    unit_id_prefix = _unit_id_prefix(source_input_id)
 
     system_prompt = _system_prompt()
     output_schema = extraction_output_json_schema()
@@ -114,10 +116,12 @@ def render_extract_units_prompt(
         request.schema_version,
         output_schema=output_schema,
         output_schema_hash=output_schema_hash,
+        unit_id_prefix=unit_id_prefix,
     )
     user_prompt = _user_prompt(
         source_input_id=source_input_id,
         source_path=source_path,
+        unit_id_prefix=unit_id_prefix,
         body_line_start=body_line_start,
         body_line_end=body_line_end,
         raw_content_hash=raw_content_hash,
@@ -178,6 +182,7 @@ def _system_prompt() -> str:
         Preserve source references exactly from the supplied source_ref payload.
         Treat the supplied source_input_id as immutable request context, not text to summarize or replace.
         Return structured JSON only.
+        Do not omit required fields. If no complete unit candidate can be formed, return empty candidate arrays.
         Do not generate KnowledgePatch data, formal notes, blog drafts, publication content, or tool calls.
         Do not invent sources.
         """
@@ -189,7 +194,17 @@ def _output_instructions(
     *,
     output_schema: Mapping[str, object],
     output_schema_hash: str,
+    unit_id_prefix: str,
 ) -> str:
+    unit_type_values = _schema_enum_values(output_schema, "knowledge_unit", "type")
+    status_values = _schema_enum_values(output_schema, "knowledge_unit", "status")
+    confidence_values = _schema_enum_values(
+        output_schema,
+        "knowledge_unit",
+        "confidence",
+    )
+    relation_type_values = _schema_enum_values(output_schema, "relation", "relation_type")
+    source_origin_values = _schema_enum_values(output_schema, "source_ref", "origin")
     return dedent(
         f"""\
         Return one JSON object with:
@@ -203,6 +218,17 @@ def _output_instructions(
         Output schema hash: {output_schema_hash}
 
         unit_candidates items must include id, type, title, content, status, source_refs, relations, confidence, created_at, updated_at, and schema_version.
+        Every unit_candidates item must include a non-empty id field.
+        Generate each id as lowercase snake_case using this exact prefix plus a short semantic label: {unit_id_prefix}<short_label>
+        Example unit id: {unit_id_prefix}core_claim
+        Never return a unit candidate object without id. If a complete unit candidate cannot be produced, omit that candidate.
+        All enum-valued fields must be JSON strings, never objects, arrays, booleans, or explanatory text:
+        - unit_candidates[].type must be one of: {unit_type_values}
+        - unit_candidates[].status must be one of: {status_values}
+        - unit_candidates[].confidence must be one of: {confidence_values}
+        - unit_candidates[].source_refs[].origin must be one of: {source_origin_values}
+        - relation_candidates[].relation_type must be one of: {relation_type_values}
+        - relation_candidates[].confidence must be one of: {confidence_values}
         relation_candidates may be empty.
         Every source_refs item must preserve the supplied source_ref fields exactly,
         including source_id, source_path, source_span, origin, line_start, line_end,
@@ -221,6 +247,7 @@ def _user_prompt(
     *,
     source_input_id: str,
     source_path: str,
+    unit_id_prefix: str,
     body_line_start: int,
     body_line_end: int,
     raw_content_hash: str,
@@ -233,6 +260,7 @@ def _user_prompt(
         f"""\
         source_input_id: {source_input_id}
         source_path: {source_path}
+        unit_id_prefix: {unit_id_prefix}
         body_line_start: {body_line_start}
         body_line_end: {body_line_end}
         raw_content_hash: {raw_content_hash}
@@ -242,6 +270,7 @@ def _user_prompt(
 
         Required output binding:
         - top-level source_input_id must be exactly: {source_input_id}
+        - every unit candidate id must be non-empty and begin with: {unit_id_prefix}
         - every unit candidate source_refs item must use source_id exactly: {source_input_id}
         - source_refs must be copied from source_ref_json, not inferred from the Markdown body
 
@@ -279,6 +308,36 @@ def _stable_json_mapping(data: Mapping[str, object]) -> str:
         return json.dumps(dict(data), sort_keys=True, ensure_ascii=True)
     except TypeError as exc:
         raise PromptRenderError("prompt metadata must be JSON serializable") from exc
+
+
+def _unit_id_prefix(source_input_id: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9]+", "_", source_input_id).strip("_").lower()
+    if not slug:
+        raise PromptRenderError("source_input_id cannot produce unit_id_prefix")
+    return f"unit_{slug}_"
+
+
+def _schema_enum_values(
+    output_schema: Mapping[str, object],
+    definition_name: str,
+    property_name: str,
+) -> str:
+    definition = _expect_mapping(
+        _expect_mapping(output_schema, "$defs"),
+        definition_name,
+    )
+    property_schema = _expect_mapping(
+        _expect_mapping(definition, "properties"),
+        property_name,
+    )
+    values = property_schema.get("enum")
+    if not isinstance(values, list) or not all(
+        isinstance(value, str) and value for value in values
+    ):
+        raise PromptRenderError(
+            f"output schema {definition_name}.{property_name} enum is invalid"
+        )
+    return ", ".join(f'"{value}"' for value in values)
 
 
 def _require_supported_output_schema(
