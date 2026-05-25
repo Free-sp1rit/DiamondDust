@@ -743,3 +743,14 @@ Record completed development milestones and links to reviews here.
 - Validation: See milestone review for final validation results.
 - Dependency impact: No dependency was added or changed.
 - Follow-up: Re-run a controlled DeepSeek fixture smoke to determine whether the provider can now produce a validated extraction artifact before testing real notes.
+
+## 2026-05-25 — DeepSeek JSON Mode Output Instructions Completed
+
+- Scope: Contained DeepSeek JSON mode output shaping inside the DeepSeek adapter by adding provider-neutral output instructions, a compact JSON example, and a `max_tokens` request field to the Chat Completions mapping.
+- Outcome: Controlled DeepSeek fixture live smoke `run_deepseek_live_smoke_codex_after_json_mode_20260525T145000Z` passed typed extraction validation and wrote a validated extraction artifact plus AI run log without raw provider request/response persistence, formal vault writes, patch acceptance, or publication.
+- Review: `docs/reviews/milestone-reviews/2026-05-25-deepseek-json-mode-output-instructions.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider adapter hardening and live-smoke validation milestone.
+- Validation: 262 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, architecture scan reported 0 violations, and controlled DeepSeek fixture live smoke passed.
+- Dependency impact: No dependency was added or changed.
+- Follow-up: Evaluate DeepSeek extraction quality on a product-owner-approved non-sensitive real note before enabling downstream patch generation from DeepSeek output.

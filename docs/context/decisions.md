@@ -572,6 +572,14 @@ Record durable technical and governance decisions here.
 - Risks: The artifact could be mistaken for formal knowledge or patch acceptance, so the persisted payload includes explicit boundaries and remains under `_ai_suggestions/`.
 - Follow-up: Revisit extraction artifact fields after real provider smoke feedback, especially source-span auditing, quality metrics, and replay needs.
 
+### 2026-05-25 — Keep DeepSeek JSON mode shaping inside the adapter
+
+- Decision: The DeepSeek adapter now adds the provider-neutral output instructions and a compact JSON example to the DeepSeek Chat Completions system message, and maps an adapter-level `max_tokens` value into requests.
+- Reason: DeepSeek JSON mode returns valid JSON but does not enforce DiamondDust's schema. Keeping the JSON mode shaping inside `src/diamonddust/ai/adapters/deepseek.py` preserves high cohesion, avoids provider-specific behavior in domain validation, and lets typed runtime validation remain the acceptance boundary.
+- Alternatives: Add alias compatibility for provider-chosen keys such as `units`; move DeepSeek-specific wording into the domain schema or application orchestrator; switch to raw-output postprocessing.
+- Risks: The prompt payload becomes larger for DeepSeek calls, and successful fixture validation does not prove extraction quality on real user notes.
+- Follow-up: Evaluate DeepSeek extraction quality on a product-owner-approved non-sensitive real note before enabling downstream patch generation from DeepSeek output.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
