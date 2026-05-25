@@ -1,6 +1,7 @@
 # DeepSeek Provider Adapter Design
 
-Status: implemented provider boundary; no live call executed by this stage.
+Status: implemented provider boundary; controlled fixture live smoke now
+validated after JSON mode output-instruction hardening.
 
 ## Source References
 
@@ -62,14 +63,20 @@ into:
 
 - `chat.completions.create`
 - `model`: explicit CLI/runtime model
-- `messages`: rendered system and user prompt messages
+- `messages`: rendered system and user prompt messages, with DeepSeek-specific
+  JSON mode shaping contained inside the adapter by adding the provider-neutral
+  output instructions and a compact JSON example to the system message
 - `response_format`: `{"type": "json_object"}`
+- `max_tokens`: explicit adapter/CLI limit, defaulting to `4096`
 - `stream`: `false`
 - `base_url`: `https://api.deepseek.com`
 
-The DeepSeek API guide requires the prompt to request JSON output when JSON mode
-is used. DiamondDust's `extract_units.v1` prompt already includes JSON output
-instructions and the provider-neutral output schema in the prompt package.
+The DeepSeek API guide requires the prompt to request JSON output and provide
+an example when JSON mode is used. DiamondDust keeps the provider-neutral
+instructions in the prompt package and lets the DeepSeek adapter decide how to
+place those instructions into Chat Completions messages. This keeps
+DeepSeek-specific JSON mode handling out of domain validation and application
+orchestration.
 
 Unlike the OpenAI Responses adapter path, this adapter does not rely on
 provider-side strict JSON Schema enforcement. DiamondDust typed runtime
@@ -139,6 +146,4 @@ for this stage does not execute it against DeepSeek.
 - approved DeepSeek model for live use
 - whether real user essays may be externalized
 - manual live-smoke scope and cost limit
-- whether to keep JSON Output mode or add provider-specific schema prompting
-  refinements
 - how to evaluate real DeepSeek extraction quality before downstream patch work

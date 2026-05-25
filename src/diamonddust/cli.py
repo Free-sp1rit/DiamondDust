@@ -37,6 +37,7 @@ from diamonddust.ai.adapters.openai import (
 from diamonddust.ai.adapters.deepseek import (
     DEEPSEEK_API_KEY_ENV_VAR,
     DEEPSEEK_BASE_URL,
+    DEEPSEEK_DEFAULT_MAX_TOKENS,
     DEEPSEEK_PROVIDER,
     DeepSeekAdapterConfig,
     DeepSeekExecutionClient,
@@ -433,6 +434,7 @@ def _add_deepseek_extract_arguments(command: argparse.ArgumentParser) -> None:
     )
     command.add_argument("--timeout-seconds", type=int, default=30)
     command.add_argument("--max-retries", type=int, default=0)
+    command.add_argument("--max-tokens", type=int, default=DEEPSEEK_DEFAULT_MAX_TOKENS)
 
 
 def _add_provider_readiness_arguments(command: argparse.ArgumentParser) -> None:
@@ -1255,6 +1257,7 @@ def _deepseek_config_from_args(args: argparse.Namespace) -> DeepSeekAdapterConfi
         base_url=args.base_url,
         timeout_seconds=args.timeout_seconds,
         max_retries=args.max_retries,
+        max_tokens=args.max_tokens,
         api_key_value_reading_approved=getattr(
             args,
             "api_key_value_reading_approved",
