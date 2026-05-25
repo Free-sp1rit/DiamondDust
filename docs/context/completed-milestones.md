@@ -721,3 +721,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 259 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, and architecture scan reported 0 violations.
 - Dependency impact: No new dependency was added; the existing OpenAI SDK dependency is reused behind the DeepSeek adapter because DeepSeek documents OpenAI-compatible access.
 - Follow-up: Create a DeepSeek-specific live-smoke decision package before reading a DeepSeek key value or calling the provider.
+
+## 2026-05-25 — Provider Source Context Binding Hardened
+
+- Scope: Updated the provider-neutral extraction prompt and application provider handoff after DeepSeek live probes reached the provider but failed validation on top-level source identity.
+- Outcome: Prompt instructions now explicitly require exact `source_input_id` and `source_ref` preservation. The application handoff binds the top-level provider output `source_input_id` from request context before typed validation, while unit `source_refs` must still match the request-bound source id or fail closed.
+- Review: `docs/reviews/milestone-reviews/2026-05-25-provider-source-context-binding.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider extraction boundary hardening milestone.
+- Validation: See milestone review for final validation results.
+- Dependency impact: No dependency was added or changed.
+- Follow-up: Re-run a controlled DeepSeek fixture smoke after review if product owner wants live confirmation; keep raw provider request/response persistence, formal apply, patch acceptance, publication, provider tools, and broad user-essay externalization out of scope.

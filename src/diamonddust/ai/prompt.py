@@ -176,6 +176,7 @@ def _system_prompt() -> str:
         You are DiamondDust's provider-neutral extraction adapter.
         Extract reviewable knowledge unit candidates from the supplied Markdown body.
         Preserve source references exactly from the supplied source_ref payload.
+        Treat the supplied source_input_id as immutable request context, not text to summarize or replace.
         Return structured JSON only.
         Do not generate KnowledgePatch data, formal notes, blog drafts, publication content, or tool calls.
         Do not invent sources.
@@ -196,12 +197,16 @@ def _output_instructions(
         - unit_candidates
         - relation_candidates
 
+        The top-level source_input_id value must exactly equal the source_input_id
+        shown in the user prompt.
         Output schema id: {EXTRACTION_OUTPUT_SCHEMA_ID}
         Output schema hash: {output_schema_hash}
 
         unit_candidates items must include id, type, title, content, status, source_refs, relations, confidence, created_at, updated_at, and schema_version.
         relation_candidates may be empty.
-        Every source_refs item must preserve the supplied source_ref fields.
+        Every source_refs item must preserve the supplied source_ref fields exactly,
+        including source_id, source_path, source_span, origin, line_start, line_end,
+        content_hash, and is_approximate when those fields are supplied.
         Use schema_version {schema_version!r}.
 
         output_schema_json:
@@ -234,6 +239,11 @@ def _user_prompt(
         body_content_hash: {body_content_hash}
         frontmatter_json: {_stable_json_mapping(frontmatter)}
         source_ref_json: {_stable_json_mapping(source_ref)}
+
+        Required output binding:
+        - top-level source_input_id must be exactly: {source_input_id}
+        - every unit candidate source_refs item must use source_id exactly: {source_input_id}
+        - source_refs must be copied from source_ref_json, not inferred from the Markdown body
 
         Markdown body:
         ```markdown

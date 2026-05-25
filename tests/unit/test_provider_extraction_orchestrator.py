@@ -112,7 +112,29 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
             run.rendered_prompt.prompt_hash,
         )
 
-    def test_provider_output_must_match_prompt_source_input_id(self) -> None:
+    def test_provider_handoff_binds_top_level_source_input_id_from_request(self) -> None:
+        essay = _essay()
+        spec = _spec()
+        request = build_extract_units_provider_request(essay, spec)
+        output = _valid_output(request.input_payload)
+        output["source_input_id"] = "raw_essay_provider_generated_wrong_id"
+
+        run = run_extract_units_provider_orchestration(
+            FakeExecutionProvider(structured_output=output),
+            essay,
+            spec,
+        )
+
+        self.assertTrue(run.is_valid, run.errors)
+        self.assertIsNotNone(run.validation_result.proposal)
+        self.assertEqual(run.validation_result.proposal.source_input_id, essay.source_id)
+        self.assertEqual(run.run_log.validation_status.value, "passed")
+        self.assertEqual(
+            run.run_log_context.to_mapping()["source_input_id"],
+            essay.source_id,
+        )
+
+    def test_provider_output_source_refs_must_match_prompt_source_input_id(self) -> None:
         essay = _essay()
         spec = _spec()
         request = build_extract_units_provider_request(essay, spec)
@@ -131,7 +153,7 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
         self.assertFalse(run.is_valid)
         self.assertIsNone(run.validation_result.proposal)
         self.assertEqual(run.run_log.validation_status.value, "failed")
-        self.assertIn("must match request source_input_id", run.errors[0])
+        self.assertIn("must reference source_input_id", run.errors[0])
         self.assertEqual(
             run.run_log_context.to_mapping()["source_input_id"],
             essay.source_id,

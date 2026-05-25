@@ -56,7 +56,7 @@ Rules:
 - The schema does not approve provider calls or provider SDK integration.
 - The schema does not read API keys, call providers, or persist raw provider output.
 - The schema is a contract aid only; typed runtime validation remains authoritative before output becomes domain data.
-- Runtime validation may enforce rules that JSON Schema cannot fully express, such as source references matching the top-level `source_input_id`.
+- Runtime validation may enforce rules that JSON Schema cannot fully express, such as source references matching the request-bound `source_input_id`.
 
 ## Provider Request Builder
 
@@ -118,6 +118,8 @@ Rules:
 - Prompt rendering must include the provider-neutral `extract_units` output schema in the prompt package.
 - Prompt identity must change when the output schema identity changes.
 - Prompt rendering must preserve source metadata and instruct providers not to invent sources.
+- Prompt rendering must instruct providers to preserve the exact request
+  `source_input_id` and copied `source_ref` values.
 - Prompt rendering must not generate KnowledgePatch data, formal notes, blog drafts, publication content, or tool calls.
 - Sending rendered output schema content to a real provider still requires real-provider approval.
 - Sending rendered prompt text to a real provider still requires real-provider approval.
@@ -132,7 +134,7 @@ The orchestrator should:
 - build a provider-neutral request from ingested Markdown
 - render an `extract_units.v1` prompt package
 - execute a provider boundary that returns a typed response/error envelope
-- confirm structured output source identity matches the request source identity
+- bind structured output source identity from the request context before typed validation
 - validate structured provider output before it becomes domain data
 - produce run-log context with provider metadata and prompt hash
 
@@ -142,7 +144,12 @@ Rules:
 - Orchestration does not call providers directly; it receives a provider boundary.
 - Orchestration does not persist prompt packages, run logs, suggestions, reports, or formal vault files by default.
 - Prompt hash may be recorded for traceability, but prompt text must not be persisted by default.
-- Provider output `source_input_id` must match the request payload `source_input_id` before output can be accepted.
+- The request payload `source_input_id` is the authoritative top-level source
+  identity for provider output validation.
+- The application layer may bind the top-level provider output
+  `source_input_id` from request context before typed validation.
+- Unit source references must still preserve the request-bound source identity;
+  source refs that point to another source must fail closed.
 - Provider output must pass typed validation before patch generation.
 - Provider errors must fail closed and produce failed validation results.
 - Real provider execution still requires separate approval.

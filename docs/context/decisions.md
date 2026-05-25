@@ -4,6 +4,14 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-25 — Bind top-level provider source identity from request context
+
+- Decision: The application provider extraction handoff treats the request payload `source_input_id` as authoritative top-level lineage and binds that value into structured provider output before typed validation.
+- Reason: Real provider JSON output can treat `source_input_id` as generated text, but DiamondDust already owns the source identity through the ingested Markdown request. Binding only the top-level lineage field avoids rejecting otherwise source-preserving output while keeping source-reference validation authoritative.
+- Alternatives: Keep failing immediately when top-level provider `source_input_id` differs; let provider adapters rewrite all source refs; persist raw provider output for manual repair.
+- Risks: The run-log `output_hash` tracks the validation payload rather than a full raw response body; raw provider request/response persistence remains intentionally disabled.
+- Follow-up: Keep unit `source_refs` strict. If providers keep producing wrong or incomplete source refs, improve prompt/schema/evaluation before broadening live provider use.
+
 ### 2026-05-23 — Add DeepSeek adapter using OpenAI-compatible SDK boundary
 
 - Decision: Implement DeepSeek as a second concrete provider adapter for `extract_units` using DeepSeek's documented OpenAI-compatible API through the existing OpenAI SDK dependency, with base URL `https://api.deepseek.com` and API key env var name `DIAMONDDUST_DEEPSEEK_API_KEY`.
