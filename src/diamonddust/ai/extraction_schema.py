@@ -73,7 +73,7 @@ def extraction_output_json_schema() -> dict[str, Any]:
             "schema_version",
         ],
         "properties": {
-            "id": _non_empty_string(),
+            "id": _knowledge_unit_id_string(),
             "type": _enum_values(UnitType),
             "title": _non_empty_string(),
             "content": _non_empty_string(),
@@ -136,6 +136,18 @@ def extraction_output_json_schema() -> dict[str, Any]:
 
 def _non_empty_string() -> dict[str, Any]:
     return {"type": "string", "minLength": 1}
+
+
+def _knowledge_unit_id_string() -> dict[str, Any]:
+    return {
+        "type": "string",
+        "minLength": 1,
+        "description": (
+            "Required stable candidate id for this extracted unit. Use a "
+            "lowercase snake_case id beginning with unit_ unless the prompt "
+            "provides a stricter unit_id_prefix."
+        ),
+    }
 
 
 def _positive_integer() -> dict[str, Any]:

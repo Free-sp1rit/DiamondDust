@@ -61,7 +61,19 @@ class AIExtractionProposalTests(unittest.TestCase):
         self.assertFalse(result.is_valid)
         self.assertIsNone(result.proposal)
         self.assertEqual(result.run_log.validation_status, AIValidationStatus.FAILED)
+        self.assertIn("unit_candidates[0]", result.errors[0])
         self.assertIn("unsupported value", result.errors[0])
+
+    def test_missing_unit_id_reports_candidate_index(self) -> None:
+        output = _valid_output()
+        del output["unit_candidates"][0]["id"]
+
+        result = validate_extraction_output(output, _metadata())
+
+        self.assertFalse(result.is_valid)
+        self.assertIsNone(result.proposal)
+        self.assertEqual(result.run_log.validation_status, AIValidationStatus.FAILED)
+        self.assertIn("unit_candidates[0]: id is required", result.errors[0])
 
     def test_unit_candidates_must_preserve_source_refs(self) -> None:
         output = _valid_output()

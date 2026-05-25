@@ -80,6 +80,8 @@ class ExtractionOutputSchemaTests(unittest.TestCase):
         unit_properties = schema["$defs"]["knowledge_unit"]["properties"]
 
         self.assertEqual(unit_properties["source_refs"]["minItems"], 1)
+        self.assertIn("Required stable candidate id", unit_properties["id"]["description"])
+        self.assertIn("unit_", unit_properties["id"]["description"])
         self.assertIn("source_ref whose source_id matches", schema["$comment"])
         self.assertIn("does not authorize provider calls", schema["$comment"])
 

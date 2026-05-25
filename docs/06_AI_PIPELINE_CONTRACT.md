@@ -97,6 +97,7 @@ Rendered prompt packages should include:
 - input hash
 - source input id
 - source path
+- unit id prefix for candidate ids
 - output schema id
 - output schema version
 - output schema hash
@@ -120,6 +121,11 @@ Rules:
 - Prompt rendering must preserve source metadata and instruct providers not to invent sources.
 - Prompt rendering must instruct providers to preserve the exact request
   `source_input_id` and copied `source_ref` values.
+- Prompt rendering must instruct providers to include non-empty
+  `unit_candidates[].id` values and may provide a request-derived
+  `unit_id_prefix` for stable candidate ids.
+- Prompt rendering must instruct providers that enum-valued fields are JSON
+  strings, not objects or explanatory text.
 - Prompt rendering must not generate KnowledgePatch data, formal notes, blog drafts, publication content, or tool calls.
 - Sending rendered output schema content to a real provider still requires real-provider approval.
 - Sending rendered prompt text to a real provider still requires real-provider approval.
