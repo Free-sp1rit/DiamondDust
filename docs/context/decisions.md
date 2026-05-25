@@ -4,6 +4,22 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-25 — Bind top-level provider source identity from request context
+
+- Decision: The application provider extraction handoff treats the request payload `source_input_id` as authoritative top-level lineage and binds that value into structured provider output before typed validation.
+- Reason: Real provider JSON output can treat `source_input_id` as generated text, but DiamondDust already owns the source identity through the ingested Markdown request. Binding only the top-level lineage field avoids rejecting otherwise source-preserving output while keeping source-reference validation authoritative.
+- Alternatives: Keep failing immediately when top-level provider `source_input_id` differs; let provider adapters rewrite all source refs; persist raw provider output for manual repair.
+- Risks: The run-log `output_hash` tracks the validation payload rather than a full raw response body; raw provider request/response persistence remains intentionally disabled.
+- Follow-up: Keep unit `source_refs` strict. If providers keep producing wrong or incomplete source refs, improve prompt/schema/evaluation before broadening live provider use.
+
+### 2026-05-23 — Add DeepSeek adapter using OpenAI-compatible SDK boundary
+
+- Decision: Implement DeepSeek as a second concrete provider adapter for `extract_units` using DeepSeek's documented OpenAI-compatible API through the existing OpenAI SDK dependency, with base URL `https://api.deepseek.com` and API key env var name `DIAMONDDUST_DEEPSEEK_API_KEY`.
+- Reason: The product owner requested DeepSeek API-key call support, and DeepSeek's official docs support OpenAI SDK-compatible access. Reusing the existing SDK avoids adding another production dependency while keeping provider-specific behavior isolated to the AI adapter layer.
+- Alternatives: Add a separate DeepSeek SDK or use direct HTTP. Both would increase dependency or locally maintained protocol surface before DeepSeek quality is validated.
+- Risks: DeepSeek JSON Output mode is prompt-guided and weaker than provider-side strict JSON Schema, so DiamondDust typed runtime validation remains the acceptance boundary before output can become domain data.
+- Follow-up: Do not run DeepSeek live calls until model, cost, key reading, network call, and prompt/source/schema externalization scope are explicitly approved for the run. Consider a DeepSeek-specific readiness package if it becomes a durable provider option.
+
 ### 2026-05-23 — Approve one manual OpenAI fixture live smoke, not recurring live use
 
 - Decision: Record the product-owner decision package for exactly one future manual OpenAI `extract_units` live smoke using `gpt-5.5`, `DIAMONDDUST_OPENAI_API_KEY`, one small fixture essay, timeout 60 seconds, zero retries, no fallback, USD 1.00 per-run cost limit, and hash/metadata-only raw output retention.

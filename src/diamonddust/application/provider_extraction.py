@@ -284,38 +284,27 @@ def _validated_structured_output(
     cost: float | None,
     latency: float | None,
 ) -> ExtractionValidationResult:
-    source_binding_error = _source_binding_error(request, structured_output)
-    if source_binding_error is not None:
-        return _failed_output_validation_result(
-            request,
-            structured_output,
-            source_binding_error,
-            cost=cost,
-            latency=latency,
-        )
-
+    source_bound_output = _source_bound_structured_output(request, structured_output)
     return validate_extraction_output(
-        structured_output,
+        source_bound_output,
         _metadata_from_request(request, cost=cost, latency=latency),
     )
 
 
-def _source_binding_error(
+def _source_bound_structured_output(
     request: ProviderRequest,
     structured_output: object,
-) -> str | None:
+) -> object:
     expected_source_input_id = _request_source_input_id(request)
-    if expected_source_input_id is None:
-        return None
-    if not isinstance(structured_output, Mapping):
-        return None
+    if expected_source_input_id is None or not isinstance(structured_output, Mapping):
+        return structured_output
 
-    actual_source_input_id = structured_output.get("source_input_id")
-    if actual_source_input_id != expected_source_input_id:
-        return (
-            "provider output source_input_id must match request source_input_id"
-        )
-    return None
+    if structured_output.get("source_input_id") == expected_source_input_id:
+        return structured_output
+
+    bound_output = dict(structured_output)
+    bound_output["source_input_id"] = expected_source_input_id
+    return bound_output
 
 
 def _request_source_input_id(request: ProviderRequest) -> str | None:
@@ -323,26 +312,6 @@ def _request_source_input_id(request: ProviderRequest) -> str | None:
     if isinstance(source_input_id, str) and source_input_id.strip():
         return source_input_id
     return None
-
-
-def _failed_output_validation_result(
-    request: ProviderRequest,
-    structured_output: object,
-    error: str,
-    *,
-    cost: float | None,
-    latency: float | None,
-) -> ExtractionValidationResult:
-    run_log = AIRunLog.from_metadata(
-        _metadata_from_request(request, cost=cost, latency=latency),
-        output_hash=compute_ai_output_hash(structured_output),
-        validation_status=AIValidationStatus.FAILED,
-    )
-    return ExtractionValidationResult(
-        proposal=None,
-        run_log=run_log,
-        errors=(error,),
-    )
 
 
 def _token_usage_from_provider_usage(

@@ -118,7 +118,21 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertEqual(run.run_log.validation_status.value, "failed")
         self.assertIn("structured mapping", run.errors[0])
 
-    def test_provider_output_must_match_request_source_input_id(self) -> None:
+    def test_provider_extraction_binds_top_level_source_input_id_from_request(self) -> None:
+        output = _valid_output()
+        output["source_input_id"] = "raw_essay_provider_generated_wrong_id"
+
+        run = run_provider_extraction(
+            FakeProvider(structured_output=output),
+            _request(),
+        )
+
+        self.assertTrue(run.is_valid, run.errors)
+        self.assertIsNotNone(run.validation_result.proposal)
+        self.assertEqual(run.validation_result.proposal.source_input_id, SOURCE_ID)
+        self.assertEqual(run.run_log.validation_status.value, "passed")
+
+    def test_provider_output_source_refs_must_match_request_source_input_id(self) -> None:
         output = _valid_output()
         output["source_input_id"] = "raw_essay_unrelated_source_cd34ef"
         output["unit_candidates"][0]["source_refs"][0][
@@ -133,7 +147,7 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertFalse(run.is_valid)
         self.assertIsNone(run.validation_result.proposal)
         self.assertEqual(run.run_log.validation_status.value, "failed")
-        self.assertIn("must match request source_input_id", run.errors[0])
+        self.assertIn("must reference source_input_id", run.errors[0])
 
     def test_provider_error_fails_safely_and_records_failed_run_log(self) -> None:
         error = ProviderError(

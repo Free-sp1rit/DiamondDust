@@ -8,7 +8,7 @@ DiamondDust 是一个本地优先的语义知识编译器：它将零散随笔�
 
 The project has completed the Gate 7 MVP release readiness skeleton.
 
-The current implementation includes typed domain schemas, read-only Markdown ingestion, provider-neutral structured extraction validation, provider readiness reporting, AI run log persistence, patch review, candidate Markdown export, patch review report rendering, review package persistence, deterministic blog draft generation, durable blog draft package persistence, a local trial CLI with packaged fixture assets and feedback reports, formal vault conflict preflight checks, formal apply dry-run plans, a five-sample release readiness harness, and GitHub Actions CI for package install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls, formal vault apply/revert execution, publishing, and UI flows remain future work behind the existing review boundaries.
+The current implementation includes typed domain schemas, read-only Markdown ingestion, provider-neutral structured extraction validation, provider readiness reporting, OpenAI and DeepSeek adapter boundaries, AI run log persistence, patch review, candidate Markdown export, patch review report rendering, review package persistence, deterministic blog draft generation, durable blog draft package persistence, a local trial CLI with packaged fixture assets and feedback reports, formal vault conflict preflight checks, formal apply dry-run plans, a five-sample release readiness harness, and GitHub Actions CI for package install, tests, compile checks, whitespace checks, and local trial fixture smoke. Real provider calls, formal vault apply/revert execution, publishing, and UI flows remain behind the existing review boundaries.
 
 ## Local Trial
 
@@ -108,6 +108,15 @@ diamonddust provider-decision-package --decisions-json provider-decisions.json
 The generated template is blocked by default and must be edited before it can represent real decisions. Decision JSON is diagnostic input, not an approval artifact. It may contain the API key environment variable name, but must not contain API key values.
 
 The first-provider adapter design is documented in `docs/designs/2026-05-20-first-provider-adapter-design.md`. Product-owner approvals for adapter implementation should be captured with `docs/templates/PROVIDER_ADAPTER_DECISION_PACKAGE_TEMPLATE.md` before adding SDKs, reading API key values, or making real provider calls.
+
+DeepSeek adapter design is documented in `docs/designs/2026-05-23-deepseek-provider-adapter.md`. The provider-free DeepSeek preview and dry-run commands are:
+
+```bash
+diamonddust deepseek-payload-preview --essay path/to/essay.md --run-id run_deepseek_preview --model deepseek-v4-flash
+diamonddust deepseek-dry-run --essay path/to/essay.md --run-id run_deepseek_dry_run --model deepseek-v4-flash
+```
+
+These commands do not read `DIAMONDDUST_DEEPSEEK_API_KEY`, call DeepSeek, persist raw provider output, write formal vault files, or approve live use. `deepseek-extract-units` is blocked by default and requires explicit runtime approval flags before any key read or network call.
 
 ## Development Validation
 

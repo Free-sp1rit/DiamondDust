@@ -47,6 +47,9 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("openai-payload-preview", result.stdout)
         self.assertIn("openai-dry-run", result.stdout)
         self.assertIn("openai-extract-units", result.stdout)
+        self.assertIn("deepseek-payload-preview", result.stdout)
+        self.assertIn("deepseek-dry-run", result.stdout)
+        self.assertIn("deepseek-extract-units", result.stdout)
 
     def test_provider_readiness_report_defaults_to_blocked(self) -> None:
         env = dict(os.environ)
@@ -746,6 +749,198 @@ class CLIEntrypointTests(unittest.TestCase):
             report["blockers"],
         )
 
+    def test_deepseek_payload_preview_is_sanitized_and_provider_free(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_DEEPSEEK_API_KEY"] = "DO_NOT_RENDER_THIS_DEEPSEEK_SECRET"
+        with TemporaryDirectory() as tmp:
+            essay_path = _write_deepseek_preview_essay(tmp)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "deepseek-payload-preview",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_deepseek_preview_ab12cd",
+                    "--model",
+                    "deepseek-v4-flash",
+                    "--root",
+                    tmp,
+                    "--api-key-env-var",
+                    "DIAMONDDUST_DEEPSEEK_API_KEY",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        self.assertNotIn("DO_NOT_RENDER_THIS_DEEPSEEK_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_DEEPSEEK_SECRET", result.stderr)
+        self.assertNotIn("DeepSeek preview should hide this body text.", result.stdout)
+        self.assertNotIn("knowledge_unit", result.stdout)
+
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["provider"], "deepseek")
+        self.assertEqual(payload["sdk_method"], "chat.completions.create")
+        self.assertEqual(payload["model"], "deepseek-v4-flash")
+        self.assertEqual(payload["structured_output_mechanism"], "json_object")
+        self.assertEqual(payload["response_format"], {"type": "json_object"})
+        self.assertFalse(payload["provider_called"])
+        self.assertFalse(payload["network_call"])
+        self.assertFalse(payload["api_key_value_read"])
+        self.assertFalse(payload["payload_contains_raw_prompt"])
+        self.assertFalse(payload["payload_contains_raw_schema"])
+        self.assertEqual(payload["api_key_env_var_name"], "DIAMONDDUST_DEEPSEEK_API_KEY")
+
+    def test_deepseek_dry_run_reports_blockers_without_key_read_or_network(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_DEEPSEEK_API_KEY"] = "DO_NOT_RENDER_THIS_DEEPSEEK_SECRET"
+        with TemporaryDirectory() as tmp:
+            essay_path = _write_deepseek_preview_essay(tmp)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "deepseek-dry-run",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_deepseek_dry_run_ab12cd",
+                    "--model",
+                    "deepseek-v4-flash",
+                    "--root",
+                    tmp,
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("DO_NOT_RENDER_THIS_DEEPSEEK_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_DEEPSEEK_SECRET", result.stderr)
+        report = json.loads(result.stdout)
+        self.assertTrue(report["dry_run"])
+        self.assertTrue(report["real_run_blocked"])
+        self.assertFalse(report["provider_called"])
+        self.assertFalse(report["network_call"])
+        self.assertFalse(report["api_key_value_read"])
+        self.assertIn(
+            "API key value reading is not approved",
+            report["blockers"],
+        )
+        self.assertIn("real network calls are not approved", report["blockers"])
+
+    def test_deepseek_extract_units_fails_closed_before_key_read_or_network(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_DEEPSEEK_API_KEY"] = "DO_NOT_RENDER_THIS_DEEPSEEK_SECRET"
+        with TemporaryDirectory() as tmp:
+            essay_path = _write_deepseek_preview_essay(tmp)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "deepseek-extract-units",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_deepseek_real_guard_ab12cd",
+                    "--model",
+                    "deepseek-v4-flash",
+                    "--root",
+                    tmp,
+                    "--real-provider-call-approved",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stderr, "")
+        self.assertNotIn("DO_NOT_RENDER_THIS_DEEPSEEK_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_DEEPSEEK_SECRET", result.stderr)
+        report = json.loads(result.stdout)
+        self.assertFalse(report["succeeded"])
+        self.assertFalse(report["provider_called"])
+        self.assertFalse(report["network_call"])
+        self.assertFalse(report["api_key_value_read"])
+        self.assertEqual(report["error"]["error_type"], "permission_error")
+        self.assertIn(
+            "API key value reading is not approved",
+            report["blockers"],
+        )
+
+    def test_deepseek_extract_units_preflight_blocks_before_key_read(self) -> None:
+        env = dict(os.environ)
+        env["PYTHONPATH"] = "src"
+        env["DIAMONDDUST_DEEPSEEK_API_KEY"] = "DO_NOT_RENDER_THIS_DEEPSEEK_SECRET"
+        with TemporaryDirectory() as tmp:
+            essay_path = _write_deepseek_preview_essay(tmp)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "diamonddust",
+                    "deepseek-extract-units",
+                    "--essay",
+                    str(essay_path),
+                    "--run-id",
+                    "run_deepseek_preflight_ab12cd",
+                    "--model",
+                    "deepseek-v4-flash",
+                    "--root",
+                    tmp,
+                    "--base-url",
+                    "https://unapproved.example.com",
+                    "--cost-limit",
+                    "1.0",
+                    "--real-provider-call-approved",
+                    "--api-key-value-reading-approved",
+                    "--real-network-call-approved",
+                    "--prompt-source-schema-externalization-approved",
+                    "--cost-limit-approved",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stderr, "")
+        self.assertNotIn("DO_NOT_RENDER_THIS_DEEPSEEK_SECRET", result.stdout)
+        self.assertNotIn("DO_NOT_RENDER_THIS_DEEPSEEK_SECRET", result.stderr)
+        report = json.loads(result.stdout)
+        self.assertFalse(report["succeeded"])
+        self.assertFalse(report["provider_called"])
+        self.assertFalse(report["network_call"])
+        self.assertFalse(report["api_key_value_read"])
+        self.assertIn(
+            "base_url must be https://api.deepseek.com",
+            report["blockers"],
+        )
+
 
 def _ready_provider_decisions() -> dict[str, object]:
     return {
@@ -809,6 +1004,24 @@ def _write_openai_preview_essay(root: str) -> Path:
                 "---",
                 "",
                 "OpenAI preview should hide this body text.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return essay_path
+
+
+def _write_deepseek_preview_essay(root: str) -> Path:
+    essay_path = Path(root) / "deepseek-preview-essay.md"
+    essay_path.write_text(
+        "\n".join(
+            [
+                "---",
+                "id: raw_essay_deepseek_preview_ab12cd",
+                "title: DeepSeek Preview",
+                "---",
+                "",
+                "DeepSeek preview should hide this body text.",
             ]
         ),
         encoding="utf-8",
