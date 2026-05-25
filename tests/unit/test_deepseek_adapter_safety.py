@@ -76,6 +76,7 @@ class DeepSeekAdapterSafetyTests(unittest.TestCase):
         self.assertTrue(result.succeeded, result.error)
         self.assertEqual(fake_client.create_call_count, 1)
         self.assertEqual(fake_client.last_kwargs["response_format"], {"type": "json_object"})
+        self.assertEqual(fake_client.last_kwargs["max_tokens"], 4096)
 
     def test_preview_dry_run_and_guard_do_not_read_environment_values(self) -> None:
         request = _execution_request(real_provider_calls_enabled=True)

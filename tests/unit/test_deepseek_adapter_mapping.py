@@ -11,6 +11,7 @@ from diamonddust.ai import (
 )
 from diamonddust.ai.adapters.deepseek import (
     DEEPSEEK_BASE_URL,
+    DEEPSEEK_DEFAULT_MAX_TOKENS,
     DEEPSEEK_RESPONSE_FORMAT,
     build_deepseek_request_mapping,
     build_sanitized_deepseek_request_preview,
@@ -33,14 +34,31 @@ class DeepSeekAdapterMappingTests(unittest.TestCase):
             ["system", "user"],
         )
         self.assertIn(
+            "Return one JSON object with:",
+            mapped["messages"][0]["content"],
+        )
+        self.assertIn(
+            '"unit_candidates": []',
+            mapped["messages"][0]["content"],
+        )
+        self.assertIn(
+            '"relation_candidates": []',
+            mapped["messages"][0]["content"],
+        )
+        self.assertIn(
             "body text visible only inside full mapping",
             mapped["messages"][1]["content"],
         )
+        self.assertEqual(mapped["max_tokens"], DEEPSEEK_DEFAULT_MAX_TOKENS)
         self.assertEqual(
             mapped["_adapter_options"]["structured_output_mechanism"],
             "json_object",
         )
         self.assertEqual(mapped["_adapter_options"]["max_retries"], 0)
+        self.assertEqual(
+            mapped["_adapter_options"]["max_tokens"],
+            DEEPSEEK_DEFAULT_MAX_TOKENS,
+        )
 
     def test_sanitized_preview_excludes_raw_prompt_and_schema(self) -> None:
         request = _execution_request()
@@ -59,6 +77,7 @@ class DeepSeekAdapterMappingTests(unittest.TestCase):
         self.assertEqual(len(preview["message_content_hashes"]), 2)
         self.assertEqual(preview["structured_output_mechanism"], "json_object")
         self.assertEqual(preview["response_format"], {"type": "json_object"})
+        self.assertEqual(preview["max_tokens"], DEEPSEEK_DEFAULT_MAX_TOKENS)
         self.assertNotIn("body text visible only inside full mapping", preview_json)
         self.assertNotIn("knowledge_unit", preview_json)
 

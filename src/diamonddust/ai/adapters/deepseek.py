@@ -17,6 +17,8 @@ from diamonddust.ai.provider import (
     ProviderUsage,
 )
 from diamonddust.ai.provider_execution import (
+    ProviderExecutionMessage,
+    ProviderExecutionPayload,
     ProviderExecutionRequest,
     build_provider_execution_payload,
 )
@@ -27,6 +29,7 @@ DEEPSEEK_API_KEY_ENV_VAR = "DIAMONDDUST_DEEPSEEK_API_KEY"
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_SDK_METHOD = "chat.completions.create"
 DEEPSEEK_RESPONSE_FORMAT = {"type": "json_object"}
+DEEPSEEK_DEFAULT_MAX_TOKENS = 4096
 
 
 class DeepSeekAdapterError(ProviderBoundaryError):
@@ -45,6 +48,7 @@ class DeepSeekAdapterConfig:
     base_url: str = DEEPSEEK_BASE_URL
     timeout_seconds: int = 30
     max_retries: int = 0
+    max_tokens: int = DEEPSEEK_DEFAULT_MAX_TOKENS
     api_key_value_reading_approved: bool = False
     real_provider_calls_approved: bool = False
     real_network_calls_approved: bool = False
@@ -60,6 +64,8 @@ class DeepSeekAdapterConfig:
             raise DeepSeekAdapterError("timeout_seconds must be positive")
         if self.max_retries != 0:
             raise DeepSeekAdapterError("DeepSeek adapter v0 requires max_retries=0")
+        if self.max_tokens <= 0:
+            raise DeepSeekAdapterError("max_tokens must be positive")
         if self.cost_limit is not None and self.cost_limit < 0:
             raise DeepSeekAdapterError("cost_limit must be non-negative")
         if self.raw_output_persistence_allowed:
@@ -135,13 +141,15 @@ def build_deepseek_request_mapping(
         "model": payload.model,
         "messages": [
             {"role": message.role.value, "content": message.content}
-            for message in payload.messages
+            for message in _deepseek_json_mode_messages(payload, request)
         ],
         "response_format": dict(DEEPSEEK_RESPONSE_FORMAT),
+        "max_tokens": cfg.max_tokens,
         "stream": False,
         "_adapter_options": {
             "timeout_seconds": payload.timeout_seconds,
             "max_retries": payload.max_retries,
+            "max_tokens": cfg.max_tokens,
             "raw_output_persistence_allowed": False,
             "structured_output_mechanism": "json_object",
         },
@@ -159,6 +167,7 @@ def build_sanitized_deepseek_request_preview(
     payload = build_provider_execution_payload(request)
     if payload.provider != DEEPSEEK_PROVIDER:
         raise DeepSeekAdapterError("DeepSeek preview requires provider='deepseek'")
+    mapped_messages = _deepseek_json_mode_messages(payload, request)
 
     return {
         "preview_schema_version": "0.1.0",
@@ -172,16 +181,17 @@ def build_sanitized_deepseek_request_preview(
         "schema_version": payload.schema_version,
         "input_hash": payload.input_hash,
         "prompt_hash": payload.prompt_hash,
-        "message_count": len(payload.messages),
-        "message_roles": [message.role.value for message in payload.messages],
+        "message_count": len(mapped_messages),
+        "message_roles": [message.role.value for message in mapped_messages],
         "message_content_hashes": [
-            _stable_text_hash(message.content) for message in payload.messages
+            _stable_text_hash(message.content) for message in mapped_messages
         ],
         "output_schema_id": payload.output_schema_id,
         "output_schema_version": payload.output_schema_version,
         "output_schema_hash": payload.output_schema_hash,
         "structured_output_mechanism": "json_object",
         "response_format": dict(DEEPSEEK_RESPONSE_FORMAT),
+        "max_tokens": cfg.max_tokens,
         "timeout_seconds": payload.timeout_seconds or cfg.timeout_seconds,
         "max_retries": payload.max_retries,
         "tool_calls_enabled": False,
@@ -194,6 +204,49 @@ def build_sanitized_deepseek_request_preview(
         "payload_contains_raw_prompt": False,
         "payload_contains_raw_schema": False,
     }
+
+
+def _deepseek_json_mode_messages(
+    payload: ProviderExecutionPayload,
+    request: ProviderExecutionRequest,
+) -> tuple[ProviderExecutionMessage, ...]:
+    if len(payload.messages) != 2:
+        raise DeepSeekAdapterError("DeepSeek adapter expects system and user messages")
+
+    system_message, user_message = payload.messages
+    return (
+        ProviderExecutionMessage(
+            role=system_message.role,
+            content=_deepseek_json_mode_system_content(
+                system_message.content,
+                payload.output_instructions,
+                source_input_id=request.rendered_prompt.source_input_id,
+            ),
+        ),
+        user_message,
+    )
+
+
+def _deepseek_json_mode_system_content(
+    system_prompt: str,
+    output_instructions: str,
+    *,
+    source_input_id: str,
+) -> str:
+    return "\n\n".join(
+        (
+            system_prompt,
+            output_instructions,
+            "DeepSeek JSON mode example output:\n"
+            + _stable_json_mapping(
+                {
+                    "source_input_id": source_input_id,
+                    "unit_candidates": [],
+                    "relation_candidates": [],
+                }
+            ),
+        )
+    )
 
 
 def build_deepseek_dry_run_report(
@@ -439,6 +492,10 @@ def _stable_text_hash(value: str) -> str:
     from hashlib import sha256
 
     return sha256(value.encode("utf-8")).hexdigest()
+
+
+def _stable_json_mapping(value: Mapping[str, object]) -> str:
+    return json.dumps(value, ensure_ascii=True, sort_keys=True)
 
 
 def _lookup(value: object, key: str) -> object | None:
