@@ -29,7 +29,9 @@ def extraction_output_json_schema() -> dict[str, Any]:
             "relation_type": _enum_values(RelationType),
             "target_id": _non_empty_string(),
             "confidence": _enum_values(Confidence),
-            "reason": _non_empty_string(),
+            "reason": _user_facing_chinese_string(
+                "User-facing explanation for the proposed relation."
+            ),
         },
     }
 
@@ -50,7 +52,7 @@ def extraction_output_json_schema() -> dict[str, Any]:
             "line_start": _positive_integer(),
             "line_end": _positive_integer(),
             "block_id": _non_empty_string(),
-            "quote": _non_empty_string(),
+            "quote": _original_source_quote_string(),
             "content_hash": _non_empty_string(),
             "is_approximate": {"type": "boolean"},
         },
@@ -75,8 +77,12 @@ def extraction_output_json_schema() -> dict[str, Any]:
         "properties": {
             "id": _knowledge_unit_id_string(),
             "type": _enum_values(UnitType),
-            "title": _non_empty_string(),
-            "content": _non_empty_string(),
+            "title": _user_facing_chinese_string(
+                "User-facing extracted unit title."
+            ),
+            "content": _user_facing_chinese_string(
+                "User-facing extracted unit content."
+            ),
             "status": _enum_values(Status),
             "source_refs": {
                 "type": "array",
@@ -136,6 +142,30 @@ def extraction_output_json_schema() -> dict[str, Any]:
 
 def _non_empty_string() -> dict[str, Any]:
     return {"type": "string", "minLength": 1}
+
+
+def _user_facing_chinese_string(description: str) -> dict[str, Any]:
+    return {
+        "type": "string",
+        "minLength": 1,
+        "description": (
+            f"{description} Write generated user-facing knowledge text in "
+            "Simplified Chinese for DiamondDust's Chinese knowledge-base use. "
+            "Preserve code, commands, identifiers, product names, file paths, "
+            "and API names in their original spelling."
+        ),
+    }
+
+
+def _original_source_quote_string() -> dict[str, Any]:
+    return {
+        "type": "string",
+        "minLength": 1,
+        "description": (
+            "Optional copied source quote. Preserve the original source language "
+            "and wording; do not translate quoted evidence."
+        ),
+    }
 
 
 def _knowledge_unit_id_string() -> dict[str, Any]:

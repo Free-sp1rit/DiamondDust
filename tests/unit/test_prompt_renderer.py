@@ -82,6 +82,23 @@ class PromptRendererTests(unittest.TestCase):
             "unit_raw_essay_prompt_renderer_ab12cd_<short_label>",
             prompt.output_instructions,
         )
+        self.assertIn("Knowledge language policy:", prompt.output_instructions)
+        self.assertIn(
+            "Write generated user-facing knowledge fields in Simplified Chinese",
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            "unit_candidates[].title, unit_candidates[].content, and relation_candidates[].reason",
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            "Preserve code, commands, identifiers, product names, file paths, and API names",
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            "Keep JSON field names, enum values, schema_version values, and candidate ids",
+            prompt.output_instructions,
+        )
         self.assertIn(
             "All enum-valued fields must be JSON strings",
             prompt.output_instructions,

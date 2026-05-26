@@ -35,6 +35,19 @@ Allowed unit types:
 - `updated_at`
 - `schema_version`
 
+### KnowledgeUnit Language Policy
+
+DiamondDust's default user-facing knowledge-base language is Simplified Chinese.
+
+Rules:
+
+- Generated `title` and `content` should be written in Simplified Chinese.
+- Code, commands, identifiers, product names, API names, and file paths should
+  preserve their original spelling.
+- `id`, `type`, `status`, `confidence`, `schema_version`, JSON keys, and enum
+  values remain machine-facing English/ASCII contract fields.
+- Source reference metadata and copied evidence are not translated.
+
 ### Unit Type Meanings
 
 #### raw_essay
@@ -140,6 +153,7 @@ Rules:
 - AI must not invent source references.
 - If exact span is unknown, `source_span` must be marked approximate.
 - Derived units should preserve the original raw essay reference where possible.
+- `quote` should preserve the original source language and wording when copied.
 
 ## Relation
 
@@ -168,6 +182,8 @@ Allowed relation types:
 
 - AI may suggest relations.
 - Suggested relations must be reviewable.
+- Suggested relation `reason` text should be written in Simplified Chinese for
+  user review, while relation type enum values remain unchanged.
 - Formal relations must use allowed relation types.
 - If a proposed relation does not fit the allowed set, it must be recorded as a candidate, not a formal relation.
 

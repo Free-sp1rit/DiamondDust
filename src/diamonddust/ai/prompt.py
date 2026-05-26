@@ -222,6 +222,12 @@ def _output_instructions(
         Generate each id as lowercase snake_case using this exact prefix plus a short semantic label: {unit_id_prefix}<short_label>
         Example unit id: {unit_id_prefix}core_claim
         Never return a unit candidate object without id. If a complete unit candidate cannot be produced, omit that candidate.
+        Knowledge language policy:
+        - Write generated user-facing knowledge fields in Simplified Chinese:
+          unit_candidates[].title, unit_candidates[].content, and relation_candidates[].reason.
+        - Preserve code, commands, identifiers, product names, file paths, and API names in their original spelling.
+        - Preserve source_refs values exactly; do not translate source reference metadata or copied source quotes.
+        - Keep JSON field names, enum values, schema_version values, and candidate ids exactly in the schema-defined machine format.
         All enum-valued fields must be JSON strings, never objects, arrays, booleans, or explanatory text:
         - unit_candidates[].type must be one of: {unit_type_values}
         - unit_candidates[].status must be one of: {status_values}
