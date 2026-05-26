@@ -85,6 +85,30 @@ class ExtractionOutputSchemaTests(unittest.TestCase):
         self.assertIn("source_ref whose source_id matches", schema["$comment"])
         self.assertIn("does not authorize provider calls", schema["$comment"])
 
+    def test_schema_documents_knowledge_language_policy(self) -> None:
+        schema = extraction_output_json_schema()
+        unit_properties = schema["$defs"]["knowledge_unit"]["properties"]
+        relation_properties = schema["$defs"]["relation"]["properties"]
+        source_ref_properties = schema["$defs"]["source_ref"]["properties"]
+
+        for field in ("title", "content"):
+            self.assertIn(
+                "Simplified Chinese",
+                unit_properties[field]["description"],
+            )
+            self.assertIn(
+                "Preserve code, commands",
+                unit_properties[field]["description"],
+            )
+        self.assertIn(
+            "Simplified Chinese",
+            relation_properties["reason"]["description"],
+        )
+        self.assertIn(
+            "do not translate quoted evidence",
+            source_ref_properties["quote"]["description"],
+        )
+
     def test_checked_in_fixture_matches_runtime_contract(self) -> None:
         fixture = json.loads(FIXTURE_EXTRACTION_JSON.read_text(encoding="utf-8"))
 

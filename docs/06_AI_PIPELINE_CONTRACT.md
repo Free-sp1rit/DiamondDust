@@ -57,6 +57,9 @@ Rules:
 - The schema does not read API keys, call providers, or persist raw provider output.
 - The schema is a contract aid only; typed runtime validation remains authoritative before output becomes domain data.
 - Runtime validation may enforce rules that JSON Schema cannot fully express, such as source references matching the request-bound `source_input_id`.
+- Schema descriptions may document the knowledge language policy: generated
+  user-facing fields are Simplified Chinese, source quotes preserve original
+  wording, and machine keys/enums remain unchanged.
 
 ## Provider Request Builder
 
@@ -126,6 +129,10 @@ Rules:
   `unit_id_prefix` for stable candidate ids.
 - Prompt rendering must instruct providers that enum-valued fields are JSON
   strings, not objects or explanatory text.
+- Prompt rendering must instruct providers to write generated user-facing
+  knowledge fields in Simplified Chinese while preserving code, commands,
+  identifiers, product names, file paths, API names, source reference metadata,
+  and source quotes in original form.
 - Prompt rendering must not generate KnowledgePatch data, formal notes, blog drafts, publication content, or tool calls.
 - Sending rendered output schema content to a real provider still requires real-provider approval.
 - Sending rendered prompt text to a real provider still requires real-provider approval.

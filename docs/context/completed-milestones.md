@@ -754,3 +754,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 262 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with 12 artifacts, architecture scan reported 0 violations, and controlled DeepSeek fixture live smoke passed.
 - Dependency impact: No dependency was added or changed.
 - Follow-up: Evaluate DeepSeek extraction quality on a product-owner-approved non-sensitive real note before enabling downstream patch generation from DeepSeek output.
+
+## 2026-05-26 — Knowledge Language Policy Completed
+
+- Scope: Added provider-neutral language policy guidance to the extraction prompt, extraction output schema descriptions, domain model docs, and AI pipeline contract.
+- Outcome: Generated user-facing knowledge fields are now instructed to use Simplified Chinese, while source evidence keeps original wording and machine-facing ids, JSON keys, enum values, schema versions, and artifact metadata remain unchanged.
+- Review: `docs/reviews/milestone-reviews/2026-05-26-knowledge-language-policy.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 provider-neutral AI output contract milestone.
+- Validation: 263 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with `provider_called: false` and `formal_write_performed: false`, and architecture scan reported 0 critical violations.
+- Dependency impact: No dependency was added or changed.
+- Follow-up: Review the next real-note extraction artifact for Chinese wording quality before downstream patch generation.

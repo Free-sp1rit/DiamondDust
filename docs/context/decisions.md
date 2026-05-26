@@ -580,6 +580,14 @@ Record durable technical and governance decisions here.
 - Risks: The prompt payload becomes larger for DeepSeek calls, and successful fixture validation does not prove extraction quality on real user notes.
 - Follow-up: Evaluate DeepSeek extraction quality on a product-owner-approved non-sensitive real note before enabling downstream patch generation from DeepSeek output.
 
+### 2026-05-26 — Use Chinese for user-facing knowledge text
+
+- Decision: Provider-neutral extraction prompts and schema descriptions now instruct providers to write generated user-facing knowledge fields in Simplified Chinese while preserving code, commands, identifiers, product names, file paths, API names, source reference metadata, and source quotes in original form.
+- Reason: DiamondDust's formal knowledge base is intended for Chinese user review and reuse, but machine contracts must remain stable and provider-neutral.
+- Alternatives: Translate every field into Chinese; keep all generated content in the provider's default language; add provider-specific language handling only for DeepSeek.
+- Risks: Mixed-language notes still require human review for natural phrasing, and existing generated artifacts are not migrated.
+- Follow-up: Evaluate the next real-note extraction artifact for Chinese title/content/reason quality before allowing downstream patch generation.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
