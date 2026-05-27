@@ -1,3 +1,4 @@
+from hashlib import sha256
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -8,15 +9,31 @@ from urllib.request import urlopen
 from diamonddust.interface.trial_client import (
     CommandResult,
     DEEPSEEK_API_KEY_ENV_VAR,
+    DEFAULT_TRIAL_MODEL,
     TRIAL_CLIENT_HTML,
     TrialClientConfig,
     TrialClientHTTPServer,
     TrialClientService,
     load_provider_secret_env,
+    save_provider_secret_env,
 )
 
 
 class TrialClientTests(unittest.TestCase):
+    def test_status_exposes_deepseek_v4_model_presets(self) -> None:
+        with TemporaryDirectory() as tmp:
+            service = TrialClientService(TrialClientConfig(root=Path(tmp)))
+            status = service.status()
+
+        models = {
+            preset["model"]
+            for preset in status["model_presets"]
+            if isinstance(preset, dict)
+        }
+        self.assertEqual(status["default_model"], DEFAULT_TRIAL_MODEL)
+        self.assertEqual(DEFAULT_TRIAL_MODEL, "deepseek-v4-flash")
+        self.assertEqual(models, {"deepseek-v4-flash", "deepseek-v4-pro"})
+
     def test_load_provider_secret_env_reads_names_without_exposing_values(self) -> None:
         with TemporaryDirectory() as tmp:
             env_path = Path(tmp) / "provider-secrets.env"
@@ -34,6 +51,37 @@ class TrialClientTests(unittest.TestCase):
         self.assertEqual(secrets[DEEPSEEK_API_KEY_ENV_VAR], "SECRET_VALUE")
         self.assertTrue(status["api_key_present"])
         self.assertNotIn("SECRET_VALUE", json.dumps(status, ensure_ascii=False))
+
+    def test_save_provider_secret_env_writes_local_key_without_returning_value(self) -> None:
+        with TemporaryDirectory() as tmp:
+            env_path = Path(tmp) / "provider-secrets.env"
+            env_path.write_text("OTHER_VALUE=keep\n", encoding="utf-8")
+            service = TrialClientService(
+                TrialClientConfig(root=Path(tmp), secrets_env_file=env_path)
+            )
+
+            result = service.save_api_key({"api_key": "SECRET_VALUE"})
+            secrets = load_provider_secret_env(env_path)
+            content = env_path.read_text(encoding="utf-8")
+
+        self.assertTrue(result["saved"])
+        self.assertTrue(result["api_key_present"])
+        self.assertFalse(result["api_key_value_returned"])
+        self.assertEqual(secrets[DEEPSEEK_API_KEY_ENV_VAR], "SECRET_VALUE")
+        self.assertIn("OTHER_VALUE=keep", content)
+        self.assertNotIn("SECRET_VALUE", json.dumps(result, ensure_ascii=False))
+
+    def test_save_provider_secret_env_replaces_existing_key(self) -> None:
+        with TemporaryDirectory() as tmp:
+            env_path = Path(tmp) / "provider-secrets.env"
+            save_provider_secret_env(env_path, DEEPSEEK_API_KEY_ENV_VAR, "OLD")
+
+            save_provider_secret_env(env_path, DEEPSEEK_API_KEY_ENV_VAR, "NEW")
+            secrets = load_provider_secret_env(env_path)
+            content = env_path.read_text(encoding="utf-8")
+
+        self.assertEqual(secrets[DEEPSEEK_API_KEY_ENV_VAR], "NEW")
+        self.assertNotIn("OLD", content)
 
     def test_run_extraction_builds_safe_deepseek_command(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -81,7 +129,7 @@ class TrialClientTests(unittest.TestCase):
                 {
                     "note_path": note.as_posix(),
                     "run_id": "run_trial_client_safe_ab12cd",
-                    "model": "deepseek-chat",
+                    "model": "deepseek-v4-flash",
                 }
             )
 
@@ -95,6 +143,27 @@ class TrialClientTests(unittest.TestCase):
         self.assertNotIn("SECRET_VALUE", command)
         self.assertEqual(env[DEEPSEEK_API_KEY_ENV_VAR], "SECRET_VALUE")
         self.assertNotIn("SECRET_VALUE", json.dumps(result, ensure_ascii=False))
+
+    def test_run_extraction_rejects_non_preset_model(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            note = _write_note(root)
+            service = TrialClientService(
+                TrialClientConfig(
+                    root=root,
+                    input_dir=Path("inputs"),
+                    vault_root=Path("knowledge-vault"),
+                )
+            )
+
+            with self.assertRaisesRegex(ValueError, "DeepSeek trial presets"):
+                service.run_extraction(
+                    {
+                        "note_path": note.as_posix(),
+                        "run_id": "run_trial_client_bad_model_ab12cd",
+                        "model": "deepseek-chat",
+                    }
+                )
 
     def test_empty_real_note_extraction_is_quality_failure(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -138,6 +207,60 @@ class TrialClientTests(unittest.TestCase):
         self.assertIn(
             "non-empty note produced zero unit candidates",
             result["quality_reasons"],
+        )
+
+    def test_artifact_versions_are_grouped_by_note_and_loaded_without_provider(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            note = _write_note(root)
+            run_id = "run_trial_client_deepseek_history_ab12cd"
+            _write_success_artifacts(root, run_id, unit_count=1)
+            service = TrialClientService(
+                TrialClientConfig(
+                    root=root,
+                    input_dir=Path("inputs"),
+                    vault_root=Path("knowledge-vault"),
+                ),
+                command_runner=_raising_runner,
+            )
+
+            status = service.status()
+            loaded = service.load_artifact_result(run_id)
+
+        self.assertEqual(status["notes"][0]["path"], "inputs/note.md")
+        self.assertEqual(status["notes"][0]["artifact_versions"][0]["run_id"], run_id)
+        self.assertTrue(loaded["loaded_existing_artifact"])
+        self.assertEqual(loaded["quality_status"], "needs_human_review")
+        self.assertEqual(
+            loaded["extraction_artifact"]["unit_candidates"][0]["source_refs"][0][
+                "source_path"
+            ],
+            "inputs/note.md",
+        )
+
+    def test_delete_artifact_version_is_limited_to_trial_client_runs(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_note(root)
+            run_id = "run_trial_client_deepseek_delete_ab12cd"
+            _write_success_artifacts(root, run_id, unit_count=1)
+            service = TrialClientService(
+                TrialClientConfig(
+                    root=root,
+                    input_dir=Path("inputs"),
+                    vault_root=Path("knowledge-vault"),
+                )
+            )
+
+            result = service.delete_artifact_version({"run_id": run_id})
+            with self.assertRaisesRegex(ValueError, "trial-client generated"):
+                service.delete_artifact_version({"run_id": "run_deepseek_manual_ab12cd"})
+
+        self.assertTrue(result["deleted"])
+        self.assertFalse((root / "knowledge-vault/_ai_runs" / f"{run_id}.json").exists())
+        self.assertFalse(
+            (root / "knowledge-vault/_ai_suggestions/extractions" / f"{run_id}.json")
+            .exists()
         )
 
     def test_save_feedback_writes_review_artifacts_without_formal_actions(self) -> None:
@@ -200,6 +323,8 @@ class TrialClientTests(unittest.TestCase):
             "renderEmbeddedRelations",
             "structured JSON",
             "source_refs",
+            "验证依据 source_refs",
+            "Unit ",
             "schema_version",
             "confidence",
             "unsupported",
@@ -218,6 +343,10 @@ def _write_note(root: Path) -> Path:
     return note
 
 
+def _raising_runner(command: list[str], env) -> CommandResult:
+    raise AssertionError("provider command should not run")
+
+
 def _write_success_artifacts(root: Path, run_id: str, *, unit_count: int) -> None:
     vault = root / "knowledge-vault"
     runs = vault / "_ai_runs"
@@ -225,6 +354,17 @@ def _write_success_artifacts(root: Path, run_id: str, *, unit_count: int) -> Non
     runs.mkdir(parents=True, exist_ok=True)
     extractions.mkdir(parents=True, exist_ok=True)
     units = []
+    note_path = "inputs/note.md"
+    source_ref = {
+        "source_id": "raw_essay_trial_client",
+        "source_path": note_path,
+        "source_span": "lines 1-3",
+        "origin": "user_text",
+        "line_start": 1,
+        "line_end": 3,
+        "content_hash": _content_hash("# 自动化测试\n\n真实笔记内容。\n"),
+        "is_approximate": False,
+    }
     if unit_count:
         units = [
             {
@@ -233,7 +373,7 @@ def _write_success_artifacts(root: Path, run_id: str, *, unit_count: int) -> Non
                 "title": "自动化测试",
                 "content": "关于自动化测试的知识单元。",
                 "status": "seedling",
-                "source_refs": [],
+                "source_refs": [source_ref],
                 "relations": [],
                 "confidence": "medium",
                 "created_at": "2026-05-27T00:00:00Z",
@@ -247,7 +387,7 @@ def _write_success_artifacts(root: Path, run_id: str, *, unit_count: int) -> Non
             {
                 "run_id": run_id,
                 "provider": "deepseek",
-                "model": "deepseek-chat",
+                "model": "deepseek-v4-flash",
                 "validation_status": "passed",
                 "real_provider_call": True,
             }
@@ -259,7 +399,10 @@ def _write_success_artifacts(root: Path, run_id: str, *, unit_count: int) -> Non
             {
                 "run_id": run_id,
                 "provider": "deepseek",
+                "model": "deepseek-v4-flash",
+                "created_at": "2026-05-27T00:00:00Z",
                 "validation_status": "passed",
+                "input_hash": _content_hash("# 自动化测试\n\n真实笔记内容。\n"),
                 "unit_candidate_count": unit_count,
                 "relation_candidate_count": 0,
                 "unit_candidates": units,
@@ -274,6 +417,10 @@ def _write_success_artifacts(root: Path, run_id: str, *, unit_count: int) -> Non
         ),
         encoding="utf-8",
     )
+
+
+def _content_hash(content: str) -> str:
+    return "sha256:" + sha256(content.encode("utf-8")).hexdigest()
 
 
 if __name__ == "__main__":
