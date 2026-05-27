@@ -49,7 +49,7 @@ so trial reviewers can inspect machine structure instead of prose-only cards.
 ## Tests and Evaluation
 
 - Focused trial-client and CLI tests: passed.
-- Full unit suite: 268 tests passed.
+- Full unit suite: 269 tests passed.
 - Compile check: passed.
 - `git diff --check`: passed.
 - Local trial fixture smoke: passed; `provider_called: false`,
