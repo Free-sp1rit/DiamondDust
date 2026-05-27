@@ -50,6 +50,7 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertIn("deepseek-payload-preview", result.stdout)
         self.assertIn("deepseek-dry-run", result.stdout)
         self.assertIn("deepseek-extract-units", result.stdout)
+        self.assertIn("trial-client", result.stdout)
 
     def test_provider_readiness_report_defaults_to_blocked(self) -> None:
         env = dict(os.environ)
