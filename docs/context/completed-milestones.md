@@ -773,6 +773,6 @@ Record completed development milestones and links to reviews here.
 - Review: `docs/reviews/milestone-reviews/2026-05-27-trial-client.md`.
 - Review decision: pass with follow-up.
 - Gate impact: Post-Gate 7 interface adapter and real-provider trial UX milestone.
-- Validation: 268 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with `provider_called: false` and `formal_write_performed: false`, architecture scan reported 0 critical violations, and manual client `/api/status` smoke passed.
+- Validation: 269 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with `provider_called: false` and `formal_write_performed: false`, architecture scan reported 0 critical violations, and manual client `/api/status` smoke passed.
 - Dependency impact: No dependency was added or changed.
 - Follow-up: Use trial-client feedback to decide the next extraction quality gate or prompt/provider adjustment before downstream patch generation.
