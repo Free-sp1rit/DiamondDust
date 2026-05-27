@@ -769,7 +769,7 @@ Record completed development milestones and links to reviews here.
 ## 2026-05-27 — Trial Client Completed
 
 - Scope: Added a local browser client for small-user DeepSeek real-note extraction trials, feedback capture, and empty-extraction quality surfacing.
-- Outcome: `diamonddust trial-client` starts a local UI that lists Markdown trial notes, loads the local provider secret file only into the extraction subprocess environment, runs `deepseek-extract-units`, displays validated artifacts and safety boundaries, marks non-empty notes with zero unit candidates as `failed_empty_extraction`, and writes manual feedback artifacts under `knowledge-vault/_manual_trials/trial-client-feedback/`.
+- Outcome: `diamonddust trial-client` starts a local UI that lists Markdown trial notes, loads the local provider secret file only into the extraction subprocess environment, runs `deepseek-extract-units`, displays validated artifacts, structured unit fields, expandable JSON, and safety boundaries, marks non-empty notes with zero unit candidates as `failed_empty_extraction`, and writes manual feedback artifacts under `knowledge-vault/_manual_trials/trial-client-feedback/`.
 - Review: `docs/reviews/milestone-reviews/2026-05-27-trial-client.md`.
 - Review decision: pass with follow-up.
 - Gate impact: Post-Gate 7 interface adapter and real-provider trial UX milestone.

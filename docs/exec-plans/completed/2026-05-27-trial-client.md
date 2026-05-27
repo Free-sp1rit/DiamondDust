@@ -44,6 +44,7 @@ The client will:
 - load provider secrets into the subprocess environment without returning values
 - run DeepSeek extraction with explicit approval flags and controlled defaults
 - read the generated run log and validated extraction artifact
+- render unit candidates as structured field groups instead of prose-only cards
 - compute a trial quality status, including `failed_empty_extraction`
 - write small feedback Markdown and JSON files under manual-trial directories
 - show safety boundaries and artifact paths for review
@@ -55,6 +56,8 @@ The client will:
 - [x] Add `diamonddust trial-client` CLI command.
 - [x] Add focused tests for secret handling, command construction, empty output
       quality status, feedback persistence, and CLI help.
+- [x] Address review feedback that Units output looked unstructured by rendering
+      unit fields, source refs, relations, and expandable structured JSON.
 - [x] Update docs/context and milestone review.
 - [x] Run validation.
 
