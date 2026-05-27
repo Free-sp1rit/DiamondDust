@@ -31,6 +31,9 @@ The client can:
 - list Markdown trial notes
 - run one DeepSeek `extract_units` call with explicit safety flags
 - show validated extraction artifacts and safety boundaries
+- render each unit candidate as structured fields, including `id`, `type`,
+  `status`, `confidence`, `source_refs`, `relations`, and expandable
+  structured JSON
 - mark empty real-note extractions as quality failures
 - save feedback Markdown and JSON files
 
@@ -59,4 +62,3 @@ DIAMONDDUST_DEEPSEEK_API_KEY
 
 Only the subprocess environment receives the key value. The browser API returns
 only whether the key is present.
-

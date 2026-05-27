@@ -43,7 +43,8 @@ and do not change formal domain schema.
 Pass. The client can trigger approved DeepSeek `extract_units` calls but cannot
 generate patches, accept patches, formal apply, or publish. Empty extractions
 are surfaced as product-quality failures even when typed schema validation
-passes.
+passes. Unit candidates are rendered as structured fields plus expandable JSON
+so trial reviewers can inspect machine structure instead of prose-only cards.
 
 ## Tests and Evaluation
 

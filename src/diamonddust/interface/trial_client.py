@@ -797,6 +797,68 @@ TRIAL_CLIENT_HTML = """<!doctype html>
     }
     .item h3 { margin: 0 0 6px; font-size: 14px; }
     .item p { margin: 0; line-height: 1.55; color: #354052; }
+    .fields {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .field {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .field span {
+      color: var(--muted);
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .field strong {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .subsection {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .subsection h4 {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .subitem {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      background: #fbfcfd;
+    }
+    details {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 650;
+    }
+    pre {
+      margin: 8px 0 0;
+      max-height: 260px;
+      overflow: auto;
+      border-radius: 6px;
+      padding: 10px;
+      background: #111827;
+      color: #f9fafb;
+      font-size: 12px;
+      line-height: 1.45;
+    }
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 12px;
@@ -981,7 +1043,22 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       for (const unit of units) {
         const div = document.createElement('div');
         div.className = 'item';
-        div.innerHTML = `<h3>${escapeHtml(unit.title || unit.id)}</h3><p>${escapeHtml(unit.content || '')}</p><p class="muted"><code>${escapeHtml(unit.type)}</code> <code>${escapeHtml(unit.id)}</code></p>`;
+        const heading = document.createElement('h3');
+        heading.textContent = unit.title || unit.id || 'untitled unit';
+        div.appendChild(heading);
+        div.appendChild(renderFieldGroup([
+          ['id', unit.id],
+          ['type', unit.type],
+          ['status', unit.status],
+          ['confidence', unit.confidence],
+          ['unsupported', unit.unsupported],
+          ['schema_version', unit.schema_version],
+          ['title', unit.title],
+          ['content', unit.content]
+        ]));
+        div.appendChild(renderSourceRefs(unit.source_refs || []));
+        div.appendChild(renderEmbeddedRelations(unit.relations || []));
+        div.appendChild(renderJsonDetails(unit));
         root.appendChild(div);
       }
     }
@@ -996,9 +1073,124 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       for (const relation of relations) {
         const div = document.createElement('div');
         div.className = 'item';
-        div.innerHTML = `<h3>${escapeHtml(relation.relation_type)}</h3><p>${escapeHtml(relation.reason || '')}</p><p class="muted"><code>${escapeHtml(relation.source_id)}</code> -> <code>${escapeHtml(relation.target_id)}</code></p>`;
+        const heading = document.createElement('h3');
+        heading.textContent = relation.relation_type || 'relation';
+        div.appendChild(heading);
+        div.appendChild(renderFieldGroup([
+          ['source_id', relation.source_id],
+          ['relation_type', relation.relation_type],
+          ['target_id', relation.target_id],
+          ['confidence', relation.confidence],
+          ['reason', relation.reason]
+        ]));
+        div.appendChild(renderJsonDetails(relation));
         root.appendChild(div);
       }
+    }
+
+    function renderFieldGroup(rows) {
+      const group = document.createElement('div');
+      group.className = 'fields';
+      for (const [label, value] of rows) {
+        group.appendChild(renderField(label, value));
+      }
+      return group;
+    }
+
+    function renderField(label, value) {
+      const row = document.createElement('div');
+      row.className = 'field';
+      const key = document.createElement('span');
+      key.textContent = label;
+      const val = document.createElement('strong');
+      val.textContent = formatFieldValue(value);
+      row.appendChild(key);
+      row.appendChild(val);
+      return row;
+    }
+
+    function renderSourceRefs(refs) {
+      const section = document.createElement('div');
+      section.className = 'subsection';
+      const heading = document.createElement('h4');
+      heading.textContent = 'source_refs';
+      section.appendChild(heading);
+      if (!refs.length) {
+        section.appendChild(renderEmptySubitem('none'));
+        return section;
+      }
+      for (const ref of refs) {
+        const item = document.createElement('div');
+        item.className = 'subitem';
+        item.appendChild(renderFieldGroup([
+          ['source_id', ref.source_id],
+          ['source_path', ref.source_path],
+          ['source_span', ref.source_span],
+          ['line_start', ref.line_start],
+          ['line_end', ref.line_end],
+          ['origin', ref.origin],
+          ['quote', ref.quote],
+          ['content_hash', ref.content_hash],
+          ['is_approximate', ref.is_approximate]
+        ]));
+        item.appendChild(renderJsonDetails(ref));
+        section.appendChild(item);
+      }
+      return section;
+    }
+
+    function renderEmbeddedRelations(relations) {
+      const section = document.createElement('div');
+      section.className = 'subsection';
+      const heading = document.createElement('h4');
+      heading.textContent = 'relations';
+      section.appendChild(heading);
+      if (!relations.length) {
+        section.appendChild(renderEmptySubitem('none'));
+        return section;
+      }
+      for (const relation of relations) {
+        const item = document.createElement('div');
+        item.className = 'subitem';
+        item.appendChild(renderFieldGroup([
+          ['source_id', relation.source_id],
+          ['relation_type', relation.relation_type],
+          ['target_id', relation.target_id],
+          ['confidence', relation.confidence],
+          ['reason', relation.reason]
+        ]));
+        item.appendChild(renderJsonDetails(relation));
+        section.appendChild(item);
+      }
+      return section;
+    }
+
+    function renderEmptySubitem(text) {
+      const item = document.createElement('div');
+      item.className = 'subitem';
+      const paragraph = document.createElement('p');
+      paragraph.className = 'muted';
+      paragraph.textContent = text;
+      item.appendChild(paragraph);
+      return item;
+    }
+
+    function renderJsonDetails(value) {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = 'structured JSON';
+      const pre = document.createElement('pre');
+      pre.textContent = JSON.stringify(value, null, 2);
+      details.appendChild(summary);
+      details.appendChild(pre);
+      return details;
+    }
+
+    function formatFieldValue(value) {
+      if (value === undefined || value === null || value === '') return '-';
+      if (Array.isArray(value)) return value.length ? JSON.stringify(value) : '[]';
+      if (typeof value === 'object') return JSON.stringify(value);
+      return String(value);
     }
 
     function renderBoundaries(boundaries) {

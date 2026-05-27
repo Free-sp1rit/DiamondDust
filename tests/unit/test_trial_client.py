@@ -8,6 +8,7 @@ from urllib.request import urlopen
 from diamonddust.interface.trial_client import (
     CommandResult,
     DEEPSEEK_API_KEY_ENV_VAR,
+    TRIAL_CLIENT_HTML,
     TrialClientConfig,
     TrialClientHTTPServer,
     TrialClientService,
@@ -191,6 +192,22 @@ class TrialClientTests(unittest.TestCase):
 
         self.assertEqual(data["provider"], "deepseek")
         self.assertEqual(len(data["notes"]), 1)
+
+    def test_units_panel_renders_structured_unit_fields(self) -> None:
+        expected_tokens = [
+            "renderFieldGroup",
+            "renderSourceRefs",
+            "renderEmbeddedRelations",
+            "structured JSON",
+            "source_refs",
+            "schema_version",
+            "confidence",
+            "unsupported",
+        ]
+
+        for token in expected_tokens:
+            with self.subTest(token=token):
+                self.assertIn(token, TRIAL_CLIENT_HTML)
 
 
 def _write_note(root: Path) -> Path:
