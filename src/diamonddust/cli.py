@@ -72,6 +72,17 @@ from diamonddust.storage import (
     write_ai_run_log_artifact,
     write_validated_extraction_artifact,
 )
+from diamonddust.interface.trial_client import (
+    DEFAULT_TRIAL_FEEDBACK_DIR,
+    DEFAULT_TRIAL_HOST,
+    DEFAULT_TRIAL_INPUT_DIR,
+    DEFAULT_TRIAL_PORT,
+    DEFAULT_TRIAL_SECRETS_ENV_FILE,
+    DEFAULT_TRIAL_MODEL,
+    TrialClientConfig,
+    serve_trial_client,
+    trial_client_url,
+)
 
 
 FIXTURE_TRIAL_ID = "trial_fixture_ab12cd"
@@ -182,6 +193,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "deepseek-extract-units":
         return _run_deepseek_extract_units_command(
+            args,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+    if args.command == "trial-client":
+        return _run_trial_client_command(
             args,
             stdout=sys.stdout,
             stderr=sys.stderr,
@@ -396,6 +413,29 @@ def _build_parser() -> argparse.ArgumentParser:
         "--raw-output-retention",
         default=DEEPSEEK_RAW_OUTPUT_RETENTION,
     )
+
+    trial_client = subparsers.add_parser(
+        "trial-client",
+        help="start the local browser client for real-note extraction trials",
+    )
+    trial_client.add_argument("--host", default=DEFAULT_TRIAL_HOST)
+    trial_client.add_argument("--port", type=int, default=DEFAULT_TRIAL_PORT)
+    trial_client.add_argument("--root", default=".")
+    trial_client.add_argument("--input-dir", default=DEFAULT_TRIAL_INPUT_DIR)
+    trial_client.add_argument("--vault-root", default=DEFAULT_VAULT_ROOT)
+    trial_client.add_argument("--feedback-dir", default=DEFAULT_TRIAL_FEEDBACK_DIR)
+    trial_client.add_argument(
+        "--secrets-env-file",
+        default=DEFAULT_TRIAL_SECRETS_ENV_FILE,
+    )
+    trial_client.add_argument("--model", default=DEFAULT_TRIAL_MODEL)
+    trial_client.add_argument("--timeout-seconds", type=int, default=60)
+    trial_client.add_argument(
+        "--max-tokens",
+        type=int,
+        default=DEEPSEEK_DEFAULT_MAX_TOKENS,
+    )
+    trial_client.add_argument("--cost-limit", type=float, default=1.0)
     return parser
 
 
@@ -1112,6 +1152,43 @@ def _run_deepseek_extract_units_command(
         print(f"DeepSeek extract_units failed before execution: {exc}", file=stderr)
         return 1
     return 0 if result.succeeded else 1
+
+
+def _run_trial_client_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        config = TrialClientConfig(
+            host=args.host,
+            port=args.port,
+            root=Path(args.root),
+            input_dir=Path(args.input_dir),
+            vault_root=Path(args.vault_root),
+            feedback_dir=Path(args.feedback_dir),
+            secrets_env_file=Path(args.secrets_env_file).expanduser(),
+            default_model=args.model,
+            timeout_seconds=args.timeout_seconds,
+            max_tokens=args.max_tokens,
+            cost_limit=args.cost_limit,
+        )
+    except Exception as exc:
+        print(f"trial client configuration failed: {exc}", file=stderr)
+        return 1
+
+    stdout.write(f"DiamondDust trial client: {trial_client_url(config)}\n")
+    stdout.flush()
+    try:
+        serve_trial_client(config)
+    except KeyboardInterrupt:
+        stdout.write("\ntrial client stopped\n")
+        return 0
+    except Exception as exc:
+        print(f"trial client failed: {exc}", file=stderr)
+        return 1
+    return 0
 
 
 def _run_deepseek_live_extract_units_command(

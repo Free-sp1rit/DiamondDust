@@ -765,3 +765,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 263 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with `provider_called: false` and `formal_write_performed: false`, and architecture scan reported 0 critical violations.
 - Dependency impact: No dependency was added or changed.
 - Follow-up: Review the next real-note extraction artifact for Chinese wording quality before downstream patch generation.
+
+## 2026-05-27 — Trial Client Completed
+
+- Scope: Added a local browser client for small-user DeepSeek real-note extraction trials, feedback capture, and empty-extraction quality surfacing.
+- Outcome: `diamonddust trial-client` starts a local UI that lists Markdown trial notes, loads the local provider secret file only into the extraction subprocess environment, runs `deepseek-extract-units`, displays validated artifacts and safety boundaries, marks non-empty notes with zero unit candidates as `failed_empty_extraction`, and writes manual feedback artifacts under `knowledge-vault/_manual_trials/trial-client-feedback/`.
+- Review: `docs/reviews/milestone-reviews/2026-05-27-trial-client.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Post-Gate 7 interface adapter and real-provider trial UX milestone.
+- Validation: 268 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with `provider_called: false` and `formal_write_performed: false`, architecture scan reported 0 critical violations, and manual client `/api/status` smoke passed.
+- Dependency impact: No dependency was added or changed.
+- Follow-up: Use trial-client feedback to decide the next extraction quality gate or prompt/provider adjustment before downstream patch generation.

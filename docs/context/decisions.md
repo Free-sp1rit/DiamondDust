@@ -588,6 +588,14 @@ Record durable technical and governance decisions here.
 - Risks: Mixed-language notes still require human review for natural phrasing, and existing generated artifacts are not migrated.
 - Follow-up: Evaluate the next real-note extraction artifact for Chinese title/content/reason quality before allowing downstream patch generation.
 
+### 2026-05-27 — Build a local trial client before adding more core features
+
+- Decision: Add a standard-library local browser client for real-note `extract_units` trials, focused on DeepSeek runs, artifact review, empty-extraction quality surfacing, and feedback capture.
+- Reason: The core provider pipeline exists, but real-note feedback is insufficient. A small client can validate extraction usefulness before downstream core features expand.
+- Alternatives: Continue CLI-only trials; build a full note editor; continue downstream patch/blog functionality first.
+- Risks: The trial client makes real provider calls easier, so it must stay local-only, show boundaries, avoid API key disclosure, avoid raw provider output persistence, and keep formal apply/publish disabled.
+- Follow-up: Use collected feedback artifacts to decide whether to harden prompts, add quality gates, or change provider/model before expanding core workflows.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>
