@@ -596,6 +596,14 @@ Record durable technical and governance decisions here.
 - Risks: The trial client makes real provider calls easier, so it must stay local-only, show boundaries, avoid API key disclosure, avoid raw provider output persistence, and keep formal apply/publish disabled.
 - Follow-up: Use collected feedback artifacts to decide whether to harden prompts, add quality gates, or change provider/model before expanding core workflows.
 
+### 2026-05-28 — Trial client model presets and local artifact management
+
+- Decision: Restrict the trial client UI to DeepSeek-V4-Flash and DeepSeek-V4-Pro presets, default to DeepSeek-V4-Flash, allow local-only API key writing to `~/.config/diamonddust/provider-secrets.env`, and manage historical extraction versions by note without regenerating output.
+- Reason: Product-owner testing showed that free-form model entry, shell-only key setup, and regenerate-only review flow made small-user trials too hard to operate.
+- Alternatives: Keep CLI-only key setup; keep free-form model entry; build a larger data browser; delete no artifacts from the client.
+- Risks: Local key writing is less secure than shell-managed secrets, so the client must never return key values. Artifact deletion must stay limited to trial-client generated AI working artifacts and never touch formal vault files.
+- Follow-up: Use real-user feedback to decide whether artifact comparison, richer quality scoring, or model-specific recommendations are needed.
+
 ## Template
 
 ### YYYY-MM-DD — <decision title>

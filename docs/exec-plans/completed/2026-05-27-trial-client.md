@@ -88,7 +88,7 @@ The client will:
 ## Validation Results
 
 - `PYTHONPATH=src .venv/bin/python -m unittest tests.unit.test_trial_client tests.unit.test_cli_entrypoints`: 29 tests passed.
-- `PYTHONPATH=src .venv/bin/python -m unittest discover -s tests`: 269 tests passed.
+- `PYTHONPATH=src .venv/bin/python -m unittest discover -s tests`: 275 tests passed after product-feedback follow-up.
 - `.venv/bin/python -m compileall src tests`: passed.
 - `git diff --check`: passed.
 - `PYTHONPATH=src .venv/bin/python -m diamonddust local-trial-fixture`: passed with `provider_called: false` and `formal_write_performed: false`.
