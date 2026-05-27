@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from hashlib import sha256
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -25,12 +26,26 @@ DEFAULT_TRIAL_INPUT_DIR = (
 DEFAULT_TRIAL_FEEDBACK_DIR = "knowledge-vault/_manual_trials/trial-client-feedback"
 DEFAULT_TRIAL_SECRETS_ENV_FILE = "~/.config/diamonddust/provider-secrets.env"
 DEFAULT_TRIAL_PROVIDER = "deepseek"
-DEFAULT_TRIAL_MODEL = "deepseek-chat"
+DEFAULT_TRIAL_MODEL = "deepseek-v4-flash"
 DEFAULT_TRIAL_TIMEOUT_SECONDS = 60
 DEFAULT_TRIAL_MAX_RETRIES = 0
 DEFAULT_TRIAL_MAX_TOKENS = 4096
 DEFAULT_TRIAL_COST_LIMIT = 1.0
 DEEPSEEK_API_KEY_ENV_VAR = "DIAMONDDUST_DEEPSEEK_API_KEY"
+TRIAL_CLIENT_RUN_ID_PREFIX = "run_trial_client_deepseek_"
+DEEPSEEK_MODEL_PRESETS: tuple[dict[str, str], ...] = (
+    {
+        "label": "DeepSeek-V4-Flash",
+        "model": "deepseek-v4-flash",
+        "description": "更快、更经济，适合默认试用。",
+    },
+    {
+        "label": "DeepSeek-V4-Pro",
+        "model": "deepseek-v4-pro",
+        "description": "能力更强，适合复杂长笔记试用。",
+    },
+)
+_ALLOWED_TRIAL_MODELS = {preset["model"] for preset in DEEPSEEK_MODEL_PRESETS}
 _RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 _ENV_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -65,6 +80,7 @@ class TrialClientConfig:
         if not isinstance(self.cost_limit, (int, float)) or self.cost_limit <= 0:
             raise TrialClientError("cost_limit must be positive")
         _require_non_empty("default_model", self.default_model)
+        _validate_trial_model(self.default_model)
         _require_non_empty("python_executable", self.python_executable)
 
 
@@ -94,9 +110,11 @@ class TrialClientService:
 
     def status(self) -> dict[str, object]:
         secrets = load_provider_secret_env(self.config.secrets_env_file)
+        artifact_versions = self.list_artifact_versions()
         return {
             "provider": DEFAULT_TRIAL_PROVIDER,
             "default_model": self.config.default_model,
+            "model_presets": list(DEEPSEEK_MODEL_PRESETS),
             "api_key_env_var": DEEPSEEK_API_KEY_ENV_VAR,
             "api_key_present": bool(secrets.get(DEEPSEEK_API_KEY_ENV_VAR)),
             "secrets_env_file": self.config.secrets_env_file.as_posix(),
@@ -104,8 +122,9 @@ class TrialClientService:
             "input_dir": self._display_path(self._input_dir()),
             "vault_root": self._display_path(self._vault_root()),
             "feedback_dir": self._display_path(self._feedback_dir()),
-            "notes": self.list_notes(),
+            "notes": self.list_notes(artifact_versions=artifact_versions),
             "recent_runs": self.list_recent_runs(),
+            "artifact_versions": artifact_versions,
             "boundaries": {
                 "raw_provider_request_persisted": False,
                 "raw_provider_response_persisted": False,
@@ -117,10 +136,15 @@ class TrialClientService:
             },
         }
 
-    def list_notes(self) -> list[dict[str, object]]:
+    def list_notes(
+        self,
+        *,
+        artifact_versions: list[dict[str, object]] | None = None,
+    ) -> list[dict[str, object]]:
         input_dir = self._input_dir()
         if not input_dir.exists():
             return []
+        versions_by_note = _versions_by_source_path(artifact_versions or [])
         notes = []
         for path in sorted(input_dir.rglob("*")):
             if (
@@ -133,6 +157,10 @@ class TrialClientService:
                         "path": self._display_path(path),
                         "name": path.name,
                         "size_bytes": path.stat().st_size,
+                        "artifact_versions": versions_by_note.get(
+                            self._display_path(path),
+                            [],
+                        ),
                     }
                 )
         return notes
@@ -164,9 +192,89 @@ class TrialClientService:
             )
         return rows
 
+    def list_artifact_versions(self) -> list[dict[str, object]]:
+        extraction_dir = self._vault_root() / "_ai_suggestions/extractions"
+        if not extraction_dir.exists():
+            return []
+        note_paths_by_hash = self._note_paths_by_hash()
+        versions: list[dict[str, object]] = []
+        for path in sorted(
+            extraction_dir.glob("*.json"),
+            key=lambda item: item.stat().st_mtime,
+            reverse=True,
+        ):
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if not isinstance(data, dict):
+                continue
+            versions.append(
+                self._artifact_version_summary(
+                    data,
+                    path=path,
+                    note_paths_by_hash=note_paths_by_hash,
+                )
+            )
+        return versions
+
+    def save_api_key(self, request: Mapping[str, object]) -> dict[str, object]:
+        api_key = _expect_str(request, "api_key")
+        save_provider_secret_env(
+            self.config.secrets_env_file,
+            DEEPSEEK_API_KEY_ENV_VAR,
+            api_key,
+        )
+        return {
+            "saved": True,
+            "api_key_present": True,
+            "api_key_env_var": DEEPSEEK_API_KEY_ENV_VAR,
+            "api_key_value_returned": False,
+            "secrets_env_file": self.config.secrets_env_file.as_posix(),
+        }
+
+    def load_artifact_result(self, run_id: str) -> dict[str, object]:
+        _validate_run_id(run_id)
+        run_log = self._read_json_artifact("_ai_runs", run_id)
+        extraction_artifact = self._read_json_artifact("_ai_suggestions/extractions", run_id)
+        if run_log is None and extraction_artifact is None:
+            raise TrialClientError("artifact version was not found")
+        return {
+            "run_id": run_id,
+            "returncode": 0,
+            "succeeded": True,
+            "loaded_existing_artifact": True,
+            "provider_stdout": {},
+            "stderr": "",
+            "quality_status": _loaded_artifact_quality(extraction_artifact),
+            "quality_reasons": ["loaded existing artifact without provider call"],
+            "run_log": run_log,
+            "extraction_artifact": extraction_artifact,
+            "artifact_paths": self._artifact_paths_for_run(run_id),
+            "boundaries": _combined_boundaries({}, extraction_artifact),
+        }
+
+    def delete_artifact_version(self, request: Mapping[str, object]) -> dict[str, object]:
+        run_id = _expect_str(request, "run_id")
+        _validate_trial_client_run_id(run_id)
+        deleted_paths: list[str] = []
+        for path in self._deletable_artifact_paths(run_id):
+            if path.exists():
+                path.unlink()
+                deleted_paths.append(self._display_path(path))
+        return {
+            "deleted": bool(deleted_paths),
+            "run_id": run_id,
+            "deleted_paths": deleted_paths,
+            "formal_write_performed": False,
+            "patch_acceptance": False,
+            "publication_performed": False,
+        }
+
     def run_extraction(self, request: Mapping[str, object]) -> dict[str, object]:
         note_path = self._resolve_note_path(_expect_str(request, "note_path"))
         model = _optional_str(request, "model", self.config.default_model)
+        _validate_trial_model(model)
         timeout_seconds = _optional_int(
             request,
             "timeout_seconds",
@@ -332,6 +440,64 @@ class TrialClientService:
         data["_path"] = self._display_path(path)
         return data
 
+    def _artifact_version_summary(
+        self,
+        data: Mapping[str, object],
+        *,
+        path: Path,
+        note_paths_by_hash: Mapping[str, str],
+    ) -> dict[str, object]:
+        run_id = str(data.get("run_id") or path.stem)
+        input_hash = str(data.get("input_hash") or "")
+        source_path = _artifact_source_path(data) or note_paths_by_hash.get(input_hash, "")
+        return {
+            "run_id": run_id,
+            "created_at": data.get("created_at"),
+            "provider": data.get("provider"),
+            "model": data.get("model"),
+            "validation_status": data.get("validation_status"),
+            "unit_candidate_count": _coerce_int(data.get("unit_candidate_count")),
+            "relation_candidate_count": _coerce_int(data.get("relation_candidate_count")),
+            "source_input_id": data.get("source_input_id"),
+            "source_path": source_path,
+            "input_hash": input_hash,
+            "path": self._display_path(path),
+            "deletable": run_id.startswith(TRIAL_CLIENT_RUN_ID_PREFIX),
+        }
+
+    def _note_paths_by_hash(self) -> dict[str, str]:
+        input_dir = self._input_dir()
+        if not input_dir.exists():
+            return {}
+        result: dict[str, str] = {}
+        for path in input_dir.rglob("*"):
+            if path.is_file() and path.suffix.lower() in {".md", ".markdown"}:
+                try:
+                    content = path.read_text(encoding="utf-8")
+                except OSError:
+                    continue
+                result[_content_hash(content)] = self._display_path(path)
+        return result
+
+    def _artifact_paths_for_run(self, run_id: str) -> dict[str, object]:
+        existing_paths = [
+            self._display_path(path)
+            for path in self._artifact_file_candidates(run_id)
+            if path.exists()
+        ]
+        return {"run_id": run_id, "written_paths": existing_paths}
+
+    def _deletable_artifact_paths(self, run_id: str) -> list[Path]:
+        return self._artifact_file_candidates(run_id)
+
+    def _artifact_file_candidates(self, run_id: str) -> list[Path]:
+        return [
+            self._vault_root() / "_ai_runs" / f"{run_id}.json",
+            self._vault_root() / "_ai_suggestions/extractions" / f"{run_id}.json",
+            self._feedback_dir() / f"{run_id}.json",
+            self._feedback_dir() / f"{run_id}.md",
+        ]
+
     def _resolve_note_path(self, value: str) -> Path:
         path = Path(value)
         if not path.is_absolute():
@@ -385,19 +551,7 @@ class TrialClientHTTPRequestHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/artifact":
             query = parse_qs(parsed.query)
             run_id = query.get("run_id", [""])[0]
-            _validate_run_id(run_id)
-            self._send_json(
-                {
-                    "run_log": self.server.service._read_json_artifact(
-                        "_ai_runs",
-                        run_id,
-                    ),
-                    "extraction_artifact": self.server.service._read_json_artifact(
-                        "_ai_suggestions/extractions",
-                        run_id,
-                    ),
-                }
-            )
+            self._send_json(self.server.service.load_artifact_result(run_id))
             return
         self.send_error(HTTPStatus.NOT_FOUND)
 
@@ -409,6 +563,12 @@ class TrialClientHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
             if self.path == "/api/feedback":
                 self._send_json(self.server.service.save_feedback(body))
+                return
+            if self.path == "/api/secrets/deepseek":
+                self._send_json(self.server.service.save_api_key(body))
+                return
+            if self.path == "/api/artifact/delete":
+                self._send_json(self.server.service.delete_artifact_version(body))
                 return
             self.send_error(HTTPStatus.NOT_FOUND)
         except Exception as exc:
@@ -499,6 +659,35 @@ def load_provider_secret_env(path: str | Path) -> dict[str, str]:
     return result
 
 
+def save_provider_secret_env(path: str | Path, name: str, value: str) -> None:
+    if not _ENV_NAME_PATTERN.match(name):
+        raise TrialClientError("api key environment variable name is invalid")
+    _require_non_empty("api_key", value)
+    if any(char in value for char in "\r\n\0"):
+        raise TrialClientError("api_key must be a single-line value")
+    env_path = Path(path).expanduser()
+    env_path.parent.mkdir(parents=True, exist_ok=True)
+    _chmod_best_effort(env_path.parent, 0o700)
+    existing_lines = (
+        env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
+    )
+    assignment = f"{name}={shlex.quote(value)}"
+    lines: list[str] = []
+    replaced = False
+    for line in existing_lines:
+        if _env_assignment_name(line) == name:
+            lines.append(assignment)
+            replaced = True
+        else:
+            lines.append(line)
+    if not replaced:
+        if lines and lines[-1].strip():
+            lines.append("")
+        lines.append(assignment)
+    env_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    _chmod_best_effort(env_path, 0o600)
+
+
 def _run_command(command: list[str], env: Mapping[str, str]) -> CommandResult:
     completed = subprocess.run(
         command,
@@ -556,6 +745,71 @@ def _artifact_paths(stdout: Mapping[str, object], run_id: str) -> dict[str, obje
     }
 
 
+def _loaded_artifact_quality(artifact: Mapping[str, object] | None) -> str:
+    if artifact is None:
+        return "failed_missing_artifact"
+    if artifact.get("validation_status") != "passed":
+        return "failed_validation"
+    if _coerce_int(artifact.get("unit_candidate_count")) == 0:
+        return "failed_empty_extraction"
+    return "needs_human_review"
+
+
+def _artifact_source_path(data: Mapping[str, object]) -> str:
+    direct_source_path = data.get("source_path")
+    if isinstance(direct_source_path, str) and direct_source_path.strip():
+        return direct_source_path.strip()
+    units = data.get("unit_candidates")
+    if not isinstance(units, list):
+        return ""
+    for unit in units:
+        if not isinstance(unit, dict):
+            continue
+        refs = unit.get("source_refs")
+        if not isinstance(refs, list):
+            continue
+        for ref in refs:
+            if isinstance(ref, dict):
+                source_path = ref.get("source_path")
+                if isinstance(source_path, str) and source_path.strip():
+                    return source_path.strip()
+    return ""
+
+
+def _versions_by_source_path(
+    versions: list[dict[str, object]],
+) -> dict[str, list[dict[str, object]]]:
+    result: dict[str, list[dict[str, object]]] = {}
+    for version in versions:
+        source_path = version.get("source_path")
+        if isinstance(source_path, str) and source_path:
+            result.setdefault(source_path, []).append(version)
+    return result
+
+
+def _content_hash(content: str) -> str:
+    return "sha256:" + sha256(content.encode("utf-8")).hexdigest()
+
+
+def _env_assignment_name(line: str) -> str | None:
+    stripped = line.strip()
+    if not stripped or stripped.startswith("#"):
+        return None
+    if stripped.startswith("export "):
+        stripped = stripped[len("export ") :].strip()
+    if "=" not in stripped:
+        return None
+    name = stripped.split("=", 1)[0].strip()
+    return name if _ENV_NAME_PATTERN.match(name) else None
+
+
+def _chmod_best_effort(path: Path, mode: int) -> None:
+    try:
+        os.chmod(path, mode)
+    except OSError:
+        return
+
+
 def _safe_stderr(stderr: str) -> str:
     if not stderr:
         return ""
@@ -590,7 +844,7 @@ def _note_has_content(path: Path) -> bool:
 
 
 def _new_run_id() -> str:
-    return "run_trial_client_deepseek_" + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return TRIAL_CLIENT_RUN_ID_PREFIX + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _utc_now() -> str:
@@ -609,6 +863,18 @@ def _validate_run_id(value: str) -> None:
     _require_non_empty("run_id", value)
     if not _RUN_ID_PATTERN.match(value):
         raise TrialClientError("run_id must contain only letters, numbers, underscore, or dash")
+
+
+def _validate_trial_client_run_id(value: str) -> None:
+    _validate_run_id(value)
+    if not value.startswith(TRIAL_CLIENT_RUN_ID_PREFIX):
+        raise TrialClientError("only trial-client generated artifacts can be deleted")
+
+
+def _validate_trial_model(value: str) -> None:
+    _require_non_empty("model", value)
+    if value not in _ALLOWED_TRIAL_MODELS:
+        raise TrialClientError("model must be one of the DeepSeek trial presets")
 
 
 def _expect_str(data: Mapping[str, object], key: str) -> str:
@@ -797,6 +1063,124 @@ TRIAL_CLIENT_HTML = """<!doctype html>
     }
     .item h3 { margin: 0 0 6px; font-size: 14px; }
     .item p { margin: 0; line-height: 1.55; color: #354052; }
+    .hint { margin-top: 6px; font-size: 12px; color: var(--muted); }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    button.danger { background: var(--bad); }
+    .version-card {
+      border-left: 4px solid #8aa5a0;
+    }
+    .version-card.active {
+      border-left-color: var(--accent);
+      background: #f3fbf9;
+    }
+    .version-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #edf1f5;
+      color: #344054;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .unit-card {
+      border-left: 4px solid var(--accent);
+    }
+    .unit-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .unit-index {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .unit-title { min-width: 0; }
+    .unit-title h3 { margin-bottom: 8px; }
+    .unit-content {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      background: #fbfcfd;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+    .fields {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .field {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .field span {
+      color: var(--muted);
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .field strong {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .subsection {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .subsection h4 {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .subitem {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      background: #fbfcfd;
+    }
+    details {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 650;
+    }
+    pre {
+      margin: 8px 0 0;
+      max-height: 260px;
+      overflow: auto;
+      border-radius: 6px;
+      padding: 10px;
+      background: #111827;
+      color: #f9fafb;
+      font-size: 12px;
+      line-height: 1.45;
+    }
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 12px;
@@ -824,10 +1208,16 @@ TRIAL_CLIENT_HTML = """<!doctype html>
   <main>
     <section>
       <h2>试用输入</h2>
+      <label for="apiKeyInput">DeepSeek API Key</label>
+      <input id="apiKeyInput" type="password" autocomplete="off" placeholder="写入本机 secrets 文件">
+      <div class="toolbar">
+        <button id="saveKeyButton" class="secondary">保存 Key</button>
+      </div>
+      <p id="keyMessage" class="muted"></p>
       <label for="noteSelect">笔记</label>
       <select id="noteSelect"></select>
       <label for="modelInput">模型</label>
-      <input id="modelInput" value="deepseek-chat">
+      <select id="modelInput"></select>
       <div class="row">
         <div>
           <label for="timeoutInput">超时秒数</label>
@@ -845,6 +1235,8 @@ TRIAL_CLIENT_HTML = """<!doctype html>
         <button id="refreshButton" class="secondary">刷新</button>
       </div>
       <p id="runMessage" class="muted"></p>
+      <h2>历史产物</h2>
+      <div id="versionsList" class="list"></div>
       <h2>反馈</h2>
       <label for="verdictSelect">结论</label>
       <select id="verdictSelect">
@@ -889,6 +1281,7 @@ TRIAL_CLIENT_HTML = """<!doctype html>
   </main>
   <script>
     let currentRun = null;
+    let currentStatus = null;
     const $ = (id) => document.getElementById(id);
 
     async function api(path, options = {}) {
@@ -900,18 +1293,60 @@ TRIAL_CLIENT_HTML = """<!doctype html>
 
     async function refresh() {
       const data = await api('/api/status');
-      $('modelInput').value = data.default_model || 'deepseek-chat';
+      currentStatus = data;
+      renderModelPresets(data.model_presets || [], data.default_model || 'deepseek-v4-flash');
       const dot = $('keyDot');
       dot.className = 'dot ' + (data.api_key_present ? 'ok' : 'bad');
       $('keyStatus').textContent = data.api_key_present ? 'key ready' : 'key missing';
+      const previousNote = $('noteSelect').value;
       $('noteSelect').innerHTML = '';
       for (const note of data.notes || []) {
         const option = document.createElement('option');
         option.value = note.path;
-        option.textContent = `${note.name} (${note.size_bytes} bytes)`;
+        const count = (note.artifact_versions || []).length;
+        option.textContent = `${note.name} (${count} versions)`;
         $('noteSelect').appendChild(option);
       }
+      if (previousNote) $('noteSelect').value = previousNote;
+      renderSelectedNoteVersions();
       renderBoundaries(data.boundaries || {});
+    }
+
+    function renderModelPresets(presets, selectedModel) {
+      const select = $('modelInput');
+      select.innerHTML = '';
+      for (const preset of presets) {
+        const option = document.createElement('option');
+        option.value = preset.model;
+        option.textContent = preset.label;
+        option.title = preset.description || preset.model;
+        select.appendChild(option);
+      }
+      select.value = selectedModel;
+    }
+
+    async function saveApiKey() {
+      const value = $('apiKeyInput').value;
+      if (!value.trim()) {
+        $('keyMessage').textContent = '请输入 API key';
+        return;
+      }
+      $('saveKeyButton').disabled = true;
+      $('keyMessage').textContent = 'saving locally';
+      try {
+        const result = await api('/api/secrets/deepseek', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({api_key: value})
+        });
+        $('apiKeyInput').value = '';
+        $('keyMessage').textContent = result.secrets_env_file;
+        await refresh();
+      } catch (err) {
+        $('keyMessage').textContent = err.message;
+      } finally {
+        $('saveKeyButton').disabled = false;
+      }
     }
 
     async function runExtraction() {
@@ -932,6 +1367,7 @@ TRIAL_CLIENT_HTML = """<!doctype html>
         });
         $('runMessage').textContent = currentRun.run_id;
         renderResult(currentRun);
+        await refresh();
       } catch (err) {
         $('runMessage').textContent = err.message;
       } finally {
@@ -958,6 +1394,94 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       $('feedbackMessage').textContent = result.markdown_path;
     }
 
+    async function loadArtifact(runId) {
+      $('runMessage').textContent = 'loading ' + runId;
+      try {
+        currentRun = await api('/api/artifact?run_id=' + encodeURIComponent(runId));
+        $('runMessage').textContent = 'loaded ' + runId;
+        renderResult(currentRun);
+        renderSelectedNoteVersions();
+      } catch (err) {
+        $('runMessage').textContent = err.message;
+      }
+    }
+
+    async function deleteArtifact(runId) {
+      if (!confirm('删除这个试用产物版本？')) return;
+      $('runMessage').textContent = 'deleting ' + runId;
+      try {
+        const result = await api('/api/artifact/delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({run_id: runId})
+        });
+        $('runMessage').textContent = result.deleted ? 'deleted ' + runId : 'nothing deleted';
+        if (currentRun?.run_id === runId) currentRun = null;
+        await refresh();
+      } catch (err) {
+        $('runMessage').textContent = err.message;
+      }
+    }
+
+    function renderSelectedNoteVersions() {
+      const notePath = $('noteSelect').value;
+      const notes = currentStatus?.notes || [];
+      const note = notes.find((item) => item.path === notePath);
+      renderArtifactVersions(note?.artifact_versions || []);
+    }
+
+    function renderArtifactVersions(versions) {
+      const root = $('versionsList');
+      root.innerHTML = '';
+      if (!versions.length) {
+        root.innerHTML = '<div class="item"><p class="muted">暂无历史产物</p></div>';
+        return;
+      }
+      for (const version of versions) {
+        const div = document.createElement('div');
+        div.className = 'item version-card' + (currentRun?.run_id === version.run_id ? ' active' : '');
+        const heading = document.createElement('h3');
+        heading.textContent = version.created_at || version.run_id;
+        div.appendChild(heading);
+        const meta = document.createElement('div');
+        meta.className = 'version-meta';
+        for (const text of [
+          version.model || '-',
+          `${version.unit_candidate_count || 0} units`,
+          `${version.relation_candidate_count || 0} relations`,
+          version.validation_status || '-'
+        ]) {
+          meta.appendChild(renderChip(text));
+        }
+        div.appendChild(meta);
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        const loadButton = document.createElement('button');
+        loadButton.type = 'button';
+        loadButton.className = 'secondary';
+        loadButton.textContent = '查看';
+        loadButton.addEventListener('click', () => loadArtifact(version.run_id));
+        actions.appendChild(loadButton);
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'danger';
+        deleteButton.textContent = '删除';
+        deleteButton.disabled = !version.deletable;
+        deleteButton.title = version.deletable ? '' : '只能删除 trial-client 生成的产物';
+        deleteButton.addEventListener('click', () => deleteArtifact(version.run_id));
+        actions.appendChild(deleteButton);
+        div.appendChild(actions);
+        root.appendChild(div);
+      }
+    }
+
+    function renderChip(text) {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = text;
+      return chip;
+    }
+
     function renderResult(result) {
       const artifact = result.extraction_artifact || {};
       $('qualityMetric').textContent = result.quality_status || '-';
@@ -978,10 +1502,47 @@ TRIAL_CLIENT_HTML = """<!doctype html>
         root.innerHTML = '<div class="item"><p class="bad-text">empty extraction</p></div>';
         return;
       }
-      for (const unit of units) {
+      for (const [index, unit] of units.entries()) {
         const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `<h3>${escapeHtml(unit.title || unit.id)}</h3><p>${escapeHtml(unit.content || '')}</p><p class="muted"><code>${escapeHtml(unit.type)}</code> <code>${escapeHtml(unit.id)}</code></p>`;
+        div.className = 'item unit-card';
+        const head = document.createElement('div');
+        head.className = 'unit-head';
+        const titleBox = document.createElement('div');
+        titleBox.className = 'unit-title';
+        const heading = document.createElement('h3');
+        heading.textContent = unit.title || unit.id || 'untitled unit';
+        titleBox.appendChild(heading);
+        const meta = document.createElement('div');
+        meta.className = 'version-meta';
+        for (const text of [unit.type, unit.status, unit.confidence, unit.unsupported ? 'unsupported' : 'supported']) {
+          meta.appendChild(renderChip(text || '-'));
+        }
+        titleBox.appendChild(meta);
+        const badge = document.createElement('span');
+        badge.className = 'unit-index';
+        badge.textContent = `Unit ${index + 1}`;
+        head.appendChild(titleBox);
+        head.appendChild(badge);
+        div.appendChild(head);
+        const content = document.createElement('div');
+        content.className = 'unit-content';
+        content.textContent = unit.content || '-';
+        div.appendChild(content);
+        const machineFields = document.createElement('details');
+        const machineSummary = document.createElement('summary');
+        machineSummary.textContent = '机器字段';
+        machineFields.appendChild(machineSummary);
+        machineFields.appendChild(renderFieldGroup([
+          ['id', unit.id],
+          ['schema_version', unit.schema_version],
+          ['unsupported', unit.unsupported],
+          ['created_at', unit.created_at],
+          ['updated_at', unit.updated_at]
+        ]));
+        div.appendChild(machineFields);
+        div.appendChild(renderSourceRefs(unit.source_refs || []));
+        div.appendChild(renderEmbeddedRelations(unit.relations || []));
+        div.appendChild(renderJsonDetails(unit));
         root.appendChild(div);
       }
     }
@@ -996,9 +1557,124 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       for (const relation of relations) {
         const div = document.createElement('div');
         div.className = 'item';
-        div.innerHTML = `<h3>${escapeHtml(relation.relation_type)}</h3><p>${escapeHtml(relation.reason || '')}</p><p class="muted"><code>${escapeHtml(relation.source_id)}</code> -> <code>${escapeHtml(relation.target_id)}</code></p>`;
+        const heading = document.createElement('h3');
+        heading.textContent = relation.relation_type || 'relation';
+        div.appendChild(heading);
+        div.appendChild(renderFieldGroup([
+          ['source_id', relation.source_id],
+          ['relation_type', relation.relation_type],
+          ['target_id', relation.target_id],
+          ['confidence', relation.confidence],
+          ['reason', relation.reason]
+        ]));
+        div.appendChild(renderJsonDetails(relation));
         root.appendChild(div);
       }
+    }
+
+    function renderFieldGroup(rows) {
+      const group = document.createElement('div');
+      group.className = 'fields';
+      for (const [label, value] of rows) {
+        group.appendChild(renderField(label, value));
+      }
+      return group;
+    }
+
+    function renderField(label, value) {
+      const row = document.createElement('div');
+      row.className = 'field';
+      const key = document.createElement('span');
+      key.textContent = label;
+      const val = document.createElement('strong');
+      val.textContent = formatFieldValue(value);
+      row.appendChild(key);
+      row.appendChild(val);
+      return row;
+    }
+
+    function renderSourceRefs(refs) {
+      const section = document.createElement('details');
+      section.className = 'subsection';
+      const summary = document.createElement('summary');
+      summary.textContent = `验证依据 source_refs (${refs.length})`;
+      section.appendChild(summary);
+      if (!refs.length) {
+        section.appendChild(renderEmptySubitem('none'));
+        return section;
+      }
+      for (const ref of refs) {
+        const item = document.createElement('div');
+        item.className = 'subitem';
+        item.appendChild(renderFieldGroup([
+          ['source_id', ref.source_id],
+          ['source_path', ref.source_path],
+          ['source_span', ref.source_span],
+          ['line_start', ref.line_start],
+          ['line_end', ref.line_end],
+          ['origin', ref.origin],
+          ['quote', ref.quote],
+          ['content_hash', ref.content_hash],
+          ['is_approximate', ref.is_approximate]
+        ]));
+        item.appendChild(renderJsonDetails(ref));
+        section.appendChild(item);
+      }
+      return section;
+    }
+
+    function renderEmbeddedRelations(relations) {
+      const section = document.createElement('details');
+      section.className = 'subsection';
+      const summary = document.createElement('summary');
+      summary.textContent = `内部 relations (${relations.length})`;
+      section.appendChild(summary);
+      if (!relations.length) {
+        section.appendChild(renderEmptySubitem('none'));
+        return section;
+      }
+      for (const relation of relations) {
+        const item = document.createElement('div');
+        item.className = 'subitem';
+        item.appendChild(renderFieldGroup([
+          ['source_id', relation.source_id],
+          ['relation_type', relation.relation_type],
+          ['target_id', relation.target_id],
+          ['confidence', relation.confidence],
+          ['reason', relation.reason]
+        ]));
+        item.appendChild(renderJsonDetails(relation));
+        section.appendChild(item);
+      }
+      return section;
+    }
+
+    function renderEmptySubitem(text) {
+      const item = document.createElement('div');
+      item.className = 'subitem';
+      const paragraph = document.createElement('p');
+      paragraph.className = 'muted';
+      paragraph.textContent = text;
+      item.appendChild(paragraph);
+      return item;
+    }
+
+    function renderJsonDetails(value) {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = 'structured JSON';
+      const pre = document.createElement('pre');
+      pre.textContent = JSON.stringify(value, null, 2);
+      details.appendChild(summary);
+      details.appendChild(pre);
+      return details;
+    }
+
+    function formatFieldValue(value) {
+      if (value === undefined || value === null || value === '') return '-';
+      if (Array.isArray(value)) return value.length ? JSON.stringify(value) : '[]';
+      if (typeof value === 'object') return JSON.stringify(value);
+      return String(value);
     }
 
     function renderBoundaries(boundaries) {
@@ -1031,8 +1707,10 @@ TRIAL_CLIENT_HTML = """<!doctype html>
     }
 
     $('runButton').addEventListener('click', runExtraction);
+    $('saveKeyButton').addEventListener('click', saveApiKey);
     $('refreshButton').addEventListener('click', refresh);
     $('saveFeedbackButton').addEventListener('click', saveFeedback);
+    $('noteSelect').addEventListener('change', renderSelectedNoteVersions);
     refresh();
   </script>
 </body>

@@ -43,12 +43,15 @@ and do not change formal domain schema.
 Pass. The client can trigger approved DeepSeek `extract_units` calls but cannot
 generate patches, accept patches, formal apply, or publish. Empty extractions
 are surfaced as product-quality failures even when typed schema validation
-passes.
+passes. Unit candidates are rendered as structured fields plus expandable JSON
+so trial reviewers can inspect machine structure instead of prose-only cards.
+Historical artifacts can be loaded without a provider call; deletion is limited
+to trial-client generated AI working artifacts.
 
 ## Tests and Evaluation
 
 - Focused trial-client and CLI tests: passed.
-- Full unit suite: 268 tests passed.
+- Full unit suite: 275 tests passed after product-feedback follow-up.
 - Compile check: passed.
 - `git diff --check`: passed.
 - Local trial fixture smoke: passed; `provider_called: false`,
@@ -65,6 +68,9 @@ serving and browser APIs.
 
 - The subprocess command wrapper can drift from CLI flags.
 - The first client is DeepSeek-only.
+- Local API key writing is less secure than shell-only setup, so status and
+  artifact APIs must never return key values.
+- Artifact deletion must remain limited to trial-client generated run IDs.
 - Quality classification is intentionally narrow and does not replace human
   review.
 
@@ -76,6 +82,7 @@ serving and browser APIs.
 
 - Add provider selection after another provider has enough real-note evidence.
 - Add a richer quality rubric once users produce several feedback artifacts.
+- Add artifact comparison after users generate multiple versions per note.
 
 ## Escalation Requests
 
