@@ -8,9 +8,13 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 Set-Location $RepoRoot
 
-$LogDir = Join-Path $RepoRoot ".diamonddust-trial\logs"
+$RuntimeDir = Join-Path $RepoRoot ".diamonddust-trial"
+$LogDir = Join-Path $RuntimeDir "logs"
+$SecretsDir = Join-Path $RuntimeDir "secrets"
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+New-Item -ItemType Directory -Path $SecretsDir -Force | Out-Null
 $LogFile = Join-Path $LogDir "trial-client-launch.log"
+$SecretsEnvFile = Join-Path $SecretsDir "provider-secrets.env"
 
 function Write-LaunchLog {
     param([string]$Message)
@@ -32,6 +36,8 @@ function Invoke-PythonCandidate {
 
 function Get-PythonCommand {
     $candidates = @(
+        , @("py", "-3.13"),
+        , @("py", "-3.12"),
         , @("py", "-3.11"),
         , @("py", "-3"),
         , @("python")
@@ -42,10 +48,46 @@ function Get-PythonCommand {
             "import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)"
         ) *> $null
         if ($LASTEXITCODE -eq 0) {
+            Write-LaunchLog "Selected Python: $($candidate -join ' ')"
             return $candidate
         }
     }
     throw "DiamondDust trial client requires Python 3.11 or newer"
+}
+
+function Test-TrialPortAvailable {
+    param([int]$CandidatePort)
+    try {
+        $listener = [System.Net.Sockets.TcpListener]::new(
+            [System.Net.IPAddress]::Parse("127.0.0.1"),
+            $CandidatePort
+        )
+        $listener.Start()
+        $listener.Stop()
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Get-TrialPort {
+    param([string]$RequestedPort)
+    if ($env:DIAMONDDUST_TRIAL_PORT) {
+        Write-LaunchLog "Selected port from DIAMONDDUST_TRIAL_PORT: $env:DIAMONDDUST_TRIAL_PORT"
+        return $env:DIAMONDDUST_TRIAL_PORT
+    }
+    $startPort = [int]$RequestedPort
+    if ($startPort -ne 8765) {
+        Write-LaunchLog "Selected requested port: $RequestedPort"
+        return $RequestedPort
+    }
+    foreach ($candidate in 8765..8775) {
+        if (Test-TrialPortAvailable $candidate) {
+            Write-LaunchLog "Selected port: $candidate"
+            return "$candidate"
+        }
+    }
+    throw "Could not find an available port from 8765 through 8775"
 }
 
 Write-LaunchLog ""
@@ -82,6 +124,7 @@ try {
             throw "DiamondDust dependency installation failed"
         }
     }
+    $SelectedPort = Get-TrialPort $Port
 } catch {
     Write-Host $_.Exception.Message
     Write-Host "Launch log: $LogFile"
@@ -97,7 +140,9 @@ $ArgsList = @(
     "--root",
     $RepoRoot,
     "--port",
-    $Port
+    $SelectedPort,
+    "--secrets-env-file",
+    $SecretsEnvFile
 )
 
 $FrontendDist = Join-Path $RepoRoot "frontend\trial-client\dist"
@@ -124,13 +169,14 @@ if ($WorkspaceDir.Trim()) {
     )
 }
 
-Write-Host "DiamondDust trial client: http://127.0.0.1:$Port/"
+Write-Host "DiamondDust trial client: http://127.0.0.1:$SelectedPort/"
 Write-Host "Launch log: $LogFile"
+Write-Host "API key file: $SecretsEnvFile"
 if (-not $NoBrowser) {
     try {
-        Start-Process "http://127.0.0.1:$Port/" | Out-Null
+        Start-Process "http://127.0.0.1:$SelectedPort/" | Out-Null
     } catch {
-        Write-Host "Open http://127.0.0.1:$Port/ in your browser."
+        Write-Host "Open http://127.0.0.1:$SelectedPort/ in your browser."
     }
 }
 & $Python $ArgsList

@@ -2,6 +2,20 @@
 
 Record completed development milestones and links to reviews here.
 
+## 2026-05-29 — Win Trial Alpha Startup Fixes Completed
+
+- Scope: Fixed Win11 alpha startup issues found during real package trial.
+- Outcome: Win launchers now support Python 3.13/3.12/3.11 without manual
+  script edits, avoid the batch delayed-expansion failure that produced
+  `'-m' is not recognized`, choose an available port from 8765 through 8775
+  unless `DIAMONDDUST_TRIAL_PORT` is set, and pass a package-local secret file
+  at `.diamonddust-trial/secrets/provider-secrets.env` to the backend.
+- Gate impact: Post-Gate 7 alpha distribution fix; no provider policy,
+  formal write, dependency, or publication behavior changed.
+- Validation: Focused distribution tests passed, frontend build passed, package
+  generation smoke passed. Full validation is recorded in the PR.
+- Dependency impact: No new dependency or bundled Python runtime was added.
+
 ## 2026-05-28 — Trial Client Win Launcher Fix Completed
 
 - Scope: Hardened Win11 `.cmd` and PowerShell trial-client launchers after an

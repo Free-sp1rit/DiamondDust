@@ -56,7 +56,8 @@ The package must not include:
 Requirements:
 
 - Windows 11
-- Python 3.11 or newer on `PATH`
+- Python 3.11 or newer, including Python 3.13/3.12/3.11. The Win launcher
+  checks `py -3.13`, `py -3.12`, `py -3.11`, `py -3`, then `python`.
 - Internet access on first start for Python dependency installation and during
   provider extraction calls
 
@@ -65,7 +66,8 @@ For Win11 testers:
 1. Unzip the package.
 2. Double-click `start-diamonddust-trial.cmd`.
 3. Wait for the first launch to create `.venv` and install dependencies.
-4. Open `http://127.0.0.1:8765/` if the browser does not open automatically.
+4. Open the local URL printed by the launcher if the browser does not open
+   automatically.
 5. In the client, choose a workspace directory such as `C:\DiamondDustTrial`.
 6. Save the DeepSeek API key through the client.
 7. Import a Markdown note or use files already placed in the workspace input
@@ -97,12 +99,23 @@ Common first-run blockers:
 - The first-run dependency installation cannot access the Python package index.
 - A stale `.venv` was created with an older Python version.
 
+If port `8765` is already in use, the Win launcher automatically tries ports
+`8765` through `8775`. To force a port before launch:
+
+```bat
+set DIAMONDDUST_TRIAL_PORT=8788
+start-diamonddust-trial.cmd
+```
+
 ## Runtime Boundaries
 
 The trial client remains local-first:
 
 - The backend runs on `127.0.0.1`.
 - API key status is shown without returning the key value.
+- The Win alpha launchers pass a package-local secret file to the backend:
+  `<package>/.diamonddust-trial/secrets/provider-secrets.env`. Do not share the
+  unpacked package directory after saving an API key.
 - Provider calls happen only when the user explicitly runs extraction.
 - Raw provider request and response bodies are not persisted by default.
 - Trial output is written under the selected workspace.

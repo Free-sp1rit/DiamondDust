@@ -42,9 +42,14 @@ class TrialDistributionTests(unittest.TestCase):
         self.assertTrue(manifest["include_frontend_dist"])
         self.assertFalse(manifest["boundaries"]["api_key_values_included"])
         self.assertFalse(manifest["boundaries"]["knowledge_vault_included"])
+        self.assertFalse(manifest["boundaries"]["trial_runtime_dir_included"])
         self.assertFalse(manifest["boundaries"]["formal_write_enabled"])
         self.assertIn(".diamonddust-trial", start_here)
+        self.assertIn(".diamonddust-trial/secrets/provider-secrets.env", start_here)
         self.assertIn("trial-client-launch.log", start_here)
+        self.assertIn("DIAMONDDUST_TRIAL_PORT", start_here)
+        self.assertIn("Python 3.13", start_here)
+        self.assertIn(".diamonddust-trial", manifest["excluded_by_policy"])
         self.assertIn("frontend/trial-client/dist", manifest["included_paths"])
         self.assertIn(package_prefix + "START_HERE.md", zip_names)
         self.assertIn(package_prefix + "TRIAL_RELEASE_MANIFEST.json", zip_names)
@@ -55,6 +60,7 @@ class TrialDistributionTests(unittest.TestCase):
                 "provider-secrets.env" in name
                 or "knowledge-vault" in name
                 or "node_modules" in name
+                or ".diamonddust-trial" in name
                 or ".egg-info" in name
                 or "/.git/" in name
                 for name in zip_names
