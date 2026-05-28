@@ -20,6 +20,7 @@ _VERSION_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
 _FORBIDDEN_PATH_PARTS = {
     ".git",
     ".venv",
+    ".diamonddust-trial",
     "__pycache__",
     "knowledge-vault",
     "node_modules",
@@ -184,17 +185,21 @@ def _write_start_here(package_dir: Path, version: str) -> None:
 
 ## 快速启动（Win11）
 
-前置条件：Windows 11、Python 3.11 或更新版本，并且首次启动时可联网安装依赖。
+前置条件：Windows 11、Python 3.11 或更新版本。Python 3.13/3.12/3.11
+都可用；首次启动时需要联网安装依赖。
 
 1. 解压整个目录。
 2. 双击 `start-diamonddust-trial.cmd`。
 3. 首次启动会在本目录创建 `.venv` 并安装试用依赖。
-4. 浏览器打开 `http://127.0.0.1:8765/` 后，在页面中设置试用工作目录。
+4. 浏览器打开启动窗口显示的本地地址后，在页面中设置试用工作目录。
 5. 在客户端保存 DeepSeek API key，导入 Markdown 笔记，选择模型预设并运行。
 6. 查看历史产物、删除试用产物或填写反馈时，都在客户端内完成。
 
 如果启动失败，窗口会显示错误并暂停；诊断日志位于
 `.diamonddust-trial\\logs\\trial-client-launch.log`。
+
+如果默认端口被占用，启动器会自动尝试 `8765` 到 `8775`。也可以先在
+命令行设置 `DIAMONDDUST_TRIAL_PORT` 指定端口。
 
 PowerShell 用户也可以运行：
 
@@ -204,12 +209,13 @@ PowerShell 用户也可以运行：
 
 ## 本地数据边界
 
-- API key 只应保存在本机用户目录的
-  `~/.config/diamonddust/provider-secrets.env`。
+- 通过 Win11 启动器运行时，API key 保存在本发行包目录的
+  `.diamonddust-trial/secrets/provider-secrets.env`。保存 key 后不要把
+  解压后的整个目录转发给他人。
 - 试用产物写入你选择的工作目录。
 - 启动诊断日志写入本目录的 `.diamonddust-trial/logs/`。
 - 本发行包不包含 API key、`knowledge-vault/`、`.git/`、`.venv/`、
-  `node_modules/` 或历史模型调用产物。
+  `.diamonddust-trial/`、`node_modules/` 或历史模型调用产物。
 - 试用客户端不会 formal apply、不会发布、不会记录 patch acceptance。
 
 更多说明见 `docs/guides/trial-client-alpha-distribution.md`。
@@ -247,6 +253,7 @@ def _write_manifest(
             "git_history_included": False,
             "raw_provider_request_included": False,
             "raw_provider_response_included": False,
+            "trial_runtime_dir_included": False,
             "formal_write_enabled": False,
             "publication_enabled": False,
         },

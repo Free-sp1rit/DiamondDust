@@ -32,7 +32,10 @@ dependencies on first start when no local virtual environment exists. They
 serve the built React frontend automatically when
 `frontend/trial-client/dist/index.html` exists and open the local browser by
 default. If startup fails, diagnostics are written to
-`.diamonddust-trial/logs/trial-client-launch.log`.
+`.diamonddust-trial/logs/trial-client-launch.log`. The launchers support
+Python 3.13/3.12/3.11 through `py` or `python`, automatically try ports `8765`
+through `8775`, and pass a package-local secret file at
+`.diamonddust-trial/secrets/provider-secrets.env` to the backend.
 
 Trial alpha packages are built with:
 
@@ -51,7 +54,9 @@ Defaults:
 - input notes: `knowledge-vault/_manual_trials/deepseek-real-note-evaluation/00-input-notes`
 - vault artifacts: `knowledge-vault/`
 - feedback artifacts: `knowledge-vault/_manual_trials/trial-client-feedback/`
-- secrets env file: `~/.config/diamonddust/provider-secrets.env`
+- secrets env file: Win launcher
+  `.diamonddust-trial/secrets/provider-secrets.env`; direct CLI default
+  `~/.config/diamonddust/provider-secrets.env`
 - provider: `deepseek`
 - default model: `deepseek-v4-flash`
 - model presets: `deepseek-v4-flash`, `deepseek-v4-pro`
@@ -108,6 +113,15 @@ The expected local-only file is:
 ```text
 ~/.config/diamonddust/provider-secrets.env
 ```
+
+When started through the Win11 alpha launcher, the launcher passes this
+package-local file instead:
+
+```text
+<package>/.diamonddust-trial/secrets/provider-secrets.env
+```
+
+Do not share the unpacked package directory after saving an API key.
 
 Expected variable name:
 
