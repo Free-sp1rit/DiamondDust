@@ -193,6 +193,9 @@ def _write_start_here(package_dir: Path, version: str) -> None:
 5. 在客户端保存 DeepSeek API key，导入 Markdown 笔记，选择模型预设并运行。
 6. 查看历史产物、删除试用产物或填写反馈时，都在客户端内完成。
 
+如果启动失败，窗口会显示错误并暂停；诊断日志位于
+`.diamonddust-trial\\logs\\trial-client-launch.log`。
+
 PowerShell 用户也可以运行：
 
 ```powershell
@@ -204,6 +207,7 @@ PowerShell 用户也可以运行：
 - API key 只应保存在本机用户目录的
   `~/.config/diamonddust/provider-secrets.env`。
 - 试用产物写入你选择的工作目录。
+- 启动诊断日志写入本目录的 `.diamonddust-trial/logs/`。
 - 本发行包不包含 API key、`knowledge-vault/`、`.git/`、`.venv/`、
   `node_modules/` 或历史模型调用产物。
 - 试用客户端不会 formal apply、不会发布、不会记录 patch acceptance。

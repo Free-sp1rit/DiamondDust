@@ -30,6 +30,9 @@ class TrialDistributionTests(unittest.TestCase):
             )
 
             manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+            start_here = (result.package_dir / "START_HERE.md").read_text(
+                encoding="utf-8"
+            )
             package_prefix = result.package_dir.name + "/"
             with zipfile.ZipFile(result.zip_path) as archive:
                 zip_names = set(archive.namelist())
@@ -40,6 +43,8 @@ class TrialDistributionTests(unittest.TestCase):
         self.assertFalse(manifest["boundaries"]["api_key_values_included"])
         self.assertFalse(manifest["boundaries"]["knowledge_vault_included"])
         self.assertFalse(manifest["boundaries"]["formal_write_enabled"])
+        self.assertIn(".diamonddust-trial", start_here)
+        self.assertIn("trial-client-launch.log", start_here)
         self.assertIn("frontend/trial-client/dist", manifest["included_paths"])
         self.assertIn(package_prefix + "START_HERE.md", zip_names)
         self.assertIn(package_prefix + "TRIAL_RELEASE_MANIFEST.json", zip_names)

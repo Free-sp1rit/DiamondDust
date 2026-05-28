@@ -31,7 +31,8 @@ The Win11 launchers create a local `.venv` and install DiamondDust trial
 dependencies on first start when no local virtual environment exists. They
 serve the built React frontend automatically when
 `frontend/trial-client/dist/index.html` exists and open the local browser by
-default.
+default. If startup fails, diagnostics are written to
+`.diamonddust-trial/logs/trial-client-launch.log`.
 
 Trial alpha packages are built with:
 
