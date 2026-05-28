@@ -2,7 +2,7 @@
 
 Record unresolved product, architecture, schema, dependency, or governance questions here.
 
-Last updated: 2026-05-25
+Last updated: 2026-05-28
 
 ## Tooling and Repository Shape
 
@@ -105,6 +105,17 @@ Last updated: 2026-05-25
 - Impact: Affects dependencies, cost, evidence coverage, unsupported claim risk, and quality evaluation.
 
 ## Release Automation
+
+### 2026-05-28 — When should the alpha package become a native or published release?
+
+- Context: A source-based trial-client alpha package can now be generated for a
+  small user group. It is intentionally not a stable release, signed installer,
+  GitHub Release, or package-publishing workflow.
+- Needed decision: After enough real-user trial feedback, decide whether to
+  invest in a native Win11 installer, checksums/signing, version tags, and
+  release publishing.
+- Impact: Affects distribution polish, support burden, user trust, and release
+  governance.
 
 ### 2026-05-14 — When should release publishing and versioning become gated?
 
