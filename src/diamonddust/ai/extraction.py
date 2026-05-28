@@ -8,7 +8,16 @@ from hashlib import sha256
 import json
 from typing import Any, Mapping
 
-from diamonddust.domain import KnowledgeUnit, Relation, SourceRef, ValidationError
+from diamonddust.domain import (
+    KnowledgeUnit,
+    Relation,
+    SourceRef,
+    UnitType,
+    ValidationError,
+)
+
+CURRENT_EXTRACTION_SCHEMA_VERSION = "0.2.0"
+LEGACY_EXTRACTION_SCHEMA_VERSION = "0.1.0"
 
 EXTRACTION_TASK = "extract_units"
 
@@ -20,6 +29,55 @@ class AIValidationStatus(StrEnum):
 
 class ExtractionValidationError(ValueError):
     """Raised internally when AI extraction output cannot be accepted."""
+
+
+class SourceShape(StrEnum):
+    ENGINEERING_PROCEDURE_NOTE = "engineering_procedure_note"
+    STUDY_NOTE = "study_note"
+    SCRATCH_NOTE = "scratch_note"
+    LONG_ARTICLE = "long_article"
+    EXPERIMENT_RECORD = "experiment_record"
+    REFLECTION = "reflection"
+
+
+@dataclass(frozen=True)
+class SourceContext:
+    source_input_id: str
+    source_shape: SourceShape
+    knowledge_domains: tuple[str, ...]
+    background: str
+    main_content: tuple[str, ...]
+    scope: str
+    source_refs: tuple[SourceRef, ...]
+
+    def __post_init__(self) -> None:
+        _require_non_empty("source_input_id", self.source_input_id)
+        if not isinstance(self.source_shape, SourceShape):
+            raise ExtractionValidationError("source_shape must be a SourceShape")
+        _require_str_tuple("knowledge_domains", self.knowledge_domains)
+        _require_non_empty("background", self.background)
+        _require_str_tuple("main_content", self.main_content)
+        _require_non_empty("scope", self.scope)
+        _require_tuple("source_refs", self.source_refs, SourceRef)
+        if not self.source_refs:
+            raise ExtractionValidationError("source_context must preserve source_refs")
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "SourceContext":
+        if not isinstance(data, Mapping):
+            raise ExtractionValidationError("source_context must be a mapping")
+        return cls(
+            source_input_id=_expect_str(data, "source_input_id"),
+            source_shape=_source_shape_from_value(data.get("source_shape")),
+            knowledge_domains=_str_tuple_from_value(
+                data.get("knowledge_domains"),
+                "knowledge_domains",
+            ),
+            background=_expect_str(data, "background"),
+            main_content=_str_tuple_from_value(data.get("main_content"), "main_content"),
+            scope=_expect_str(data, "scope"),
+            source_refs=_source_refs_from_output(data.get("source_refs")),
+        )
 
 
 @dataclass(frozen=True)
@@ -115,16 +173,27 @@ class AIRunLog:
 @dataclass(frozen=True)
 class ExtractionProposal:
     source_input_id: str
+    source_context: SourceContext | None
     unit_candidates: tuple[KnowledgeUnit, ...]
     relation_candidates: tuple[Relation, ...]
     run_log: AIRunLog
 
     def __post_init__(self) -> None:
         _require_non_empty("source_input_id", self.source_input_id)
+        if self.source_context is not None and not isinstance(
+            self.source_context,
+            SourceContext,
+        ):
+            raise ExtractionValidationError("source_context must be SourceContext")
         _require_tuple("unit_candidates", self.unit_candidates, KnowledgeUnit)
         _require_tuple("relation_candidates", self.relation_candidates, Relation)
         if self.run_log.validation_status != AIValidationStatus.PASSED:
             raise ExtractionValidationError("proposal run_log must have passed validation")
+        if self.source_context is not None:
+            _require_source_context_matches(
+                self.source_input_id,
+                self.source_context,
+            )
         _require_preserved_source_refs(self.source_input_id, self.unit_candidates)
 
 
@@ -152,7 +221,16 @@ def validate_extraction_output(
             raise ExtractionValidationError("extraction output must be a structured mapping")
 
         source_input_id = _expect_str(raw_output, "source_input_id")
+        source_context = _source_context_from_output(
+            raw_output.get("source_context"),
+            source_input_id=source_input_id,
+            schema_version=metadata.schema_version,
+        )
         unit_candidates = _knowledge_units_from_output(raw_output.get("unit_candidates"))
+        _require_no_raw_essay_units_for_current_schema(
+            metadata.schema_version,
+            unit_candidates,
+        )
         relation_candidates = _relations_from_output(raw_output.get("relation_candidates"))
         run_log = AIRunLog.from_metadata(
             metadata,
@@ -161,6 +239,7 @@ def validate_extraction_output(
         )
         proposal = ExtractionProposal(
             source_input_id=source_input_id,
+            source_context=source_context,
             unit_candidates=unit_candidates,
             relation_candidates=relation_candidates,
             run_log=run_log,
@@ -197,6 +276,41 @@ def _knowledge_units_from_output(value: object) -> tuple[KnowledgeUnit, ...]:
     return tuple(units)
 
 
+def _source_context_from_output(
+    value: object,
+    *,
+    source_input_id: str,
+    schema_version: str,
+) -> SourceContext | None:
+    if value is None:
+        if schema_version == LEGACY_EXTRACTION_SCHEMA_VERSION:
+            return None
+        raise ExtractionValidationError("source_context is required")
+    try:
+        source_context = SourceContext.from_mapping(value)
+    except ExtractionValidationError as exc:
+        raise ExtractionValidationError(f"source_context: {exc}") from exc
+    if source_context.source_input_id != source_input_id:
+        raise ExtractionValidationError(
+            "source_context source_input_id must match top-level source_input_id"
+        )
+    return source_context
+
+
+def _source_refs_from_output(value: object) -> tuple[SourceRef, ...]:
+    if value is None:
+        raise ExtractionValidationError("source_refs is required")
+    if not isinstance(value, (list, tuple)):
+        raise ExtractionValidationError("source_refs must be a list or tuple")
+    refs: list[SourceRef] = []
+    for index, item in enumerate(value):
+        try:
+            refs.append(SourceRef.from_mapping(item))
+        except ValidationError as exc:
+            raise ExtractionValidationError(f"source_refs[{index}]: {exc}") from exc
+    return tuple(refs)
+
+
 def _relations_from_output(value: object) -> tuple[Relation, ...]:
     if not isinstance(value, (list, tuple)):
         raise ExtractionValidationError("relation_candidates must be a list or tuple")
@@ -209,6 +323,21 @@ def _relations_from_output(value: object) -> tuple[Relation, ...]:
                 f"relation_candidates[{index}]: {exc}"
             ) from exc
     return tuple(relations)
+
+
+def _require_source_context_matches(
+    source_input_id: str,
+    source_context: SourceContext,
+) -> None:
+    if source_context.source_input_id != source_input_id:
+        raise ExtractionValidationError(
+            "source_context source_input_id must match source_input_id"
+        )
+    if not any(
+        _source_ref_matches(source_input_id, source_ref)
+        for source_ref in source_context.source_refs
+    ):
+        raise ExtractionValidationError("source_context must reference source_input_id")
 
 
 def _require_preserved_source_refs(
@@ -226,6 +355,33 @@ def _require_preserved_source_refs(
 
 def _source_ref_matches(source_input_id: str, source_ref: SourceRef) -> bool:
     return source_ref.source_id == source_input_id
+
+
+def _require_no_raw_essay_units_for_current_schema(
+    schema_version: str,
+    unit_candidates: tuple[KnowledgeUnit, ...],
+) -> None:
+    if schema_version == LEGACY_EXTRACTION_SCHEMA_VERSION:
+        return
+    for unit in unit_candidates:
+        if unit.type == UnitType.RAW_ESSAY:
+            raise ExtractionValidationError(
+                "raw_essay must not be generated as a unit candidate in current "
+                "extraction output; use source_context for source-level summary"
+            )
+
+
+def _source_shape_from_value(value: object) -> SourceShape:
+    if isinstance(value, SourceShape):
+        return value
+    if not isinstance(value, str):
+        raise ExtractionValidationError("source_shape must be a string")
+    try:
+        return SourceShape(value)
+    except ValueError as exc:
+        raise ExtractionValidationError(
+            f"source_shape has unsupported value: {value}"
+        ) from exc
 
 
 def _expect_str(data: Mapping[str, Any], key: str) -> str:
@@ -252,6 +408,23 @@ def _require_tuple(name: str, value: object, item_type: type) -> None:
         raise ExtractionValidationError(f"{name} must be a tuple")
     if not all(isinstance(item, item_type) for item in value):
         raise ExtractionValidationError(f"{name} must contain only {item_type.__name__}")
+
+
+def _require_str_tuple(name: str, value: object) -> None:
+    if not isinstance(value, tuple) or not value:
+        raise ExtractionValidationError(f"{name} must be a non-empty tuple")
+    if not all(isinstance(item, str) and item.strip() for item in value):
+        raise ExtractionValidationError(f"{name} must contain non-empty strings")
+
+
+def _str_tuple_from_value(value: object, key: str) -> tuple[str, ...]:
+    if value is None:
+        raise ExtractionValidationError(f"{key} is required")
+    if not isinstance(value, (list, tuple)):
+        raise ExtractionValidationError(f"{key} must be a list or tuple")
+    result = tuple(value)
+    _require_str_tuple(key, result)
+    return result
 
 
 def _canonical_json(raw_output: object) -> str:

@@ -4,6 +4,42 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-28 — Add SourceContext to extraction output
+
+- Decision: Current provider-facing `extract_units` output now includes
+  top-level `source_context` beside `unit_candidates` and
+  `relation_candidates`. `source_context` carries source/article-level
+  background, domains, main content, scope, shape, and source refs, while
+  ordinary units carry reusable knowledge objects.
+- Reason: Real-note trials showed that providers were turning whole-note
+  summaries and background into structurally valid but low-value units. Future
+  RAG and relation workflows need cleaner separation between source-level
+  context and independently reusable units.
+- Alternatives: Keep article summaries as `raw_essay` or broad `concept`
+  units; handle the distinction only in the UI; immediately add new unit types
+  such as `procedure`.
+- Risks: Providers may still leak article summaries into units, so prompt
+  guidance and human review remain important. Existing legacy `0.1.0` artifacts
+  without `source_context` remain viewable and valid for compatibility.
+- Follow-up: Use real-note feedback to decide whether to add semantic quality
+  checks for `source_context_leakage` and `missing_minimal_context`, and whether
+  unit taxonomy needs explicit `procedure` or configuration-decision types.
+
+### 2026-05-28 — Generate new artifact timestamps in UTC+8
+
+- Decision: Automatic DiamondDust artifact timestamps now use UTC+8 ISO 8601
+  strings with the `+08:00` offset. Trial-client generated run ids use a
+  compact UTC+8 timestamp slug ending in `UTC8`.
+- Reason: Product-owner-facing trial artifacts should align with the user's
+  local UTC+8 expectation instead of showing UTC `Z` timestamps that appear
+  eight hours behind.
+- Alternatives: Keep UTC everywhere and convert only in UI; add a user
+  preference; migrate historical artifacts.
+- Risks: Existing historical fixtures and artifacts still contain `Z`
+  timestamps, so consumers must continue to tolerate both formats.
+- Follow-up: If multi-timezone users become part of the trial group, introduce
+  a configurable display timezone while preserving stored offset timestamps.
+
 ### 2026-05-28 — Split trial client into local Python backend and maintainable React frontend
 
 - Decision: Keep the Python trial-client service as the local backend for

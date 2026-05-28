@@ -4,10 +4,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from diamonddust.ai.extraction import (
+    CURRENT_EXTRACTION_SCHEMA_VERSION,
+    LEGACY_EXTRACTION_SCHEMA_VERSION,
+    SourceShape,
+)
 from diamonddust.domain import Confidence, RelationType, SourceOrigin, Status, UnitType
 
 
-EXTRACTION_OUTPUT_SCHEMA_VERSION = "0.1.0"
+EXTRACTION_OUTPUT_SCHEMA_VERSION = CURRENT_EXTRACTION_SCHEMA_VERSION
+LEGACY_EXTRACTION_OUTPUT_SCHEMA_VERSION = LEGACY_EXTRACTION_SCHEMA_VERSION
 EXTRACTION_OUTPUT_SCHEMA_ID = "diamonddust.extract_units.output.v0"
 
 
@@ -101,6 +107,49 @@ def extraction_output_json_schema() -> dict[str, Any]:
         },
     }
 
+    source_context_schema: dict[str, Any] = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "source_input_id",
+            "source_shape",
+            "knowledge_domains",
+            "background",
+            "main_content",
+            "scope",
+            "source_refs",
+        ],
+        "properties": {
+            "source_input_id": _non_empty_string(),
+            "source_shape": _enum_values(SourceShape),
+            "knowledge_domains": {
+                "type": "array",
+                "minItems": 1,
+                "items": _user_facing_chinese_string(
+                    "Source-level knowledge domain label."
+                ),
+            },
+            "background": _user_facing_chinese_string(
+                "Source-level background context for this input note."
+            ),
+            "main_content": {
+                "type": "array",
+                "minItems": 1,
+                "items": _user_facing_chinese_string(
+                    "Source-level main content point from this input note."
+                ),
+            },
+            "scope": _user_facing_chinese_string(
+                "Source-level applicability and boundary statement for this input note."
+            ),
+            "source_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"$ref": "#/$defs/source_ref"},
+            },
+        },
+    }
+
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": EXTRACTION_OUTPUT_SCHEMA_ID,
@@ -113,11 +162,13 @@ def extraction_output_json_schema() -> dict[str, Any]:
         "additionalProperties": False,
         "required": [
             "source_input_id",
+            "source_context",
             "unit_candidates",
             "relation_candidates",
         ],
         "properties": {
             "source_input_id": _non_empty_string(),
+            "source_context": {"$ref": "#/$defs/source_context"},
             "unit_candidates": {
                 "type": "array",
                 "items": {"$ref": "#/$defs/knowledge_unit"},
@@ -131,11 +182,14 @@ def extraction_output_json_schema() -> dict[str, Any]:
             "knowledge_unit": knowledge_unit_schema,
             "relation": relation_schema,
             "source_ref": source_ref_schema,
+            "source_context": source_context_schema,
         },
         "$comment": (
             "Runtime validation additionally requires every unit candidate to preserve "
-            "a source_ref whose source_id matches top-level source_input_id. This schema "
-            "does not authorize provider calls or formal writes."
+            "a source_ref whose source_id matches top-level source_input_id. Current "
+            "schema output also rejects raw_essay unit candidates because source-level "
+            "summary belongs in source_context. This schema does not authorize provider "
+            "calls or formal writes."
         ),
     }
 
@@ -191,5 +245,6 @@ def _enum_values(enum_type: type) -> dict[str, Any]:
 __all__ = [
     "EXTRACTION_OUTPUT_SCHEMA_ID",
     "EXTRACTION_OUTPUT_SCHEMA_VERSION",
+    "LEGACY_EXTRACTION_OUTPUT_SCHEMA_VERSION",
     "extraction_output_json_schema",
 ]

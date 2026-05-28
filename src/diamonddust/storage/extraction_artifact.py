@@ -8,7 +8,7 @@ from pathlib import Path, PurePosixPath
 import re
 from typing import Any
 
-from diamonddust.ai import ExtractionProposal
+from diamonddust.ai import ExtractionProposal, SourceContext
 from diamonddust.domain import KnowledgeUnit, Relation, SourceRef
 from diamonddust.storage.artifacts import ARTIFACT_SCHEMA_VERSION
 
@@ -158,7 +158,12 @@ def _artifact_mapping(
         "output_hash": run_log.output_hash,
         "validation_status": run_log.validation_status.value,
         "unit_candidate_count": len(proposal.unit_candidates),
+        "knowledge_unit_count_excluding_raw_essay": _knowledge_unit_count(
+            proposal.unit_candidates
+        ),
+        "raw_essay_unit_count": _raw_essay_unit_count(proposal.unit_candidates),
         "relation_candidate_count": len(proposal.relation_candidates),
+        "source_context": _source_context_mapping(proposal.source_context),
         "unit_candidates": [_unit_mapping(unit) for unit in proposal.unit_candidates],
         "relation_candidates": [
             _relation_mapping(relation) for relation in proposal.relation_candidates
@@ -178,6 +183,22 @@ def _artifact_mapping(
     return data
 
 
+def _source_context_mapping(source_context: SourceContext | None) -> dict[str, Any] | None:
+    if source_context is None:
+        return None
+    return {
+        "source_input_id": source_context.source_input_id,
+        "source_shape": source_context.source_shape.value,
+        "knowledge_domains": list(source_context.knowledge_domains),
+        "background": source_context.background,
+        "main_content": list(source_context.main_content),
+        "scope": source_context.scope,
+        "source_refs": [
+            _source_ref_mapping(source_ref) for source_ref in source_context.source_refs
+        ],
+    }
+
+
 def _unit_mapping(unit: KnowledgeUnit) -> dict[str, Any]:
     return {
         "id": unit.id,
@@ -193,6 +214,14 @@ def _unit_mapping(unit: KnowledgeUnit) -> dict[str, Any]:
         "schema_version": unit.schema_version,
         "unsupported": unit.unsupported,
     }
+
+
+def _knowledge_unit_count(units: tuple[KnowledgeUnit, ...]) -> int:
+    return sum(1 for unit in units if unit.type.value != "raw_essay")
+
+
+def _raw_essay_unit_count(units: tuple[KnowledgeUnit, ...]) -> int:
+    return sum(1 for unit in units if unit.type.value == "raw_essay")
 
 
 def _source_ref_mapping(source_ref: SourceRef) -> dict[str, Any]:

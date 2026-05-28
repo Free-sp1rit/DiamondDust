@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from diamonddust.ai import (
+    CURRENT_EXTRACTION_SCHEMA_VERSION,
     EXTRACTION_TASK,
     FakeProvider,
     ProviderBoundaryError,
@@ -44,7 +45,7 @@ class ProviderBoundaryTests(unittest.TestCase):
                 provider="fake-provider",
                 model="fake-structured-model",
                 prompt_version="extract_units.v1",
-                schema_version="0.1.0",
+                schema_version=CURRENT_EXTRACTION_SCHEMA_VERSION,
                 tool_calls_enabled=True,
             )
 
@@ -205,7 +206,7 @@ def _settings(*, real_provider_calls_enabled: bool = False) -> ProviderModelSett
         provider="fake-provider",
         model="fake-structured-model",
         prompt_version="extract_units.v1",
-        schema_version="0.1.0",
+        schema_version=CURRENT_EXTRACTION_SCHEMA_VERSION,
         real_provider_calls_enabled=real_provider_calls_enabled,
     )
 
@@ -225,8 +226,26 @@ def _request(
 
 
 def _valid_output() -> dict:
+    source_ref = {
+        "source_id": SOURCE_ID,
+        "source_path": "00-inbox/provider-boundary.md",
+        "source_span": "lines 1-3",
+        "origin": "user_text",
+        "line_start": 1,
+        "line_end": 3,
+        "content_hash": "sha256:source",
+    }
     return {
         "source_input_id": SOURCE_ID,
+        "source_context": {
+            "source_input_id": SOURCE_ID,
+            "source_shape": "engineering_procedure_note",
+            "knowledge_domains": ["Provider boundary"],
+            "background": "这是一份关于 provider boundary 的工程测试输入。",
+            "main_content": ["provider envelope", "typed validation"],
+            "scope": "用于测试 provider output 到 extraction validation 的边界。",
+            "source_refs": [source_ref],
+        },
         "unit_candidates": [
             {
                 "id": "unit_provider_boundary_ab12cd",
@@ -234,22 +253,12 @@ def _valid_output() -> dict:
                 "title": "Provider boundaries",
                 "content": "Provider adapters return envelopes before validation.",
                 "status": "seedling",
-                "source_refs": [
-                    {
-                        "source_id": SOURCE_ID,
-                        "source_path": "00-inbox/provider-boundary.md",
-                        "source_span": "lines 1-3",
-                        "origin": "user_text",
-                        "line_start": 1,
-                        "line_end": 3,
-                        "content_hash": "sha256:source",
-                    }
-                ],
+                "source_refs": [source_ref],
                 "relations": [],
                 "confidence": "medium",
                 "created_at": CREATED_AT,
                 "updated_at": CREATED_AT,
-                "schema_version": "0.1.0",
+                "schema_version": CURRENT_EXTRACTION_SCHEMA_VERSION,
             }
         ],
         "relation_candidates": [],

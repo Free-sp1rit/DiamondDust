@@ -2,8 +2,11 @@ import unittest
 
 from diamonddust.ai import (
     AIRunMetadata,
+    CURRENT_EXTRACTION_SCHEMA_VERSION,
     AIValidationStatus,
     ExtractionValidationError,
+    LEGACY_EXTRACTION_SCHEMA_VERSION,
+    SourceContext,
     compute_ai_output_hash,
     validate_extraction_output,
 )
@@ -19,10 +22,15 @@ class AIExtractionProposalTests(unittest.TestCase):
         self.assertIsNotNone(result.proposal)
         assert result.proposal is not None
         self.assertIsInstance(result.proposal.unit_candidates[0], KnowledgeUnit)
+        self.assertIsInstance(result.proposal.source_context, SourceContext)
+        self.assertEqual(
+            result.proposal.source_context.source_shape.value,
+            "engineering_procedure_note",
+        )
         self.assertIsInstance(result.proposal.relation_candidates[0], Relation)
         self.assertEqual(result.run_log.validation_status, AIValidationStatus.PASSED)
         self.assertEqual(result.run_log.prompt_version, "extract_units.v1")
-        self.assertEqual(result.run_log.schema_version, "0.1.0")
+        self.assertEqual(result.run_log.schema_version, CURRENT_EXTRACTION_SCHEMA_VERSION)
         self.assertEqual(result.run_log.provider, "test-provider")
         self.assertEqual(result.run_log.model, "test-model")
         self.assertTrue(result.run_log.output_hash.startswith("sha256:"))
@@ -86,6 +94,41 @@ class AIExtractionProposalTests(unittest.TestCase):
         self.assertEqual(result.run_log.validation_status, AIValidationStatus.FAILED)
         self.assertIn("preserve source_refs", result.errors[0])
 
+    def test_current_schema_requires_source_context(self) -> None:
+        output = _valid_output()
+        del output["source_context"]
+
+        result = validate_extraction_output(output, _metadata())
+
+        self.assertFalse(result.is_valid)
+        self.assertIsNone(result.proposal)
+        self.assertIn("source_context is required", result.errors[0])
+
+    def test_current_schema_rejects_raw_essay_units(self) -> None:
+        output = _valid_output()
+        output["unit_candidates"][0]["type"] = "raw_essay"
+
+        result = validate_extraction_output(output, _metadata())
+
+        self.assertFalse(result.is_valid)
+        self.assertIsNone(result.proposal)
+        self.assertIn("raw_essay must not be generated", result.errors[0])
+
+    def test_legacy_output_without_source_context_still_validates(self) -> None:
+        output = _valid_output(schema_version=LEGACY_EXTRACTION_SCHEMA_VERSION)
+        del output["source_context"]
+
+        result = validate_extraction_output(
+            output,
+            _metadata(schema_version=LEGACY_EXTRACTION_SCHEMA_VERSION),
+        )
+
+        self.assertTrue(result.is_valid, result.errors)
+        self.assertIsNotNone(result.proposal)
+        assert result.proposal is not None
+        self.assertIsNone(result.proposal.source_context)
+        self.assertEqual(result.run_log.schema_version, LEGACY_EXTRACTION_SCHEMA_VERSION)
+
     def test_hash_is_deterministic_for_structured_output(self) -> None:
         left = {"b": [2, 3], "a": {"nested": True}}
         right = {"a": {"nested": True}, "b": [2, 3]}
@@ -123,35 +166,67 @@ class AIExtractionProposalTests(unittest.TestCase):
         self.assertIn("extract_units", result.errors[0])
 
 
-def _metadata(cost: float | None = None, latency: float | None = None) -> AIRunMetadata:
+def _metadata(
+    *,
+    schema_version: str = CURRENT_EXTRACTION_SCHEMA_VERSION,
+    cost: float | None = None,
+    latency: float | None = None,
+) -> AIRunMetadata:
+    return _metadata_with_schema(
+        schema_version=schema_version,
+        cost=cost,
+        latency=latency,
+    )
+
+
+def _metadata_with_schema(
+    *,
+    schema_version: str,
+    cost: float | None = None,
+    latency: float | None = None,
+) -> AIRunMetadata:
     return AIRunMetadata(
         run_id="run_20260510_extract_ab12cd",
         task="extract_units",
         provider="test-provider",
         model="test-model",
         prompt_version="extract_units.v1",
-        schema_version="0.1.0",
+        schema_version=schema_version,
         input_hash="sha256:inputhash",
         cost=cost,
         latency=latency,
     )
 
 
-def _valid_output() -> dict:
+def _valid_output(schema_version: str = CURRENT_EXTRACTION_SCHEMA_VERSION) -> dict:
     return {
         "source_input_id": "raw_essay_20260510_gate4_ab12cd",
+        "source_context": {
+            "source_input_id": "raw_essay_20260510_gate4_ab12cd",
+            "source_shape": "engineering_procedure_note",
+            "knowledge_domains": ["结构化知识库", "AI 输出验证"],
+            "background": "这是一份关于 AI 抽取输出边界的工程说明。",
+            "main_content": [
+                "AI 抽取输出必须先成为结构化数据",
+                "自由文本不能直接进入内部数据结构",
+            ],
+            "scope": "适用于 DiamondDust extract_units 输出验证。",
+            "source_refs": [_source_ref_data()],
+        },
         "unit_candidates": [
             _unit_data(
                 id="unit_20260510_structured_output_ab12cd",
                 type="concept",
                 title="Structured AI output",
                 content="AI extraction output must be structured before validation.",
+                schema_version=schema_version,
             ),
             _unit_data(
                 id="unit_20260510_validation_boundary_cd34ef",
                 type="claim",
                 title="Validation boundary protects internal data",
                 content="Free-form AI output should not become internal data.",
+                schema_version=schema_version,
             ),
         ],
         "relation_candidates": [
@@ -166,7 +241,14 @@ def _valid_output() -> dict:
     }
 
 
-def _unit_data(*, id: str, type: str, title: str, content: str) -> dict:
+def _unit_data(
+    *,
+    id: str,
+    type: str,
+    title: str,
+    content: str,
+    schema_version: str = CURRENT_EXTRACTION_SCHEMA_VERSION,
+) -> dict:
     return {
         "id": id,
         "type": type,
@@ -178,7 +260,7 @@ def _unit_data(*, id: str, type: str, title: str, content: str) -> dict:
         "confidence": "medium",
         "created_at": "2026-05-10T00:00:00Z",
         "updated_at": "2026-05-10T00:00:00Z",
-        "schema_version": "0.1.0",
+        "schema_version": schema_version,
     }
 
 

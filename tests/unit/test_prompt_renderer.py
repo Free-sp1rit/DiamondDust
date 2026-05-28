@@ -28,7 +28,7 @@ class PromptRendererTests(unittest.TestCase):
         self.assertEqual(prompt.run_id, request.run_id)
         self.assertEqual(prompt.task, "extract_units")
         self.assertEqual(prompt.prompt_version, EXTRACT_UNITS_PROMPT_VERSION)
-        self.assertEqual(prompt.schema_version, "0.1.0")
+        self.assertEqual(prompt.schema_version, EXTRACTION_OUTPUT_SCHEMA_VERSION)
         self.assertEqual(prompt.input_hash, request.input_hash)
         self.assertEqual(prompt.source_input_id, "raw_essay_prompt_renderer_ab12cd")
         self.assertEqual(prompt.source_path, "00-inbox/prompt-renderer.md")
@@ -44,6 +44,7 @@ class PromptRendererTests(unittest.TestCase):
         )
         self.assertTrue(prompt.prompt_hash.startswith("sha256:"))
         self.assertIn("Return structured JSON only.", prompt.system_prompt)
+        self.assertIn("Put note background, domain, scope", prompt.system_prompt)
         self.assertIn("Do not omit required fields.", prompt.system_prompt)
         self.assertIn("Do not generate KnowledgePatch", prompt.system_prompt)
         self.assertIn("source_input_id as immutable request context", prompt.system_prompt)
@@ -57,6 +58,11 @@ class PromptRendererTests(unittest.TestCase):
             prompt.user_prompt,
         )
         self.assertIn(
+            "source_context.source_input_id must be exactly: raw_essay_prompt_renderer_ab12cd",
+            prompt.user_prompt,
+        )
+        self.assertIn("source_context stores whole-note background", prompt.user_prompt)
+        self.assertIn(
             "every unit candidate id must be non-empty and begin with: unit_raw_essay_prompt_renderer_ab12cd_",
             prompt.user_prompt,
         )
@@ -69,6 +75,8 @@ class PromptRendererTests(unittest.TestCase):
         self.assertIn("Markdown body:", prompt.user_prompt)
         self.assertIn("Prompt rendering preserves source context.", prompt.user_prompt)
         self.assertIn("unit_candidates", prompt.output_instructions)
+        self.assertIn("source_context", prompt.output_instructions)
+        self.assertIn("Do not create raw_essay unit candidates", prompt.output_instructions)
         self.assertIn("relation_candidates may be empty", prompt.output_instructions)
         self.assertIn(
             "source_input_id value must exactly equal the source_input_id",
@@ -88,7 +96,7 @@ class PromptRendererTests(unittest.TestCase):
             prompt.output_instructions,
         )
         self.assertIn(
-            "unit_candidates[].title, unit_candidates[].content, and relation_candidates[].reason",
+            "source_context.knowledge_domains, source_context.background",
             prompt.output_instructions,
         )
         self.assertIn(
@@ -101,6 +109,10 @@ class PromptRendererTests(unittest.TestCase):
         )
         self.assertIn(
             "All enum-valued fields must be JSON strings",
+            prompt.output_instructions,
+        )
+        self.assertIn(
+            'source_context.source_shape must be one of: "engineering_procedure_note", "study_note", "scratch_note", "long_article", "experiment_record", "reflection"',
             prompt.output_instructions,
         )
         self.assertIn(
@@ -152,7 +164,7 @@ class PromptRendererTests(unittest.TestCase):
     def test_prompt_renderer_rejects_unsupported_output_schema_version(self) -> None:
         request = build_extract_units_provider_request(
             _essay(),
-            _spec(schema_version="0.2.0"),
+            _spec(schema_version="0.1.0"),
         )
 
         with self.assertRaises(PromptRenderError):
@@ -164,7 +176,7 @@ class PromptRendererTests(unittest.TestCase):
                 provider="future-provider",
                 model="future-model",
                 prompt_version=EXTRACT_UNITS_PROMPT_VERSION,
-                schema_version="0.1.0",
+                schema_version=EXTRACTION_OUTPUT_SCHEMA_VERSION,
                 real_provider_calls_enabled=True,
             )
         )
@@ -201,7 +213,7 @@ Prompt rendering preserves source context.
 def _spec(
     *,
     prompt_version: str = EXTRACT_UNITS_PROMPT_VERSION,
-    schema_version: str = "0.1.0",
+    schema_version: str = EXTRACTION_OUTPUT_SCHEMA_VERSION,
 ) -> ExtractUnitsProviderRequestSpec:
     return ExtractUnitsProviderRequestSpec(
         run_id="run_prompt_renderer_ab12cd",

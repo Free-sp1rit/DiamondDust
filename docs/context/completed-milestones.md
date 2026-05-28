@@ -787,3 +787,33 @@ Record completed development milestones and links to reviews here.
 - Validation: 279 unit tests passed, focused CLI tests passed, frontend `npm run build` passed, compile check passed, diff check passed, local trial fixture smoke passed with `provider_called: false` and `formal_write_performed: false`, and architecture scan reported 0 critical violations.
 - Dependency impact: Added frontend-local React/Vite/TypeScript dependencies under `frontend/trial-client`; Python package dependencies were unchanged.
 - Follow-up: Use the alpha client with a few real users before adding richer core knowledge graph or formal apply UX.
+
+## 2026-05-28 — Artifact Time UTC+8 Completed
+
+- Scope: Added a shared artifact-time helper and switched automatic CLI and trial-client generated artifact timestamps from UTC `Z` to UTC+8 `+08:00`.
+- Outcome: New automatic `created_at` values use UTC+8 ISO 8601 strings, and trial-client generated run ids use compact UTC+8 timestamp slugs ending in `UTC8`. Explicit timestamp inputs and historical `Z` fixtures remain accepted.
+- Review: `docs/reviews/milestone-reviews/2026-05-28-artifact-time-utc8.md`.
+- Review decision: pass.
+- Gate impact: Artifact metadata semantics milestone.
+- Validation: 282 unit tests passed, compile check passed, diff check passed, local trial fixture smoke passed with generated `+08:00` run-log time, and architecture scan reported 0 critical violations.
+- Dependency impact: No dependency was added or changed.
+- Follow-up: Address the next core feature design issue separately.
+
+## 2026-05-28 — SourceContext Extraction Contract Completed
+
+- Scope: Added source/article-level `source_context` to current
+  provider-facing `extract_units` output and kept legacy `0.1.0` extraction
+  artifacts compatible.
+- Outcome: New extraction schema version `0.2.0` requires `source_context`,
+  rejects generated `raw_essay` unit candidates, persists source context plus
+  raw/non-raw unit counts in validated extraction artifacts, and displays
+  source context separately in the trial client.
+- Review: `docs/reviews/milestone-reviews/2026-05-28-source-context-extraction-contract.md`.
+- Review decision: pass with follow-up.
+- Gate impact: Provider-neutral AI extraction output contract milestone.
+- Validation: See milestone review for final validation results.
+- Dependency impact: No dependency was added or changed.
+- Follow-up: Evaluate whether real-note outputs still show
+  `source_context_leakage` or `missing_minimal_context`, then decide whether to
+  add semantic quality checks or new unit types such as procedure/configuration
+  decision.

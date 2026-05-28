@@ -50,6 +50,20 @@ against model policy before provider execution.
 The `extract_units` output contract may be rendered as machine-readable JSON
 Schema for local review and future provider structured-output planning.
 
+Current provider-facing extraction schema version: `0.2.0`.
+
+Current top-level output fields:
+
+- `source_input_id`
+- `source_context`
+- `unit_candidates`
+- `relation_candidates`
+
+`source_context` is the source/article-level context slot for knowledge domain,
+background, main content, input shape, applicability scope, and source
+references. It is not a `KnowledgeUnit` and must not be treated as a formal
+knowledge graph node.
+
 Rules:
 
 - The schema is provider-neutral and generated from current domain enum values.
@@ -57,6 +71,14 @@ Rules:
 - The schema does not read API keys, call providers, or persist raw provider output.
 - The schema is a contract aid only; typed runtime validation remains authoritative before output becomes domain data.
 - Runtime validation may enforce rules that JSON Schema cannot fully express, such as source references matching the request-bound `source_input_id`.
+- Current provider-facing schema requires `source_context`; legacy `0.1.0`
+  local trial fixtures without `source_context` remain accepted for backward
+  compatibility.
+- Current provider-facing schema rejects generated `raw_essay` unit candidates;
+  whole-note background and summary belong in `source_context`.
+- `unit_candidates` should contain reusable knowledge objects that can be
+  independently reviewed, cited, retrieved, and reused. They may include the
+  smallest necessary context, but must not become whole-note summaries.
 - Schema descriptions may document the knowledge language policy: generated
   user-facing fields are Simplified Chinese, source quotes preserve original
   wording, and machine keys/enums remain unchanged.
@@ -124,6 +146,8 @@ Rules:
 - Prompt rendering must preserve source metadata and instruct providers not to invent sources.
 - Prompt rendering must instruct providers to preserve the exact request
   `source_input_id` and copied `source_ref` values.
+- Prompt rendering must instruct providers to write source/article-level
+  context into `source_context`, not into ordinary unit candidates.
 - Prompt rendering must instruct providers to include non-empty
   `unit_candidates[].id` values and may provide a request-derived
   `unit_id_prefix` for stable candidate ids.
@@ -160,7 +184,8 @@ Rules:
 - The request payload `source_input_id` is the authoritative top-level source
   identity for provider output validation.
 - The application layer may bind the top-level provider output
-  `source_input_id` from request context before typed validation.
+  `source_input_id` and `source_context.source_input_id` from request context
+  before typed validation.
 - Unit source references must still preserve the request-bound source identity;
   source refs that point to another source must fail closed.
 - Provider output must pass typed validation before patch generation.

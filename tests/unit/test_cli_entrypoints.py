@@ -451,9 +451,15 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertEqual(schema["$id"], "diamonddust.extract_units.output.v0")
         self.assertEqual(
             schema["required"],
-            ["source_input_id", "unit_candidates", "relation_candidates"],
+            [
+                "source_input_id",
+                "source_context",
+                "unit_candidates",
+                "relation_candidates",
+            ],
         )
         self.assertIn("knowledge_unit", schema["$defs"])
+        self.assertIn("source_context", schema["$defs"])
 
     def test_provider_payload_preview_prints_payload_without_provider_or_secret(self) -> None:
         env = dict(os.environ)
@@ -511,12 +517,12 @@ class CLIEntrypointTests(unittest.TestCase):
         self.assertEqual(payload["provider"], "preview-provider")
         self.assertEqual(payload["model"], "preview-structured-model")
         self.assertEqual(payload["prompt_version"], "extract_units.v1")
-        self.assertEqual(payload["schema_version"], "0.1.0")
+        self.assertEqual(payload["schema_version"], "0.2.0")
         self.assertEqual(
             payload["output_schema_id"],
             "diamonddust.extract_units.output.v0",
         )
-        self.assertEqual(payload["output_schema_version"], "0.1.0")
+        self.assertEqual(payload["output_schema_version"], "0.2.0")
         self.assertTrue(payload["structured_output_required"])
         self.assertFalse(payload["real_provider_calls_enabled"])
         self.assertFalse(payload["tool_calls_enabled"])
@@ -532,6 +538,7 @@ class CLIEntrypointTests(unittest.TestCase):
             payload["messages"][1]["content"],
         )
         self.assertIn("knowledge_unit", payload["output_schema"]["$defs"])
+        self.assertIn("source_context", payload["output_schema"]["$defs"])
 
     def test_provider_payload_preview_reports_ingestion_failure(self) -> None:
         env = dict(os.environ)

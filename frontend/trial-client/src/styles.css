@@ -137,6 +137,7 @@ h3 {
 }
 
 .panel,
+.source-context-card,
 .unit-card,
 .relation-card,
 .version,
@@ -209,6 +210,11 @@ h3 {
   gap: 18px;
 }
 
+.source-context-panel {
+  display: grid;
+  gap: 12px;
+}
+
 .result-grid > section {
   display: grid;
   gap: 12px;
@@ -216,11 +222,22 @@ h3 {
 }
 
 .unit-card,
+.source-context-card,
 .relation-card,
 .version {
   display: grid;
   gap: 10px;
   padding: 12px;
+}
+
+.source-context-card {
+  border-left: 4px solid #52796f;
+}
+
+.source-context-card header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .unit-card {
@@ -241,6 +258,13 @@ h3 {
   background: #fbfcfd;
   line-height: 1.65;
   white-space: pre-wrap;
+}
+
+.plain-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
 }
 
 .relation-card {

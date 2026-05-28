@@ -14,7 +14,10 @@ type ArtifactVersion = {
   model?: string;
   validation_status?: string;
   unit_candidate_count?: number;
+  knowledge_unit_count?: number;
+  raw_essay_unit_count?: number;
   relation_candidate_count?: number;
+  has_source_context?: boolean;
   deletable?: boolean;
 };
 
@@ -90,6 +93,8 @@ export default function App() {
   const artifact = asRecord(currentResult?.extraction_artifact);
   const units = asArray<JsonRecord>(artifact.unit_candidates);
   const relations = asArray<JsonRecord>(artifact.relation_candidates);
+  const sourceContext = asNullableRecord(artifact.source_context);
+  const knowledgeUnits = knowledgeUnitCount(artifact, units);
   const versions = useMemo(() => {
     return status?.notes.find((note) => note.path === selectedNote)?.artifact_versions || [];
   }, [selectedNote, status]);
@@ -340,6 +345,7 @@ export default function App() {
                     <strong>{version.created_at || version.run_id}</strong>
                     <span>
                       {version.model || "-"} · {version.unit_candidate_count || 0} units ·{" "}
+                      {version.knowledge_unit_count ?? version.unit_candidate_count ?? 0} knowledge ·{" "}
                       {version.relation_candidate_count || 0} relations
                     </span>
                     <div className="button-row">
@@ -370,9 +376,14 @@ export default function App() {
         <section className="content">
           <section className="metrics">
             <Metric label="质量" value={currentResult?.quality_status || "-"} />
-            <Metric label="Units" value={units.length} />
+            <Metric label="Knowledge Units" value={knowledgeUnits} />
             <Metric label="Relations" value={relations.length} />
             <Metric label="Provider" value={text(artifact.provider || status?.provider)} />
+          </section>
+
+          <section className="source-context-panel">
+            <h2>Source Context</h2>
+            <SourceContextCard context={sourceContext} />
           </section>
 
           <section className="result-grid">
@@ -406,11 +417,74 @@ export default function App() {
   );
 }
 
+function asNullableRecord(value: unknown): JsonRecord | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as JsonRecord)
+    : null;
+}
+
+function knowledgeUnitCount(artifact: JsonRecord, units: JsonRecord[]): number {
+  const explicit = artifact.knowledge_unit_count_excluding_raw_essay;
+  if (typeof explicit === "number" && Number.isInteger(explicit)) {
+    return explicit;
+  }
+  return units.filter((unit) => unit.type !== "raw_essay").length;
+}
+
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
     <article className="metric">
       <span>{label}</span>
       <strong>{value}</strong>
+    </article>
+  );
+}
+
+function SourceContextCard({ context }: { context: JsonRecord | null }) {
+  if (!context) {
+    return (
+      <article className="source-context-card">
+        <p className="muted">legacy artifact: no source_context</p>
+      </article>
+    );
+  }
+  const domains = asArray<unknown>(context.knowledge_domains);
+  const mainContent = asArray<unknown>(context.main_content);
+  return (
+    <article className="source-context-card">
+      <header>
+        <span className="pill">Source</span>
+        <h3>{text(context.source_shape)}</h3>
+      </header>
+      <div className="chips">
+        {domains.map((domain, index) => (
+          <span className="chip" key={index}>
+            {text(domain)}
+          </span>
+        ))}
+      </div>
+      <dl className="compact">
+        <dt>background</dt>
+        <dd>{text(context.background)}</dd>
+        <dt>main_content</dt>
+        <dd>
+          <ul className="plain-list">
+            {mainContent.map((item, index) => (
+              <li key={index}>{text(item)}</li>
+            ))}
+          </ul>
+        </dd>
+        <dt>scope</dt>
+        <dd>{text(context.scope)}</dd>
+      </dl>
+      <details>
+        <summary>验证依据 source_refs</summary>
+        <JsonBlock value={context.source_refs} />
+      </details>
+      <details>
+        <summary>机器结构</summary>
+        <JsonBlock value={context} />
+      </details>
     </article>
   );
 }

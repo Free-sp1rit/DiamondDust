@@ -5,7 +5,9 @@ from pathlib import Path
 from diamonddust.ai import (
     EXTRACTION_OUTPUT_SCHEMA_ID,
     EXTRACTION_OUTPUT_SCHEMA_VERSION,
+    LEGACY_EXTRACTION_OUTPUT_SCHEMA_VERSION,
     AIRunMetadata,
+    SourceShape,
     extraction_output_json_schema,
     validate_extraction_output,
 )
@@ -37,7 +39,16 @@ class ExtractionOutputSchemaTests(unittest.TestCase):
         self.assertFalse(schema["additionalProperties"])
         self.assertEqual(
             schema["required"],
-            ["source_input_id", "unit_candidates", "relation_candidates"],
+            [
+                "source_input_id",
+                "source_context",
+                "unit_candidates",
+                "relation_candidates",
+            ],
+        )
+        self.assertEqual(
+            schema["properties"]["source_context"]["$ref"],
+            "#/$defs/source_context",
         )
         self.assertEqual(
             schema["properties"]["unit_candidates"]["items"]["$ref"],
@@ -53,6 +64,7 @@ class ExtractionOutputSchemaTests(unittest.TestCase):
         unit_properties = schema["$defs"]["knowledge_unit"]["properties"]
         relation_properties = schema["$defs"]["relation"]["properties"]
         source_ref_properties = schema["$defs"]["source_ref"]["properties"]
+        source_context_properties = schema["$defs"]["source_context"]["properties"]
 
         self.assertEqual(
             unit_properties["type"]["enum"],
@@ -74,6 +86,10 @@ class ExtractionOutputSchemaTests(unittest.TestCase):
             source_ref_properties["origin"]["enum"],
             [member.value for member in SourceOrigin],
         )
+        self.assertEqual(
+            source_context_properties["source_shape"]["enum"],
+            [member.value for member in SourceShape],
+        )
 
     def test_schema_documents_runtime_source_ref_boundary(self) -> None:
         schema = extraction_output_json_schema()
@@ -83,12 +99,14 @@ class ExtractionOutputSchemaTests(unittest.TestCase):
         self.assertIn("Required stable candidate id", unit_properties["id"]["description"])
         self.assertIn("unit_", unit_properties["id"]["description"])
         self.assertIn("source_ref whose source_id matches", schema["$comment"])
+        self.assertIn("raw_essay unit candidates", schema["$comment"])
         self.assertIn("does not authorize provider calls", schema["$comment"])
 
     def test_schema_documents_knowledge_language_policy(self) -> None:
         schema = extraction_output_json_schema()
         unit_properties = schema["$defs"]["knowledge_unit"]["properties"]
         relation_properties = schema["$defs"]["relation"]["properties"]
+        source_context_properties = schema["$defs"]["source_context"]["properties"]
         source_ref_properties = schema["$defs"]["source_ref"]["properties"]
 
         for field in ("title", "content"):
@@ -103,6 +121,10 @@ class ExtractionOutputSchemaTests(unittest.TestCase):
         self.assertIn(
             "Simplified Chinese",
             relation_properties["reason"]["description"],
+        )
+        self.assertIn(
+            "Simplified Chinese",
+            source_context_properties["background"]["description"],
         )
         self.assertIn(
             "do not translate quoted evidence",
@@ -120,7 +142,7 @@ class ExtractionOutputSchemaTests(unittest.TestCase):
                 provider="fixture",
                 model="structured-json",
                 prompt_version="extract_units.v1",
-                schema_version=EXTRACTION_OUTPUT_SCHEMA_VERSION,
+                schema_version=LEGACY_EXTRACTION_OUTPUT_SCHEMA_VERSION,
                 input_hash="sha256:fixture-input",
             ),
         )

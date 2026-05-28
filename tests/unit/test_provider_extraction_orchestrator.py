@@ -1,6 +1,7 @@
 import unittest
 
 from diamonddust.ai import (
+    CURRENT_EXTRACTION_SCHEMA_VERSION,
     FakeExecutionProvider,
     ModelPolicyError,
     ProviderExecutionRequest,
@@ -134,6 +135,29 @@ class ProviderExtractionOrchestratorTests(unittest.TestCase):
             essay.source_id,
         )
 
+    def test_provider_handoff_binds_source_context_source_input_id_from_request(self) -> None:
+        essay = _essay()
+        spec = _spec()
+        request = build_extract_units_provider_request(essay, spec)
+        output = _valid_output(request.input_payload)
+        output["source_context"]["source_input_id"] = "raw_essay_provider_context_wrong_id"
+
+        run = run_extract_units_provider_orchestration(
+            FakeExecutionProvider(structured_output=output),
+            essay,
+            spec,
+        )
+
+        self.assertTrue(run.is_valid, run.errors)
+        self.assertIsNotNone(run.validation_result.proposal)
+        assert run.validation_result.proposal is not None
+        self.assertIsNotNone(run.validation_result.proposal.source_context)
+        assert run.validation_result.proposal.source_context is not None
+        self.assertEqual(
+            run.validation_result.proposal.source_context.source_input_id,
+            essay.source_id,
+        )
+
     def test_provider_output_source_refs_must_match_prompt_source_input_id(self) -> None:
         essay = _essay()
         spec = _spec()
@@ -219,7 +243,7 @@ def _spec(*, real_provider_calls_enabled: bool = False) -> ExtractUnitsProviderR
         provider="fake-provider",
         model="fake-structured-model",
         prompt_version="extract_units.v1",
-        schema_version="0.1.0",
+        schema_version=CURRENT_EXTRACTION_SCHEMA_VERSION,
         real_provider_calls_enabled=real_provider_calls_enabled,
     )
 
@@ -228,6 +252,15 @@ def _valid_output(payload) -> dict:
     source_ref = dict(payload["source_ref"])
     return {
         "source_input_id": payload["source_input_id"],
+        "source_context": {
+            "source_input_id": payload["source_input_id"],
+            "source_shape": "engineering_procedure_note",
+            "knowledge_domains": ["Provider orchestration"],
+            "background": "这是一份关于 provider orchestration 的工程说明。",
+            "main_content": ["provider request", "prompt rendering", "typed validation"],
+            "scope": "用于测试 provider orchestration 边界。",
+            "source_refs": [source_ref],
+        },
         "unit_candidates": [
             {
                 "id": "unit_provider_orchestrator_ab12cd",
@@ -240,7 +273,7 @@ def _valid_output(payload) -> dict:
                 "confidence": "medium",
                 "created_at": CREATED_AT,
                 "updated_at": CREATED_AT,
-                "schema_version": "0.1.0",
+                "schema_version": CURRENT_EXTRACTION_SCHEMA_VERSION,
             }
         ],
         "relation_candidates": [],

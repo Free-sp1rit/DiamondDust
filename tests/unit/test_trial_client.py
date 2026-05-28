@@ -15,6 +15,7 @@ from diamonddust.interface.trial_client import (
     TrialClientHTTPServer,
     TrialClientService,
     load_provider_secret_env,
+    _new_run_id,
     save_provider_secret_env,
 )
 
@@ -229,6 +230,11 @@ class TrialClientTests(unittest.TestCase):
 
         self.assertEqual(status["notes"][0]["path"], "inputs/note.md")
         self.assertEqual(status["notes"][0]["artifact_versions"][0]["run_id"], run_id)
+        self.assertTrue(status["notes"][0]["artifact_versions"][0]["has_source_context"])
+        self.assertEqual(
+            status["notes"][0]["artifact_versions"][0]["knowledge_unit_count"],
+            1,
+        )
         self.assertTrue(loaded["loaded_existing_artifact"])
         self.assertEqual(loaded["quality_status"], "needs_human_review")
         self.assertEqual(
@@ -306,6 +312,13 @@ class TrialClientTests(unittest.TestCase):
         self.assertEqual(script_asset[0], b"console.log('trial')")
         self.assertTrue(status["frontend"]["static_dist_configured"])
         self.assertTrue(status["frontend"]["static_dist_available"])
+
+    def test_generated_run_id_marks_utc_plus_8_clock(self) -> None:
+        run_id = _new_run_id()
+
+        self.assertTrue(run_id.startswith("run_trial_client_deepseek_"))
+        self.assertTrue(run_id.endswith("UTC8"))
+        self.assertNotIn("Z", run_id)
 
     def test_delete_artifact_version_is_limited_to_trial_client_runs(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -477,7 +490,18 @@ def _write_success_artifacts(root: Path, run_id: str, *, unit_count: int) -> Non
                 "validation_status": "passed",
                 "input_hash": _content_hash("# 自动化测试\n\n真实笔记内容。\n"),
                 "unit_candidate_count": unit_count,
+                "knowledge_unit_count_excluding_raw_essay": unit_count,
+                "raw_essay_unit_count": 0,
                 "relation_candidate_count": 0,
+                "source_context": {
+                    "source_input_id": "raw_essay_trial_client",
+                    "source_shape": "engineering_procedure_note",
+                    "knowledge_domains": ["自动化测试"],
+                    "background": "这是一份客户端自动化测试输入。",
+                    "main_content": ["真实笔记内容"],
+                    "scope": "用于测试 trial client artifact 读取。",
+                    "source_refs": [source_ref],
+                },
                 "unit_candidates": units,
                 "relation_candidates": [],
                 "boundaries": {

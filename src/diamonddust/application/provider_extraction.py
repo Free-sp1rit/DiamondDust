@@ -300,10 +300,26 @@ def _source_bound_structured_output(
         return structured_output
 
     if structured_output.get("source_input_id") == expected_source_input_id:
-        return structured_output
+        return _source_context_bound_output(structured_output, expected_source_input_id)
 
     bound_output = dict(structured_output)
     bound_output["source_input_id"] = expected_source_input_id
+    return _source_context_bound_output(bound_output, expected_source_input_id)
+
+
+def _source_context_bound_output(
+    structured_output: Mapping[str, object],
+    expected_source_input_id: str,
+) -> object:
+    source_context = structured_output.get("source_context")
+    if not isinstance(source_context, Mapping):
+        return structured_output
+    if source_context.get("source_input_id") == expected_source_input_id:
+        return structured_output
+    bound_output = dict(structured_output)
+    bound_context = dict(source_context)
+    bound_context["source_input_id"] = expected_source_input_id
+    bound_output["source_context"] = bound_context
     return bound_output
 
 
