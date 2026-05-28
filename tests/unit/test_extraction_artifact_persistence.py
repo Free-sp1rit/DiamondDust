@@ -3,7 +3,12 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from diamonddust.ai import AIRunMetadata, validate_extraction_output
+from diamonddust.ai import (
+    CURRENT_EXTRACTION_SCHEMA_VERSION,
+    LEGACY_EXTRACTION_SCHEMA_VERSION,
+    AIRunMetadata,
+    validate_extraction_output,
+)
 from diamonddust.storage import (
     AI_EXTRACTION_OUTPUTS_DIR,
     ExtractionArtifactContext,
@@ -51,7 +56,11 @@ class ExtractionArtifactPersistenceTests(unittest.TestCase):
         self.assertEqual(data["input_hash"], "sha256:input")
         self.assertTrue(data["output_hash"].startswith("sha256:"))
         self.assertEqual(data["validation_status"], "passed")
+        self.assertEqual(data["source_context"]["source_shape"], "engineering_procedure_note")
+        self.assertEqual(data["source_context"]["knowledge_domains"], ["试用产物"])
         self.assertEqual(data["unit_candidate_count"], 1)
+        self.assertEqual(data["knowledge_unit_count_excluding_raw_essay"], 1)
+        self.assertEqual(data["raw_essay_unit_count"], 0)
         self.assertEqual(data["relation_candidate_count"], 0)
         self.assertEqual(data["unit_candidates"][0]["id"], "unit_extraction_artifact_ab12cd")
         self.assertFalse(data["boundaries"]["raw_provider_output_persisted"])
@@ -67,6 +76,22 @@ class ExtractionArtifactPersistenceTests(unittest.TestCase):
         self.assertNotIn("raw_output", data)
         self.assertNotIn("raw_provider_response", data)
         self.assertNotIn("prompt_text", data)
+
+    def test_renders_legacy_artifact_without_source_context(self) -> None:
+        result = validate_extraction_output(
+            _legacy_output_without_source_context(),
+            _metadata(schema_version=LEGACY_EXTRACTION_SCHEMA_VERSION),
+        )
+        assert result.proposal is not None
+
+        artifact = render_validated_extraction_artifact(
+            result.proposal,
+            created_at=CREATED_AT,
+        )
+        data = json.loads(artifact.content)
+
+        self.assertIsNone(data["source_context"])
+        self.assertEqual(data["knowledge_unit_count_excluding_raw_essay"], 1)
 
     def test_writes_only_under_ai_suggestions(self) -> None:
         result = validate_extraction_output(_valid_output(), _metadata())
@@ -117,14 +142,14 @@ class ExtractionArtifactPersistenceTests(unittest.TestCase):
             ExtractionArtifactContext(real_provider_call="yes")  # type: ignore[arg-type]
 
 
-def _metadata() -> AIRunMetadata:
+def _metadata(schema_version: str = CURRENT_EXTRACTION_SCHEMA_VERSION) -> AIRunMetadata:
     return AIRunMetadata(
         run_id="run_extraction_artifact_ab12cd",
         task="extract_units",
         provider="fixture-provider",
         model="fixture-model",
         prompt_version="extract_units.v1",
-        schema_version="0.1.0",
+        schema_version=schema_version,
         input_hash="sha256:input",
     )
 
@@ -132,6 +157,15 @@ def _metadata() -> AIRunMetadata:
 def _valid_output() -> dict:
     return {
         "source_input_id": SOURCE_ID,
+        "source_context": {
+            "source_input_id": SOURCE_ID,
+            "source_shape": "engineering_procedure_note",
+            "knowledge_domains": ["试用产物"],
+            "background": "这是一份验证抽取产物持久化的工程测试输入。",
+            "main_content": ["持久化 validated extraction artifact"],
+            "scope": "用于测试 AI working artifact，不进入正式知识库。",
+            "source_refs": [_source_ref_data()],
+        },
         "unit_candidates": [
             {
                 "id": "unit_extraction_artifact_ab12cd",
@@ -144,11 +178,18 @@ def _valid_output() -> dict:
                 "confidence": "medium",
                 "created_at": CREATED_AT,
                 "updated_at": CREATED_AT,
-                "schema_version": "0.1.0",
+                "schema_version": CURRENT_EXTRACTION_SCHEMA_VERSION,
             }
         ],
         "relation_candidates": [],
     }
+
+
+def _legacy_output_without_source_context() -> dict:
+    output = _valid_output()
+    del output["source_context"]
+    output["unit_candidates"][0]["schema_version"] = LEGACY_EXTRACTION_SCHEMA_VERSION
+    return output
 
 
 def _source_ref_data() -> dict:

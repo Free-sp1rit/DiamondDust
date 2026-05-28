@@ -7,7 +7,11 @@ from diamonddust.ai.adapters.openai import (
     sanitize_openai_error_message,
     usage_from_openai_response,
 )
-from unit.test_openai_adapter_mapping import _execution_request
+
+try:
+    from unit.test_openai_adapter_mapping import _execution_request
+except ModuleNotFoundError:  # pragma: no cover - supports direct module runs.
+    from tests.unit.test_openai_adapter_mapping import _execution_request
 
 
 class OpenAIAdapterErrorMappingTests(unittest.TestCase):

@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from diamonddust.ai import (
+    CURRENT_EXTRACTION_SCHEMA_VERSION,
     EXTRACTION_OUTPUT_SCHEMA_ID,
     FakeExecutionProvider,
     PROVIDER_EXECUTION_PAYLOAD_SCHEMA_VERSION,
@@ -157,7 +158,7 @@ Payloads prepare provider adapter input.
             provider="fake-provider",
             model="fake-structured-model",
             prompt_version="extract_units.v1",
-            schema_version="0.1.0",
+            schema_version=CURRENT_EXTRACTION_SCHEMA_VERSION,
             timeout_seconds=30,
             max_retries=1,
         ),

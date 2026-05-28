@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from hashlib import sha256
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -17,6 +16,8 @@ import subprocess
 import sys
 from typing import Any, Callable, Mapping
 from urllib.parse import parse_qs, urlparse
+
+from diamonddust.artifact_time import artifact_now, artifact_timestamp_slug
 
 
 DEFAULT_TRIAL_HOST = "127.0.0.1"
@@ -383,7 +384,7 @@ class TrialClientService:
         verdict = _optional_str(feedback, "verdict", "needs_review")
         notes = _optional_str(feedback, "notes", "")
         tags = _optional_str_list(feedback, "issue_tags")
-        created_at = _utc_now()
+        created_at = _artifact_now()
         payload = {
             "artifact_type": "trial_client_feedback",
             "artifact_schema_version": "0.1.0",
@@ -473,7 +474,7 @@ class TrialClientService:
         if extraction_artifact is None:
             reasons.append("validated extraction artifact was not written")
             return {"status": "failed_missing_artifact", "reasons": reasons}
-        unit_count = _coerce_int(extraction_artifact.get("unit_candidate_count"))
+        unit_count = _knowledge_unit_count(extraction_artifact)
         if _note_has_content(note_path) and unit_count == 0:
             reasons.append("non-empty note produced zero unit candidates")
             return {"status": "failed_empty_extraction", "reasons": reasons}
@@ -537,7 +538,10 @@ class TrialClientService:
             "model": data.get("model"),
             "validation_status": data.get("validation_status"),
             "unit_candidate_count": _coerce_int(data.get("unit_candidate_count")),
+            "knowledge_unit_count": _knowledge_unit_count(data),
+            "raw_essay_unit_count": _coerce_int(data.get("raw_essay_unit_count")),
             "relation_candidate_count": _coerce_int(data.get("relation_candidate_count")),
+            "has_source_context": isinstance(data.get("source_context"), dict),
             "source_input_id": data.get("source_input_id"),
             "source_path": source_path,
             "input_hash": input_hash,
@@ -890,7 +894,7 @@ def _loaded_artifact_quality(artifact: Mapping[str, object] | None) -> str:
         return "failed_missing_artifact"
     if artifact.get("validation_status") != "passed":
         return "failed_validation"
-    if _coerce_int(artifact.get("unit_candidate_count")) == 0:
+    if _knowledge_unit_count(artifact) == 0:
         return "failed_empty_extraction"
     return "needs_human_review"
 
@@ -899,6 +903,11 @@ def _artifact_source_path(data: Mapping[str, object]) -> str:
     direct_source_path = data.get("source_path")
     if isinstance(direct_source_path, str) and direct_source_path.strip():
         return direct_source_path.strip()
+    source_context = data.get("source_context")
+    if isinstance(source_context, dict):
+        source_path = _source_path_from_refs(source_context.get("source_refs"))
+        if source_path:
+            return source_path
     units = data.get("unit_candidates")
     if not isinstance(units, list):
         return ""
@@ -913,6 +922,17 @@ def _artifact_source_path(data: Mapping[str, object]) -> str:
                 source_path = ref.get("source_path")
                 if isinstance(source_path, str) and source_path.strip():
                     return source_path.strip()
+    return ""
+
+
+def _source_path_from_refs(value: object) -> str:
+    if not isinstance(value, list):
+        return ""
+    for ref in value:
+        if isinstance(ref, dict):
+            source_path = ref.get("source_path")
+            if isinstance(source_path, str) and source_path.strip():
+                return source_path.strip()
     return ""
 
 
@@ -984,11 +1004,11 @@ def _note_has_content(path: Path) -> bool:
 
 
 def _new_run_id() -> str:
-    return TRIAL_CLIENT_RUN_ID_PREFIX + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return TRIAL_CLIENT_RUN_ID_PREFIX + artifact_timestamp_slug()
 
 
-def _utc_now() -> str:
-    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+def _artifact_now() -> str:
+    return artifact_now()
 
 
 def _format_float(value: float) -> str:
@@ -997,6 +1017,20 @@ def _format_float(value: float) -> str:
 
 def _coerce_int(value: object) -> int:
     return value if isinstance(value, int) else 0
+
+
+def _knowledge_unit_count(artifact: Mapping[str, object]) -> int:
+    explicit = artifact.get("knowledge_unit_count_excluding_raw_essay")
+    if isinstance(explicit, int):
+        return explicit
+    units = artifact.get("unit_candidates")
+    if not isinstance(units, list):
+        return _coerce_int(artifact.get("unit_candidate_count"))
+    return sum(
+        1
+        for unit in units
+        if not (isinstance(unit, dict) and unit.get("type") == "raw_essay")
+    )
 
 
 def _validate_run_id(value: str) -> None:
@@ -1437,10 +1471,12 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       <h2>运行结果</h2>
       <div class="summary">
         <div class="metric"><span>质量</span><b id="qualityMetric">-</b></div>
-        <div class="metric"><span>Units</span><b id="unitMetric">0</b></div>
+        <div class="metric"><span>Knowledge Units</span><b id="unitMetric">0</b></div>
         <div class="metric"><span>Relations</span><b id="relationMetric">0</b></div>
         <div class="metric"><span>Provider</span><b id="providerMetric">-</b></div>
       </div>
+      <h2>Source Context</h2>
+      <div id="sourceContextPanel" class="list"></div>
       <div class="grid">
         <div>
           <h2>Units</h2>
@@ -1708,13 +1744,40 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       const artifact = result.extraction_artifact || {};
       $('qualityMetric').textContent = result.quality_status || '-';
       $('qualityMetric').className = (result.quality_status || '').startsWith('failed') ? 'bad-text' : 'good-text';
-      $('unitMetric').textContent = artifact.unit_candidate_count || 0;
+      $('unitMetric').textContent = knowledgeUnitCount(artifact);
       $('relationMetric').textContent = artifact.relation_candidate_count || 0;
       $('providerMetric').textContent = artifact.provider || result.provider_stdout?.provider || '-';
+      renderSourceContext(artifact.source_context || null);
       renderUnits(artifact.unit_candidates || []);
       renderRelations(artifact.relation_candidates || []);
       renderBoundaries(result.boundaries || {});
       renderArtifacts(result);
+    }
+
+    function renderSourceContext(context) {
+      const root = $('sourceContextPanel');
+      root.innerHTML = '';
+      if (!context) {
+        root.innerHTML = '<div class="item"><p class="muted">legacy artifact: no source_context</p></div>';
+        return;
+      }
+      const div = document.createElement('div');
+      div.className = 'item';
+      const heading = document.createElement('h3');
+      heading.textContent = context.source_shape || 'source context';
+      div.appendChild(heading);
+      const meta = document.createElement('div');
+      meta.className = 'version-meta';
+      for (const domain of context.knowledge_domains || []) meta.appendChild(renderChip(domain));
+      div.appendChild(meta);
+      div.appendChild(renderFieldGroup([
+        ['background', context.background],
+        ['main_content', context.main_content],
+        ['scope', context.scope]
+      ]));
+      div.appendChild(renderSourceRefs(context.source_refs || []));
+      div.appendChild(renderJsonDetails(context));
+      root.appendChild(div);
     }
 
     function renderUnits(units) {
@@ -1897,6 +1960,14 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       if (Array.isArray(value)) return value.length ? JSON.stringify(value) : '[]';
       if (typeof value === 'object') return JSON.stringify(value);
       return String(value);
+    }
+
+    function knowledgeUnitCount(artifact) {
+      if (Number.isInteger(artifact.knowledge_unit_count_excluding_raw_essay)) {
+        return artifact.knowledge_unit_count_excluding_raw_essay;
+      }
+      const units = Array.isArray(artifact.unit_candidates) ? artifact.unit_candidates : [];
+      return units.filter((unit) => unit?.type !== 'raw_essay').length;
     }
 
     function renderBoundaries(boundaries) {

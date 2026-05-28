@@ -28,7 +28,7 @@ approved.
 - actual_real_provider_adapter_implementation_approved: true
 - dependency_file_change_approved: true
 - dependency_installation_approved: true
-- created_at: YYYY-MM-DDTHH:MM:SSZ
+- created_at: YYYY-MM-DDTHH:MM:SS+08:00
 - product_owner: pending
 - reviewed_by: pending
 - related_design: `docs/designs/2026-05-20-first-provider-adapter-design.md`

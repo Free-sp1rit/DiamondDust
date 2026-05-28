@@ -162,10 +162,14 @@ relations:
     confidence: high
     reason: The concept depends on the idea that retrieval quality affects RAG output.
 confidence: medium
-created_at: 2026-04-28T00:00:00Z
-updated_at: 2026-04-28T00:00:00Z
+created_at: 2026-04-28T08:00:00+08:00
+updated_at: 2026-04-28T08:00:00+08:00
 schema_version: 0.1.0
 ```
+
+Newly generated DiamondDust artifacts use UTC+8 ISO 8601 timestamps with the
+`+08:00` offset. Readers should continue to tolerate older `Z` timestamps in
+historical fixtures and imported artifacts.
 
 ## KnowledgeUnit Required Fields
 
@@ -191,6 +195,12 @@ schema_version: 0.1.0
 - `synthesis`
 - `map`
 - `article`
+
+Current provider-backed extraction output does not use generated `raw_essay`
+unit candidates as ordinary review units. Article-level summary, background,
+domain, and scope belong in top-level `source_context`. Validated extraction
+artifacts expose both `unit_candidate_count` for compatibility and
+`knowledge_unit_count_excluding_raw_essay` for current quality review.
 
 ## Allowed Status Values
 

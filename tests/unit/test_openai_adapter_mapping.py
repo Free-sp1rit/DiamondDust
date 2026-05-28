@@ -2,6 +2,7 @@ import json
 import unittest
 
 from diamonddust.ai import (
+    CURRENT_EXTRACTION_SCHEMA_VERSION,
     EXTRACTION_TASK,
     EXTRACT_UNITS_PROMPT_VERSION,
     ProviderExecutionRequest,
@@ -101,7 +102,7 @@ def _provider_request(*, real_provider_calls_enabled: bool) -> ProviderRequest:
             provider="openai",
             model="owner-approved-model-placeholder",
             prompt_version=EXTRACT_UNITS_PROMPT_VERSION,
-            schema_version="0.1.0",
+            schema_version=CURRENT_EXTRACTION_SCHEMA_VERSION,
             timeout_seconds=30,
             max_retries=0,
             real_provider_calls_enabled=real_provider_calls_enabled,

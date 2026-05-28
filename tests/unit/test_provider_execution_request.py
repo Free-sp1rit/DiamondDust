@@ -4,6 +4,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from diamonddust.ai import (
+    CURRENT_EXTRACTION_SCHEMA_VERSION,
+    LEGACY_EXTRACTION_SCHEMA_VERSION,
     FakeExecutionProvider,
     ProviderBoundaryError,
     ProviderExecutionRequest,
@@ -53,7 +55,10 @@ class ProviderExecutionRequestTests(unittest.TestCase):
         with self.assertRaises(ProviderBoundaryError):
             ProviderExecutionRequest(
                 provider_request=request,
-                rendered_prompt=replace(rendered_prompt, output_schema_version="0.2.0"),
+                rendered_prompt=replace(
+                    rendered_prompt,
+                    output_schema_version=LEGACY_EXTRACTION_SCHEMA_VERSION,
+                ),
             )
 
     def test_fake_execution_provider_returns_envelope_without_persistence(self) -> None:
@@ -108,7 +113,7 @@ Execution requests carry rendered prompts into provider adapters.
             provider="fake-provider",
             model="fake-structured-model",
             prompt_version="extract_units.v1",
-            schema_version="0.1.0",
+            schema_version=CURRENT_EXTRACTION_SCHEMA_VERSION,
         ),
     )
 
@@ -117,6 +122,15 @@ def _valid_output(payload) -> dict:
     source_ref = dict(payload["source_ref"])
     return {
         "source_input_id": payload["source_input_id"],
+        "source_context": {
+            "source_input_id": payload["source_input_id"],
+            "source_shape": "engineering_procedure_note",
+            "knowledge_domains": ["Provider execution request"],
+            "background": "这是一份关于 provider execution request 的工程说明。",
+            "main_content": ["rendered prompt", "provider adapter input"],
+            "scope": "用于测试 provider execution request 边界。",
+            "source_refs": [source_ref],
+        },
         "unit_candidates": [
             {
                 "id": "unit_provider_execution_ab12cd",
@@ -129,7 +143,7 @@ def _valid_output(payload) -> dict:
                 "confidence": "medium",
                 "created_at": "2026-05-17T00:00:00Z",
                 "updated_at": "2026-05-17T00:00:00Z",
-                "schema_version": "0.1.0",
+                "schema_version": CURRENT_EXTRACTION_SCHEMA_VERSION,
             }
         ],
         "relation_candidates": [],

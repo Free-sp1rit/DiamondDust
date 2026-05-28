@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, datetime
 from importlib import resources
 import json
 import os
@@ -45,6 +44,7 @@ from diamonddust.ai.adapters.deepseek import (
     build_sanitized_deepseek_request_preview,
     live_execution_blockers as deepseek_live_execution_blockers,
 )
+from diamonddust.artifact_time import artifact_now
 from diamonddust.application import (
     ExtractUnitsProviderRequestSpec,
     LocalTrialResult,
@@ -224,7 +224,7 @@ def _build_parser() -> argparse.ArgumentParser:
     local_trial.add_argument("--mode", choices=tuple(mode.value for mode in BlogMode), required=True)
     local_trial.add_argument("--audience", required=True)
     local_trial.add_argument("--reader-problem", required=True)
-    local_trial.add_argument("--created-at", default=_utc_now())
+    local_trial.add_argument("--created-at", default=_artifact_now())
     local_trial.add_argument("--provider", default="local-trial")
     local_trial.add_argument("--model", default="structured-json")
     local_trial.add_argument("--prompt-version", default="extract_units.v1")
@@ -237,7 +237,7 @@ def _build_parser() -> argparse.ArgumentParser:
     fixture_trial.add_argument("--trial-id", default=FIXTURE_TRIAL_ID)
     fixture_trial.add_argument("--root", default=".")
     fixture_trial.add_argument("--vault-root", default=DEFAULT_VAULT_ROOT)
-    fixture_trial.add_argument("--created-at", default=_utc_now())
+    fixture_trial.add_argument("--created-at", default=_artifact_now())
 
     provider_readiness = subparsers.add_parser(
         "provider-readiness-report",
@@ -326,7 +326,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     _add_openai_extract_arguments(openai_extract_units)
     openai_extract_units.add_argument("--vault-root", default=DEFAULT_VAULT_ROOT)
-    openai_extract_units.add_argument("--created-at", default=_utc_now())
+    openai_extract_units.add_argument("--created-at", default=_artifact_now())
     openai_extract_units.add_argument(
         "--real-provider-call-approved",
         action="store_true",
@@ -386,7 +386,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     _add_deepseek_extract_arguments(deepseek_extract_units)
     deepseek_extract_units.add_argument("--vault-root", default=DEFAULT_VAULT_ROOT)
-    deepseek_extract_units.add_argument("--created-at", default=_utc_now())
+    deepseek_extract_units.add_argument("--created-at", default=_artifact_now())
     deepseek_extract_units.add_argument(
         "--real-provider-call-approved",
         action="store_true",
@@ -1707,8 +1707,8 @@ def _fixture_resource(name: str) -> resources.abc.Traversable:
     return resources.files(FIXTURE_RESOURCE_PACKAGE).joinpath(name)
 
 
-def _utc_now() -> str:
-    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+def _artifact_now() -> str:
+    return artifact_now()
 
 
 if __name__ == "__main__":

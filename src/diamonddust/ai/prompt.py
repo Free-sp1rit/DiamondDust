@@ -179,6 +179,9 @@ def _system_prompt() -> str:
         """\
         You are DiamondDust's provider-neutral extraction adapter.
         Extract reviewable knowledge unit candidates from the supplied Markdown body.
+        Separate source-level article context from reusable knowledge units.
+        Put note background, domain, scope, and main content in source_context.
+        Do not turn the whole note summary into a unit candidate.
         Preserve source references exactly from the supplied source_ref payload.
         Treat the supplied source_input_id as immutable request context, not text to summarize or replace.
         Return structured JSON only.
@@ -209,6 +212,7 @@ def _output_instructions(
         f"""\
         Return one JSON object with:
         - source_input_id
+        - source_context
         - unit_candidates
         - relation_candidates
 
@@ -217,18 +221,34 @@ def _output_instructions(
         Output schema id: {EXTRACTION_OUTPUT_SCHEMA_ID}
         Output schema hash: {output_schema_hash}
 
+        source_context records source/article-level context for the entire
+        input note. It must include source_input_id, source_shape,
+        knowledge_domains, background, main_content, scope, and source_refs.
+        The source_context source_input_id must exactly equal the top-level
+        source_input_id. The source_context source_refs must copy the supplied
+        source_ref_json.
         unit_candidates items must include id, type, title, content, status, source_refs, relations, confidence, created_at, updated_at, and schema_version.
         Every unit_candidates item must include a non-empty id field.
         Generate each id as lowercase snake_case using this exact prefix plus a short semantic label: {unit_id_prefix}<short_label>
         Example unit id: {unit_id_prefix}core_claim
         Never return a unit candidate object without id. If a complete unit candidate cannot be produced, omit that candidate.
+        Do not create a unit candidate that summarizes the whole input note.
+        Do not create raw_essay unit candidates for provider output; source-level
+        background, scope, and main content belong only in source_context.
+        Unit candidates must be minimal reusable knowledge objects that can be
+        independently reviewed, cited, retrieved, and reused. Include the
+        smallest necessary context inside each unit, but do not repeat
+        source_context as an article summary.
         Knowledge language policy:
         - Write generated user-facing knowledge fields in Simplified Chinese:
+          source_context.knowledge_domains, source_context.background,
+          source_context.main_content, source_context.scope,
           unit_candidates[].title, unit_candidates[].content, and relation_candidates[].reason.
         - Preserve code, commands, identifiers, product names, file paths, and API names in their original spelling.
         - Preserve source_refs values exactly; do not translate source reference metadata or copied source quotes.
         - Keep JSON field names, enum values, schema_version values, and candidate ids exactly in the schema-defined machine format.
         All enum-valued fields must be JSON strings, never objects, arrays, booleans, or explanatory text:
+        - source_context.source_shape must be one of: {_schema_enum_values(output_schema, "source_context", "source_shape")}
         - unit_candidates[].type must be one of: {unit_type_values}
         - unit_candidates[].status must be one of: {status_values}
         - unit_candidates[].confidence must be one of: {confidence_values}
@@ -276,9 +296,13 @@ def _user_prompt(
 
         Required output binding:
         - top-level source_input_id must be exactly: {source_input_id}
+        - source_context.source_input_id must be exactly: {source_input_id}
+        - source_context.source_refs must be copied from source_ref_json
         - every unit candidate id must be non-empty and begin with: {unit_id_prefix}
         - every unit candidate source_refs item must use source_id exactly: {source_input_id}
         - source_refs must be copied from source_ref_json, not inferred from the Markdown body
+        - source_context stores whole-note background/scope/main content
+        - unit_candidates must not include whole-note summaries or raw_essay units
 
         Markdown body:
         ```markdown

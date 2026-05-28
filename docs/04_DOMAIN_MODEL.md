@@ -59,6 +59,42 @@ Rules:
 - Must be preserved.
 - Must not be overwritten by AI.
 - May be referenced by derived units.
+- In current provider-backed extraction output, article-level background and
+  whole-note summaries should be represented by `source_context`, not by a
+  generated `raw_essay` unit candidate.
+- `raw_essay` remains in the domain vocabulary for source identity and legacy
+  compatibility, but it is not counted as an ordinary reusable knowledge unit
+  in current extraction quality review.
+
+## SourceContext
+
+`SourceContext` is source/article-level context produced by the AI extraction
+boundary. It is not a `KnowledgeUnit`, not a formal knowledge graph node, and
+not a relation quality target.
+
+Minimum fields:
+
+- `source_input_id`
+- `source_shape`
+- `knowledge_domains`
+- `background`
+- `main_content`
+- `scope`
+- `source_refs`
+
+Rules:
+
+- `SourceContext` captures the input note's knowledge domain, background, main
+  content range, and applicability scope.
+- Generated user-facing `background`, `main_content`, `scope`, and
+  `knowledge_domains` should be Simplified Chinese.
+- `source_shape`, JSON field names, and other machine-facing values remain
+  English/ASCII contract fields.
+- `source_refs` preserve original source reference metadata and copied
+  evidence; copied evidence is not translated.
+- Ordinary `KnowledgeUnit` candidates must not repeat `SourceContext` as a
+  whole-note summary, but each unit still needs enough local context to be
+  independently reviewed, cited, retrieved, and reused.
 
 #### question
 
