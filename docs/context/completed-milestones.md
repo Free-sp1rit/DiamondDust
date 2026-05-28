@@ -2,6 +2,28 @@
 
 Record completed development milestones and links to reviews here.
 
+## 2026-05-28 — Trial Client Alpha Distribution Completed
+
+- Scope: Added a repeatable source-based alpha package builder, maintainer
+  packaging script, generated first-run package docs, distribution manifest,
+  Win11 launcher bootstrap behavior, and package-content safety tests.
+- Outcome: Maintainers can build
+  `dist/trial-client-alpha/DiamondDustTrialAlpha-<version>.zip` for small-user
+  trial handoff. The package includes built React frontend assets and excludes
+  secrets, `knowledge-vault/`, `.git/`, `.venv/`, `node_modules/`, and local
+  build metadata.
+- Review:
+  `docs/reviews/milestone-reviews/2026-05-28-trial-distribution-alpha.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 trial distribution milestone; no formal write,
+  publication, or stable release behavior was enabled.
+- Validation: 291 unit tests passed, frontend build passed, package generation
+  smoke passed, compile check passed, diff check passed, local trial fixture
+  smoke passed, and architecture scan reported zero critical violations.
+- Dependency impact: No new dependency was added.
+- Follow-up: Consider a native installer, checksums, and release publishing
+  only after alpha feedback validates the workflow and core extraction quality.
+
 ## 2026-05-10 — Project Context Initialized
 
 - Scope: Read `AGENTS.md`, `GOVERNANCE_REVIEW_NOTES.md`, `README.md`, `目录结构.md`, and `docs/*`.

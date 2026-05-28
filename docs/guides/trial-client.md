@@ -27,6 +27,24 @@ Optional Win11 workspace:
 .\scripts\windows\start-trial-client.ps1 -WorkspaceDir C:\DiamondDustTrial
 ```
 
+The Win11 launchers create a local `.venv` and install DiamondDust trial
+dependencies on first start when no local virtual environment exists. They
+serve the built React frontend automatically when
+`frontend/trial-client/dist/index.html` exists and open the local browser by
+default.
+
+Trial alpha packages are built with:
+
+```bash
+python3 scripts/package-trial-client-alpha.py
+```
+
+Distribution guidance:
+
+```text
+docs/guides/trial-client-alpha-distribution.md
+```
+
 Defaults:
 
 - input notes: `knowledge-vault/_manual_trials/deepseek-real-note-evaluation/00-input-notes`
