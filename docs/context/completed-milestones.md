@@ -776,3 +776,14 @@ Record completed development milestones and links to reviews here.
 - Validation: 275 unit tests passed after product-feedback follow-up, compile check passed, diff check passed, local trial fixture smoke passed with `provider_called: false` and `formal_write_performed: false`, architecture scan reported 0 critical violations, and manual client `/api/status` smoke passed.
 - Dependency impact: No dependency was added or changed.
 - Follow-up: Use trial-client feedback to decide the next extraction quality gate or prompt/provider adjustment before downstream patch generation.
+
+## 2026-05-28 — Trial Client Alpha Win11 Distribution Completed
+
+- Scope: Added configurable trial workspaces, browser Markdown import, optional static frontend serving, a React/Vite/TypeScript frontend source tree, Win11 launcher scripts, and trial-client guide updates.
+- Outcome: `diamonddust trial-client` can now create/switch trial workspaces, import Markdown into the active input directory, serve a built frontend through `--frontend-dist`, and still fall back to the embedded local page. Win11 testers can launch through `scripts/windows/start-trial-client.ps1` or `.cmd`.
+- Review: `docs/reviews/milestone-reviews/2026-05-28-trial-client-alpha-win11.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 interface adapter, dependency portability, and trial distribution milestone.
+- Validation: 279 unit tests passed, focused CLI tests passed, frontend `npm run build` passed, compile check passed, diff check passed, local trial fixture smoke passed with `provider_called: false` and `formal_write_performed: false`, and architecture scan reported 0 critical violations.
+- Dependency impact: Added frontend-local React/Vite/TypeScript dependencies under `frontend/trial-client`; Python package dependencies were unchanged.
+- Follow-up: Use the alpha client with a few real users before adding richer core knowledge graph or formal apply UX.

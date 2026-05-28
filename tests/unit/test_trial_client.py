@@ -238,6 +238,75 @@ class TrialClientTests(unittest.TestCase):
             "inputs/note.md",
         )
 
+    def test_configure_workspace_sets_trial_directories(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            service = TrialClientService(TrialClientConfig(root=root))
+
+            result = service.configure_workspace({"workspace_dir": "alpha-workspace"})
+            status = service.status()
+
+            workspace = result["workspace"]
+            self.assertTrue(workspace["input_dir"].endswith("alpha-workspace/input-notes"))
+            self.assertTrue(
+                workspace["vault_root"].endswith("alpha-workspace/knowledge-vault")
+            )
+            self.assertTrue(workspace["feedback_dir"].endswith("alpha-workspace/feedback"))
+            self.assertTrue(status["workspace"]["input_dir_exists"])
+            self.assertTrue((root / "alpha-workspace/input-notes").exists())
+            self.assertTrue((root / "alpha-workspace/knowledge-vault").exists())
+            self.assertTrue((root / "alpha-workspace/feedback").exists())
+
+    def test_import_note_writes_markdown_into_active_workspace(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            service = TrialClientService(TrialClientConfig(root=root))
+            service.configure_workspace({"workspace_dir": "alpha-workspace"})
+
+            first = service.import_note(
+                {"filename": "真实笔记.md", "content": "# 标题\n\n内容。"}
+            )
+            second = service.import_note(
+                {"filename": "真实笔记.md", "content": "# 标题\n\n第二份。"}
+            )
+
+            self.assertEqual(
+                first["note"]["path"], "alpha-workspace/input-notes/真实笔记.md"
+            )
+            self.assertEqual(
+                second["note"]["path"],
+                "alpha-workspace/input-notes/真实笔记_2.md",
+            )
+            self.assertTrue((root / "alpha-workspace/input-notes/真实笔记.md").exists())
+            self.assertTrue((root / "alpha-workspace/input-notes/真实笔记_2.md").exists())
+
+    def test_import_note_rejects_non_markdown_filename(self) -> None:
+        with TemporaryDirectory() as tmp:
+            service = TrialClientService(TrialClientConfig(root=Path(tmp)))
+
+            with self.assertRaisesRegex(ValueError, "filename must be Markdown"):
+                service.import_note({"filename": "note.txt", "content": "content"})
+
+    def test_static_frontend_dist_is_served_when_available(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dist = root / "frontend-dist"
+            dist.mkdir()
+            (dist / "index.html").write_text("<div id=\"root\"></div>", encoding="utf-8")
+            (dist / "app.js").write_text("console.log('trial')", encoding="utf-8")
+            service = TrialClientService(
+                TrialClientConfig(root=root, frontend_dist=Path("frontend-dist"))
+            )
+
+            index_asset = service.read_frontend_asset("/")
+            script_asset = service.read_frontend_asset("/app.js")
+            status = service.status()
+
+        self.assertEqual(index_asset[0], b'<div id="root"></div>')
+        self.assertEqual(script_asset[0], b"console.log('trial')")
+        self.assertTrue(status["frontend"]["static_dist_configured"])
+        self.assertTrue(status["frontend"]["static_dist_available"])
+
     def test_delete_artifact_version_is_limited_to_trial_client_runs(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -328,6 +397,10 @@ class TrialClientTests(unittest.TestCase):
             "schema_version",
             "confidence",
             "unsupported",
+            "workspaceButton",
+            "noteImportInput",
+            "/api/workspace",
+            "/api/notes/import",
         ]
 
         for token in expected_tokens:
