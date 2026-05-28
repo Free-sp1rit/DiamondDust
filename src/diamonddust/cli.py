@@ -436,6 +436,10 @@ def _build_parser() -> argparse.ArgumentParser:
         default=DEEPSEEK_DEFAULT_MAX_TOKENS,
     )
     trial_client.add_argument("--cost-limit", type=float, default=1.0)
+    trial_client.add_argument(
+        "--frontend-dist",
+        help="serve a built trial-client frontend directory instead of embedded HTML",
+    )
     return parser
 
 
@@ -1173,6 +1177,7 @@ def _run_trial_client_command(
             timeout_seconds=args.timeout_seconds,
             max_tokens=args.max_tokens,
             cost_limit=args.cost_limit,
+            frontend_dist=Path(args.frontend_dist) if args.frontend_dist else None,
         )
     except Exception as exc:
         print(f"trial client configuration failed: {exc}", file=stderr)

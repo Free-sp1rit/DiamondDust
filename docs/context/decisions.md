@@ -4,6 +4,23 @@ Record durable technical and governance decisions here.
 
 ## Current Governance Baseline Decisions
 
+### 2026-05-28 — Split trial client into local Python backend and maintainable React frontend
+
+- Decision: Keep the Python trial-client service as the local backend for
+  provider execution, artifact loading, workspace import, feedback persistence,
+  and safety boundaries, while introducing a React/Vite/TypeScript frontend as
+  the maintainable UI surface for broader alpha trials.
+- Reason: Real-note provider trials need a simpler client for small-scale user
+  feedback, but frontend complexity should not leak into domain validation,
+  provider adapters, storage adapters, or formal vault behavior.
+- Alternatives: Continue expanding the embedded HTML string only; build a full
+  desktop app immediately; move trial orchestration into frontend code.
+- Risks: The frontend dependency surface introduces new maintenance and
+  distribution work. The client must remain local-first and must not turn AI
+  output into formal knowledge without the existing review boundaries.
+- Follow-up: Use the alpha client to collect real-note quality feedback before
+  adding more core knowledge features or richer graph visualization.
+
 ### 2026-05-25 — Harden extraction prompt guidance for candidate ids and enums
 
 - Decision: The `extract_units.v1` prompt now includes a request-derived `unit_id_prefix`, explicit instructions that every `unit_candidates` item must include a non-empty id, and explicit guidance that enum-valued fields must be JSON strings. The embedded output schema also describes the candidate id expectation, and extraction validation errors identify the failing candidate index.

@@ -8,6 +8,7 @@ from hashlib import sha256
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import mimetypes
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -69,6 +70,7 @@ class TrialClientConfig:
     max_tokens: int = DEFAULT_TRIAL_MAX_TOKENS
     cost_limit: float = DEFAULT_TRIAL_COST_LIMIT
     python_executable: str = sys.executable
+    frontend_dist: Path | None = None
 
     def __post_init__(self) -> None:
         _require_non_empty("host", self.host)
@@ -82,6 +84,13 @@ class TrialClientConfig:
         _require_non_empty("default_model", self.default_model)
         _validate_trial_model(self.default_model)
         _require_non_empty("python_executable", self.python_executable)
+
+
+@dataclass(frozen=True)
+class TrialWorkspaceConfig:
+    input_dir: Path
+    vault_root: Path
+    feedback_dir: Path
 
 
 @dataclass(frozen=True)
@@ -106,6 +115,11 @@ class TrialClientService:
         if not isinstance(config, TrialClientConfig):
             raise TrialClientError("config must be TrialClientConfig")
         self.config = config
+        self._workspace = TrialWorkspaceConfig(
+            input_dir=config.input_dir,
+            vault_root=config.vault_root,
+            feedback_dir=config.feedback_dir,
+        )
         self._command_runner = command_runner or _run_command
 
     def status(self) -> dict[str, object]:
@@ -119,9 +133,14 @@ class TrialClientService:
             "api_key_present": bool(secrets.get(DEEPSEEK_API_KEY_ENV_VAR)),
             "secrets_env_file": self.config.secrets_env_file.as_posix(),
             "secrets_file_exists": self.config.secrets_env_file.exists(),
+            "workspace": self.workspace_status(),
             "input_dir": self._display_path(self._input_dir()),
             "vault_root": self._display_path(self._vault_root()),
             "feedback_dir": self._display_path(self._feedback_dir()),
+            "frontend": {
+                "static_dist_configured": self._frontend_dist() is not None,
+                "static_dist_available": self._frontend_dist_available(),
+            },
             "notes": self.list_notes(artifact_versions=artifact_versions),
             "recent_runs": self.list_recent_runs(),
             "artifact_versions": artifact_versions,
@@ -152,18 +171,57 @@ class TrialClientService:
                 and path.name.lower() != "readme.md"
                 and path.suffix.lower() in {".md", ".markdown"}
             ):
-                notes.append(
-                    {
-                        "path": self._display_path(path),
-                        "name": path.name,
-                        "size_bytes": path.stat().st_size,
-                        "artifact_versions": versions_by_note.get(
-                            self._display_path(path),
-                            [],
-                        ),
-                    }
-                )
+                notes.append(self._note_summary(path, versions_by_note=versions_by_note))
         return notes
+
+    def workspace_status(self) -> dict[str, object]:
+        return {
+            "input_dir": self._display_path(self._input_dir()),
+            "vault_root": self._display_path(self._vault_root()),
+            "feedback_dir": self._display_path(self._feedback_dir()),
+            "input_dir_exists": self._input_dir().exists(),
+            "vault_root_exists": self._vault_root().exists(),
+            "feedback_dir_exists": self._feedback_dir().exists(),
+        }
+
+    def configure_workspace(self, request: Mapping[str, object]) -> dict[str, object]:
+        workspace_dir = _optional_str(request, "workspace_dir", "")
+        if workspace_dir:
+            root = self._resolve_directory(workspace_dir)
+            workspace = TrialWorkspaceConfig(
+                input_dir=root / "input-notes",
+                vault_root=root / "knowledge-vault",
+                feedback_dir=root / "feedback",
+            )
+        else:
+            workspace = TrialWorkspaceConfig(
+                input_dir=self._resolve_directory(_expect_str(request, "input_dir")),
+                vault_root=self._resolve_directory(_expect_str(request, "vault_root")),
+                feedback_dir=self._resolve_directory(_expect_str(request, "feedback_dir")),
+            )
+        self._create_workspace_dirs(workspace)
+        self._workspace = workspace
+        return {
+            "configured": True,
+            "workspace": self.workspace_status(),
+            "notes": self.list_notes(),
+        }
+
+    def import_note(self, request: Mapping[str, object]) -> dict[str, object]:
+        filename = _safe_markdown_filename(_expect_str(request, "filename"))
+        content = _expect_str(request, "content")
+        overwrite = _optional_bool(request, "overwrite", False)
+        input_dir = self._input_dir()
+        input_dir.mkdir(parents=True, exist_ok=True)
+        target = input_dir / filename
+        if not overwrite:
+            target = _next_available_path(target)
+        target.write_text(content, encoding="utf-8")
+        return {
+            "imported": True,
+            "note": self._note_summary(target, versions_by_note={}),
+            "workspace": self.workspace_status(),
+        }
 
     def list_recent_runs(self, *, limit: int = 10) -> list[dict[str, object]]:
         runs_dir = self._vault_root() / "_ai_runs"
@@ -440,6 +498,28 @@ class TrialClientService:
         data["_path"] = self._display_path(path)
         return data
 
+    def read_frontend_asset(self, request_path: str) -> tuple[bytes, str] | None:
+        dist = self._frontend_dist()
+        if dist is None or not dist.exists() or not dist.is_dir():
+            return None
+        relative = (
+            "index.html"
+            if request_path in {"/", "/index.html"}
+            else request_path.lstrip("/")
+        )
+        if not relative or relative.startswith("api/"):
+            return None
+        asset_path = (dist / PurePosixPath(relative)).resolve()
+        dist_root = dist.resolve()
+        if asset_path != dist_root and dist_root not in asset_path.parents:
+            raise TrialClientError("frontend asset path must stay inside dist directory")
+        if not asset_path.exists() or not asset_path.is_file():
+            return None
+        content_type = (
+            mimetypes.guess_type(asset_path.name)[0] or "application/octet-stream"
+        )
+        return asset_path.read_bytes(), content_type
+
     def _artifact_version_summary(
         self,
         data: Mapping[str, object],
@@ -463,6 +543,20 @@ class TrialClientService:
             "input_hash": input_hash,
             "path": self._display_path(path),
             "deletable": run_id.startswith(TRIAL_CLIENT_RUN_ID_PREFIX),
+        }
+
+    def _note_summary(
+        self,
+        path: Path,
+        *,
+        versions_by_note: Mapping[str, list[dict[str, object]]],
+    ) -> dict[str, object]:
+        display_path = self._display_path(path)
+        return {
+            "path": display_path,
+            "name": path.name,
+            "size_bytes": path.stat().st_size,
+            "artifact_versions": versions_by_note.get(display_path, []),
         }
 
     def _note_paths_by_hash(self) -> dict[str, str]:
@@ -516,16 +610,39 @@ class TrialClientService:
         return self.config.root.resolve()
 
     def _input_dir(self) -> Path:
-        path = self.config.input_dir
+        path = self._workspace.input_dir
         return path.resolve() if path.is_absolute() else (self._root() / path).resolve()
 
     def _vault_root(self) -> Path:
-        path = self.config.vault_root
+        path = self._workspace.vault_root
         return path.resolve() if path.is_absolute() else (self._root() / path).resolve()
 
     def _feedback_dir(self) -> Path:
-        path = self.config.feedback_dir
+        path = self._workspace.feedback_dir
         return path.resolve() if path.is_absolute() else (self._root() / path).resolve()
+
+    def _frontend_dist(self) -> Path | None:
+        path = self.config.frontend_dist
+        if path is None:
+            return None
+        return path.resolve() if path.is_absolute() else (self._root() / path).resolve()
+
+    def _frontend_dist_available(self) -> bool:
+        dist = self._frontend_dist()
+        return bool(dist and (dist / "index.html").exists())
+
+    def _resolve_directory(self, value: str) -> Path:
+        _require_non_empty("directory", value)
+        path = Path(value).expanduser()
+        if not path.is_absolute():
+            path = self._root() / path
+        if path.exists() and not path.is_dir():
+            raise TrialClientError("workspace path must be a directory")
+        return path.resolve()
+
+    def _create_workspace_dirs(self, workspace: TrialWorkspaceConfig) -> None:
+        for path in (workspace.input_dir, workspace.vault_root, workspace.feedback_dir):
+            path.mkdir(parents=True, exist_ok=True)
 
     def _display_path(self, path: Path) -> str:
         try:
@@ -540,7 +657,12 @@ class TrialClientHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/":
-            self._send_html(TRIAL_CLIENT_HTML)
+            asset = self.server.service.read_frontend_asset(parsed.path)
+            if asset is None:
+                self._send_html(TRIAL_CLIENT_HTML)
+            else:
+                body, content_type = asset
+                self._send_bytes(body, content_type)
             return
         if parsed.path == "/api/status":
             self._send_json(self.server.service.status())
@@ -552,6 +674,11 @@ class TrialClientHTTPRequestHandler(BaseHTTPRequestHandler):
             query = parse_qs(parsed.query)
             run_id = query.get("run_id", [""])[0]
             self._send_json(self.server.service.load_artifact_result(run_id))
+            return
+        asset = self.server.service.read_frontend_asset(parsed.path)
+        if asset is not None:
+            body, content_type = asset
+            self._send_bytes(body, content_type)
             return
         self.send_error(HTTPStatus.NOT_FOUND)
 
@@ -566,6 +693,12 @@ class TrialClientHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
             if self.path == "/api/secrets/deepseek":
                 self._send_json(self.server.service.save_api_key(body))
+                return
+            if self.path == "/api/workspace":
+                self._send_json(self.server.service.configure_workspace(body))
+                return
+            if self.path == "/api/notes/import":
+                self._send_json(self.server.service.import_note(body))
                 return
             if self.path == "/api/artifact/delete":
                 self._send_json(self.server.service.delete_artifact_version(body))
@@ -611,6 +744,13 @@ class TrialClientHTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
+
+    def _send_bytes(self, body: bytes, content_type: str) -> None:
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
 
 class TrialClientHTTPServer(ThreadingHTTPServer):
@@ -877,6 +1017,28 @@ def _validate_trial_model(value: str) -> None:
         raise TrialClientError("model must be one of the DeepSeek trial presets")
 
 
+def _safe_markdown_filename(value: str) -> str:
+    name = Path(value.replace("\\", "/")).name.strip()
+    _require_non_empty("filename", name)
+    if name in {".", ".."} or "/" in name or "\\" in name:
+        raise TrialClientError("filename must not contain path separators")
+    if Path(name).suffix.lower() not in {".md", ".markdown"}:
+        raise TrialClientError("filename must be Markdown")
+    return name
+
+
+def _next_available_path(path: Path) -> Path:
+    if not path.exists():
+        return path
+    stem = path.stem
+    suffix = path.suffix
+    for index in range(2, 1000):
+        candidate = path.with_name(f"{stem}_{index}{suffix}")
+        if not candidate.exists():
+            return candidate
+    raise TrialClientError("too many imported files with the same name")
+
+
 def _expect_str(data: Mapping[str, object], key: str) -> str:
     value = data.get(key)
     if not isinstance(value, str) or not value.strip():
@@ -909,6 +1071,13 @@ def _optional_float(data: Mapping[str, object], key: str, default: float) -> flo
     if value <= 0:
         raise TrialClientError(f"{key} must be positive")
     return float(value)
+
+
+def _optional_bool(data: Mapping[str, object], key: str, default: bool) -> bool:
+    value = data.get(key, default)
+    if not isinstance(value, bool):
+        raise TrialClientError(f"{key} must be a boolean")
+    return value
 
 
 def _optional_str_list(data: Mapping[str, object], key: str) -> list[str]:
@@ -1214,6 +1383,15 @@ TRIAL_CLIENT_HTML = """<!doctype html>
         <button id="saveKeyButton" class="secondary">保存 Key</button>
       </div>
       <p id="keyMessage" class="muted"></p>
+      <label for="workspaceInput">工作目录</label>
+      <input id="workspaceInput" type="text" placeholder="例如 C:\\DiamondDustTrial">
+      <div class="toolbar">
+        <button id="workspaceButton" class="secondary">使用目录</button>
+      </div>
+      <p id="workspaceMessage" class="muted"></p>
+      <label for="noteImportInput">导入 Markdown</label>
+      <input id="noteImportInput" type="file" multiple accept=".md,.markdown,text/markdown">
+      <p id="importMessage" class="muted"></p>
       <label for="noteSelect">笔记</label>
       <select id="noteSelect"></select>
       <label for="modelInput">模型</label>
@@ -1346,6 +1524,50 @@ TRIAL_CLIENT_HTML = """<!doctype html>
         $('keyMessage').textContent = err.message;
       } finally {
         $('saveKeyButton').disabled = false;
+      }
+    }
+
+    async function configureWorkspace() {
+      const value = $('workspaceInput').value;
+      if (!value.trim()) {
+        $('workspaceMessage').textContent = '请输入工作目录';
+        return;
+      }
+      $('workspaceButton').disabled = true;
+      $('workspaceMessage').textContent = 'configuring';
+      try {
+        const result = await api('/api/workspace', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({workspace_dir: value})
+        });
+        $('workspaceMessage').textContent = result.workspace?.input_dir || 'workspace ready';
+        await refresh();
+      } catch (err) {
+        $('workspaceMessage').textContent = err.message;
+      } finally {
+        $('workspaceButton').disabled = false;
+      }
+    }
+
+    async function importNoteFiles(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+      $('importMessage').textContent = 'importing';
+      try {
+        for (const file of files) {
+          await api('/api/notes/import', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({filename: file.name, content: await file.text()})
+          });
+        }
+        $('importMessage').textContent = `imported ${files.length} note(s)`;
+        await refresh();
+      } catch (err) {
+        $('importMessage').textContent = err.message;
+      } finally {
+        event.target.value = '';
       }
     }
 
@@ -1708,6 +1930,8 @@ TRIAL_CLIENT_HTML = """<!doctype html>
 
     $('runButton').addEventListener('click', runExtraction);
     $('saveKeyButton').addEventListener('click', saveApiKey);
+    $('workspaceButton').addEventListener('click', configureWorkspace);
+    $('noteImportInput').addEventListener('change', importNoteFiles);
     $('refreshButton').addEventListener('click', refresh);
     $('saveFeedbackButton').addEventListener('click', saveFeedback);
     $('noteSelect').addEventListener('change', renderSelectedNoteVersions);
