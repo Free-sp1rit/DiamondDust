@@ -2,6 +2,20 @@
 
 Record completed development milestones and links to reviews here.
 
+## 2026-05-28 — Trial Client Win Launcher Fix Completed
+
+- Scope: Hardened Win11 `.cmd` and PowerShell trial-client launchers after an
+  alpha package startup failure report.
+- Outcome: Launchers now prefer `py -3.11`/`py -3` before `python`, validate
+  Python 3.11+, keep the failure window open, and write setup diagnostics to
+  `.diamonddust-trial/logs/trial-client-launch.log`.
+- Gate impact: Post-Gate 7 alpha distribution fix; no provider behavior,
+  formal write behavior, dependency, or publication behavior changed.
+- Validation: 291 unit tests passed, frontend build passed, package generation
+  smoke passed, compile check passed, diff check passed, and local trial fixture
+  smoke passed.
+- Dependency impact: No new dependency was added.
+
 ## 2026-05-28 — Trial Client Alpha Distribution Completed
 
 - Scope: Added a repeatable source-based alpha package builder, maintainer

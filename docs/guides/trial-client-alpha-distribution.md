@@ -84,6 +84,19 @@ PowerShell users can run:
 
 If PowerShell script execution is blocked, use the `.cmd` launcher.
 
+If startup fails, the launcher keeps the terminal open and writes diagnostics
+to:
+
+```text
+<package>/.diamonddust-trial/logs/trial-client-launch.log
+```
+
+Common first-run blockers:
+
+- Python 3.11+ is not installed or is not discoverable through `py`/`python`.
+- The first-run dependency installation cannot access the Python package index.
+- A stale `.venv` was created with an older Python version.
+
 ## Runtime Boundaries
 
 The trial client remains local-first:
@@ -94,6 +107,7 @@ The trial client remains local-first:
 - Raw provider request and response bodies are not persisted by default.
 - Trial output is written under the selected workspace.
 - A local `.venv` may be created inside the package directory on first start.
+- Local launch logs may be created inside `.diamonddust-trial/logs/`.
 - Formal vault writes, patch acceptance, and publication remain disabled.
 
 ## Rebuild Notes
