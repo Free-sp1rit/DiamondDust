@@ -27,6 +27,7 @@ DEFAULT_TRIAL_INPUT_DIR = (
 )
 DEFAULT_TRIAL_FEEDBACK_DIR = "knowledge-vault/_manual_trials/trial-client-feedback"
 DEFAULT_TRIAL_SECRETS_ENV_FILE = "~/.config/diamonddust/provider-secrets.env"
+DEFAULT_TRIAL_SETTINGS_FILE = ".diamonddust-trial/trial-client-settings.json"
 DEFAULT_TRIAL_PROVIDER = "deepseek"
 DEFAULT_TRIAL_MODEL = "deepseek-v4-flash"
 DEFAULT_TRIAL_TIMEOUT_SECONDS = 60
@@ -72,6 +73,7 @@ class TrialClientConfig:
     cost_limit: float = DEFAULT_TRIAL_COST_LIMIT
     python_executable: str = sys.executable
     frontend_dist: Path | None = None
+    settings_file: Path = Path(DEFAULT_TRIAL_SETTINGS_FILE)
 
     def __post_init__(self) -> None:
         _require_non_empty("host", self.host)
@@ -85,6 +87,38 @@ class TrialClientConfig:
         _require_non_empty("default_model", self.default_model)
         _validate_trial_model(self.default_model)
         _require_non_empty("python_executable", self.python_executable)
+
+
+@dataclass(frozen=True)
+class TrialRunSettings:
+    model: str
+    timeout_seconds: int
+    max_tokens: int
+    cost_limit: float
+
+    def __post_init__(self) -> None:
+        _validate_trial_model(self.model)
+        _require_positive_int("timeout_seconds", self.timeout_seconds)
+        _require_positive_int("max_tokens", self.max_tokens)
+        if not isinstance(self.cost_limit, (int, float)) or self.cost_limit <= 0:
+            raise TrialClientError("cost_limit must be positive")
+
+    @classmethod
+    def from_config(cls, config: TrialClientConfig) -> "TrialRunSettings":
+        return cls(
+            model=config.default_model,
+            timeout_seconds=config.timeout_seconds,
+            max_tokens=config.max_tokens,
+            cost_limit=float(config.cost_limit),
+        )
+
+    def to_mapping(self) -> dict[str, object]:
+        return {
+            "model": self.model,
+            "timeout_seconds": self.timeout_seconds,
+            "max_tokens": self.max_tokens,
+            "cost_limit": self.cost_limit,
+        }
 
 
 @dataclass(frozen=True)
@@ -126,10 +160,13 @@ class TrialClientService:
     def status(self) -> dict[str, object]:
         secrets = load_provider_secret_env(self.config.secrets_env_file)
         artifact_versions = self.list_artifact_versions()
+        run_settings = self.load_run_settings()
         return {
             "provider": DEFAULT_TRIAL_PROVIDER,
             "default_model": self.config.default_model,
             "model_presets": list(DEEPSEEK_MODEL_PRESETS),
+            "run_settings": run_settings.to_mapping(),
+            "run_settings_file": self._display_path(self._settings_file()),
             "api_key_env_var": DEEPSEEK_API_KEY_ENV_VAR,
             "api_key_present": bool(secrets.get(DEEPSEEK_API_KEY_ENV_VAR)),
             "secrets_env_file": self.config.secrets_env_file.as_posix(),
@@ -154,6 +191,28 @@ class TrialClientService:
                 "formal_write_performed": False,
                 "publication_performed": False,
             },
+        }
+
+    def load_run_settings(self) -> TrialRunSettings:
+        default = TrialRunSettings.from_config(self.config)
+        settings_file = self._settings_file()
+        if not settings_file.exists():
+            return default
+        try:
+            data = json.loads(settings_file.read_text(encoding="utf-8"))
+            if not isinstance(data, Mapping):
+                return default
+            return self._run_settings_from_request(data, default)
+        except (OSError, json.JSONDecodeError, TrialClientError):
+            return default
+
+    def save_run_settings(self, request: Mapping[str, object]) -> dict[str, object]:
+        settings = self._run_settings_from_request(request, self.load_run_settings())
+        self._write_run_settings(settings)
+        return {
+            "saved": True,
+            "run_settings": settings.to_mapping(),
+            "run_settings_file": self._display_path(self._settings_file()),
         }
 
     def list_notes(
@@ -332,15 +391,11 @@ class TrialClientService:
 
     def run_extraction(self, request: Mapping[str, object]) -> dict[str, object]:
         note_path = self._resolve_note_path(_expect_str(request, "note_path"))
-        model = _optional_str(request, "model", self.config.default_model)
-        _validate_trial_model(model)
-        timeout_seconds = _optional_int(
+        run_settings = self._run_settings_from_request(
             request,
-            "timeout_seconds",
-            self.config.timeout_seconds,
+            self.load_run_settings(),
         )
-        max_tokens = _optional_int(request, "max_tokens", self.config.max_tokens)
-        cost_limit = _optional_float(request, "cost_limit", self.config.cost_limit)
+        self._write_run_settings(run_settings)
         run_id = _optional_str(request, "run_id", _new_run_id())
         _validate_run_id(run_id)
 
@@ -349,10 +404,10 @@ class TrialClientService:
         command = self._deepseek_command(
             note_path=note_path,
             run_id=run_id,
-            model=model,
-            timeout_seconds=timeout_seconds,
-            max_tokens=max_tokens,
-            cost_limit=cost_limit,
+            model=run_settings.model,
+            timeout_seconds=run_settings.timeout_seconds,
+            max_tokens=run_settings.max_tokens,
+            cost_limit=run_settings.cost_limit,
         )
         command_result = self._command_runner(command, env)
         parsed_stdout = _parse_command_stdout(command_result.stdout)
@@ -648,6 +703,37 @@ class TrialClientService:
         for path in (workspace.input_dir, workspace.vault_root, workspace.feedback_dir):
             path.mkdir(parents=True, exist_ok=True)
 
+    def _settings_file(self) -> Path:
+        path = self.config.settings_file.expanduser()
+        if not path.is_absolute():
+            path = self._root() / path
+        return path.resolve()
+
+    def _run_settings_from_request(
+        self,
+        request: Mapping[str, object],
+        defaults: TrialRunSettings,
+    ) -> TrialRunSettings:
+        return TrialRunSettings(
+            model=_optional_str(request, "model", defaults.model),
+            timeout_seconds=_optional_int(
+                request,
+                "timeout_seconds",
+                defaults.timeout_seconds,
+            ),
+            max_tokens=_optional_int(request, "max_tokens", defaults.max_tokens),
+            cost_limit=_optional_float(request, "cost_limit", defaults.cost_limit),
+        )
+
+    def _write_run_settings(self, settings: TrialRunSettings) -> None:
+        path = self._settings_file()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(settings.to_mapping(), ensure_ascii=False, indent=2, sort_keys=True)
+            + "\n",
+            encoding="utf-8",
+        )
+
     def _display_path(self, path: Path) -> str:
         try:
             return path.resolve().relative_to(self._root()).as_posix()
@@ -697,6 +783,9 @@ class TrialClientHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
             if self.path == "/api/secrets/deepseek":
                 self._send_json(self.server.service.save_api_key(body))
+                return
+            if self.path == "/api/run-settings":
+                self._send_json(self.server.service.save_run_settings(body))
                 return
             if self.path == "/api/workspace":
                 self._send_json(self.server.service.configure_workspace(body))
@@ -1446,6 +1535,7 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       <label for="costInput">单次成本上限</label>
       <input id="costInput" type="number" min="0.01" step="0.01" value="1.00">
       <div class="toolbar">
+        <button id="saveSettingsButton" class="secondary">保存运行配置</button>
         <button id="runButton">运行提取</button>
         <button id="refreshButton" class="secondary">刷新</button>
       </div>
@@ -1512,6 +1602,7 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       const data = await api('/api/status');
       currentStatus = data;
       renderModelPresets(data.model_presets || [], data.default_model || 'deepseek-v4-flash');
+      renderRunSettings(data.run_settings || {});
       const dot = $('keyDot');
       dot.className = 'dot ' + (data.api_key_present ? 'ok' : 'bad');
       $('keyStatus').textContent = data.api_key_present ? 'key ready' : 'key missing';
@@ -1540,6 +1631,13 @@ TRIAL_CLIENT_HTML = """<!doctype html>
         select.appendChild(option);
       }
       select.value = selectedModel;
+    }
+
+    function renderRunSettings(settings) {
+      if (settings.model) $('modelInput').value = settings.model;
+      if (settings.timeout_seconds) $('timeoutInput').value = settings.timeout_seconds;
+      if (settings.max_tokens) $('tokenInput').value = settings.max_tokens;
+      if (settings.cost_limit) $('costInput').value = Number(settings.cost_limit).toFixed(2);
     }
 
     async function saveApiKey() {
@@ -1589,6 +1687,24 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       }
     }
 
+    async function saveRunSettings() {
+      $('saveSettingsButton').disabled = true;
+      $('runMessage').textContent = 'saving settings';
+      try {
+        const result = await api('/api/run-settings', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(currentRunSettingsPayload())
+        });
+        renderRunSettings(result.run_settings || {});
+        $('runMessage').textContent = result.run_settings_file || 'settings saved';
+      } catch (err) {
+        $('runMessage').textContent = err.message;
+      } finally {
+        $('saveSettingsButton').disabled = false;
+      }
+    }
+
     async function importNoteFiles(event) {
       const files = Array.from(event.target.files || []);
       if (!files.length) return;
@@ -1616,10 +1732,7 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       try {
         const payload = {
           note_path: $('noteSelect').value,
-          model: $('modelInput').value,
-          timeout_seconds: Number($('timeoutInput').value),
-          max_tokens: Number($('tokenInput').value),
-          cost_limit: Number($('costInput').value)
+          ...currentRunSettingsPayload()
         };
         currentRun = await api('/api/run', {
           method: 'POST',
@@ -1634,6 +1747,15 @@ TRIAL_CLIENT_HTML = """<!doctype html>
       } finally {
         $('runButton').disabled = false;
       }
+    }
+
+    function currentRunSettingsPayload() {
+      return {
+        model: $('modelInput').value,
+        timeout_seconds: Number($('timeoutInput').value),
+        max_tokens: Number($('tokenInput').value),
+        cost_limit: Number($('costInput').value)
+      };
     }
 
     async function saveFeedback() {
@@ -2003,6 +2125,7 @@ TRIAL_CLIENT_HTML = """<!doctype html>
     }
 
     $('runButton').addEventListener('click', runExtraction);
+    $('saveSettingsButton').addEventListener('click', saveRunSettings);
     $('saveKeyButton').addEventListener('click', saveApiKey);
     $('workspaceButton').addEventListener('click', configureWorkspace);
     $('noteImportInput').addEventListener('change', importNoteFiles);

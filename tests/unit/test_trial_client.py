@@ -34,6 +34,45 @@ class TrialClientTests(unittest.TestCase):
         self.assertEqual(status["default_model"], DEFAULT_TRIAL_MODEL)
         self.assertEqual(DEFAULT_TRIAL_MODEL, "deepseek-v4-flash")
         self.assertEqual(models, {"deepseek-v4-flash", "deepseek-v4-pro"})
+        self.assertEqual(status["run_settings"]["model"], DEFAULT_TRIAL_MODEL)
+        self.assertEqual(status["run_settings"]["timeout_seconds"], 60)
+        self.assertEqual(status["run_settings"]["max_tokens"], 4096)
+        self.assertEqual(status["run_settings"]["cost_limit"], 1.0)
+
+    def test_save_run_settings_persists_local_preferences(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            service = TrialClientService(TrialClientConfig(root=root))
+
+            result = service.save_run_settings(
+                {
+                    "model": "deepseek-v4-pro",
+                    "timeout_seconds": 120,
+                    "max_tokens": 8192,
+                    "cost_limit": 2.5,
+                }
+            )
+            reloaded = TrialClientService(TrialClientConfig(root=root)).status()
+            settings_file = root / ".diamonddust-trial/trial-client-settings.json"
+            self.assertTrue(result["saved"])
+            self.assertTrue(settings_file.exists())
+            self.assertEqual(result["run_settings"]["model"], "deepseek-v4-pro")
+            self.assertEqual(reloaded["run_settings"]["model"], "deepseek-v4-pro")
+            self.assertEqual(reloaded["run_settings"]["timeout_seconds"], 120)
+            self.assertEqual(reloaded["run_settings"]["max_tokens"], 8192)
+            self.assertEqual(reloaded["run_settings"]["cost_limit"], 2.5)
+
+    def test_invalid_run_settings_file_falls_back_to_defaults(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings_file = root / ".diamonddust-trial/trial-client-settings.json"
+            settings_file.parent.mkdir(parents=True)
+            settings_file.write_text("{not-json", encoding="utf-8")
+
+            status = TrialClientService(TrialClientConfig(root=root)).status()
+
+        self.assertEqual(status["run_settings"]["model"], DEFAULT_TRIAL_MODEL)
+        self.assertEqual(status["run_settings"]["timeout_seconds"], 60)
 
     def test_load_provider_secret_env_reads_names_without_exposing_values(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -161,8 +200,16 @@ class TrialClientTests(unittest.TestCase):
                 {
                     "note_path": note.as_posix(),
                     "run_id": "run_trial_client_safe_ab12cd",
-                    "model": "deepseek-v4-flash",
+                    "model": "deepseek-v4-pro",
+                    "timeout_seconds": 123,
+                    "max_tokens": 9876,
+                    "cost_limit": 2.75,
                 }
+            )
+            settings = json.loads(
+                (root / ".diamonddust-trial/trial-client-settings.json").read_text(
+                    encoding="utf-8"
+                )
             )
 
         command, env = calls[0]
@@ -172,9 +219,15 @@ class TrialClientTests(unittest.TestCase):
         self.assertIn("--api-key-value-reading-approved", command)
         self.assertIn("--real-network-call-approved", command)
         self.assertIn("--prompt-source-schema-externalization-approved", command)
+        self.assertEqual(_command_value(command, "--model"), "deepseek-v4-pro")
+        self.assertEqual(_command_value(command, "--timeout-seconds"), "123")
+        self.assertEqual(_command_value(command, "--max-tokens"), "9876")
+        self.assertEqual(_command_value(command, "--cost-limit"), "2.75")
         self.assertNotIn("SECRET_VALUE", command)
         self.assertEqual(env[DEEPSEEK_API_KEY_ENV_VAR], "SECRET_VALUE")
         self.assertNotIn("SECRET_VALUE", json.dumps(result, ensure_ascii=False))
+        self.assertEqual(settings["model"], "deepseek-v4-pro")
+        self.assertEqual(settings["timeout_seconds"], 123)
 
     def test_run_extraction_rejects_non_preset_model(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -443,8 +496,14 @@ class TrialClientTests(unittest.TestCase):
             "unsupported",
             "workspaceButton",
             "noteImportInput",
+            "saveSettingsButton",
+            "timeoutInput",
+            "tokenInput",
+            "costInput",
+            "renderRunSettings",
             "/api/workspace",
             "/api/notes/import",
+            "/api/run-settings",
         ]
 
         for token in expected_tokens:
@@ -462,6 +521,11 @@ def _write_note(root: Path) -> Path:
 
 def _raising_runner(command: list[str], env) -> CommandResult:
     raise AssertionError("provider command should not run")
+
+
+def _command_value(command: list[str], flag: str) -> str:
+    index = command.index(flag)
+    return command[index + 1]
 
 
 def _write_success_artifacts(root: Path, run_id: str, *, unit_count: int) -> None:

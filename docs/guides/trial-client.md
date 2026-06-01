@@ -57,6 +57,7 @@ Defaults:
 - secrets env file: Win launcher
   `.diamonddust-trial/secrets/provider-secrets.env`; direct CLI default
   `~/.config/diamonddust/provider-secrets.env`
+- run settings file: `.diamonddust-trial/trial-client-settings.json`
 - provider: `deepseek`
 - default model: `deepseek-v4-flash`
 - model presets: `deepseek-v4-flash`, `deepseek-v4-pro`
@@ -69,6 +70,8 @@ The client can:
 - configure a local trial workspace
 - import Markdown files from the browser into the active input directory
 - save the DeepSeek API key into the configured local secrets file
+- save local run settings for model, timeout seconds, max output, and per-run
+  cost limit
 - run one DeepSeek `extract_units` call with explicit safety flags
 - load existing extraction versions for a note without calling the provider
 - delete trial-client generated versions from AI working artifact directories
