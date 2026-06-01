@@ -116,6 +116,8 @@ The trial client remains local-first:
 - The Win alpha launchers pass a package-local secret file to the backend:
   `<package>/.diamonddust-trial/secrets/provider-secrets.env`. Do not share the
   unpacked package directory after saving an API key.
+- The trial client trims surrounding whitespace before saving or loading the
+  local API key value, including quoted values in existing local secret files.
 - Provider calls happen only when the user explicitly runs extraction.
 - Raw provider request and response bodies are not persisted by default.
 - Trial output is written under the selected workspace.
