@@ -92,6 +92,18 @@ class TrialClientTests(unittest.TestCase):
         self.assertTrue(status["api_key_present"])
         self.assertNotIn("SECRET_VALUE", json.dumps(status, ensure_ascii=False))
 
+    def test_load_provider_secret_env_trims_quoted_key_whitespace(self) -> None:
+        with TemporaryDirectory() as tmp:
+            env_path = Path(tmp) / "provider-secrets.env"
+            env_path.write_text(
+                "DIAMONDDUST_DEEPSEEK_API_KEY='  SECRET_VALUE  '\n",
+                encoding="utf-8",
+            )
+
+            secrets = load_provider_secret_env(env_path)
+
+        self.assertEqual(secrets[DEEPSEEK_API_KEY_ENV_VAR], "SECRET_VALUE")
+
     def test_save_provider_secret_env_writes_local_key_without_returning_value(self) -> None:
         with TemporaryDirectory() as tmp:
             env_path = Path(tmp) / "provider-secrets.env"
@@ -100,7 +112,7 @@ class TrialClientTests(unittest.TestCase):
                 TrialClientConfig(root=Path(tmp), secrets_env_file=env_path)
             )
 
-            result = service.save_api_key({"api_key": "SECRET_VALUE"})
+            result = service.save_api_key({"api_key": "  SECRET_VALUE  "})
             secrets = load_provider_secret_env(env_path)
             content = env_path.read_text(encoding="utf-8")
 
@@ -110,6 +122,22 @@ class TrialClientTests(unittest.TestCase):
         self.assertEqual(secrets[DEEPSEEK_API_KEY_ENV_VAR], "SECRET_VALUE")
         self.assertIn("OTHER_VALUE=keep", content)
         self.assertNotIn("SECRET_VALUE", json.dumps(result, ensure_ascii=False))
+
+    def test_save_provider_secret_env_trims_value_before_persisting(self) -> None:
+        with TemporaryDirectory() as tmp:
+            env_path = Path(tmp) / "provider-secrets.env"
+
+            save_provider_secret_env(
+                env_path,
+                DEEPSEEK_API_KEY_ENV_VAR,
+                "  SECRET_VALUE  ",
+            )
+            secrets = load_provider_secret_env(env_path)
+            content = env_path.read_text(encoding="utf-8")
+
+        self.assertEqual(secrets[DEEPSEEK_API_KEY_ENV_VAR], "SECRET_VALUE")
+        self.assertIn("DIAMONDDUST_DEEPSEEK_API_KEY=SECRET_VALUE", content)
+        self.assertNotIn("  SECRET_VALUE  ", content)
 
     def test_save_provider_secret_env_replaces_existing_key(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -122,6 +150,9 @@ class TrialClientTests(unittest.TestCase):
 
         self.assertEqual(secrets[DEEPSEEK_API_KEY_ENV_VAR], "NEW")
         self.assertNotIn("OLD", content)
+
+    def test_frontend_trims_api_key_before_submit(self) -> None:
+        self.assertIn("const value = $('apiKeyInput').value.trim();", TRIAL_CLIENT_HTML)
 
     def test_run_extraction_builds_safe_deepseek_command(self) -> None:
         with TemporaryDirectory() as tmp:

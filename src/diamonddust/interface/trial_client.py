@@ -337,7 +337,7 @@ class TrialClientService:
         return versions
 
     def save_api_key(self, request: Mapping[str, object]) -> dict[str, object]:
-        api_key = _expect_str(request, "api_key")
+        api_key = _expect_str(request, "api_key").strip()
         save_provider_secret_env(
             self.config.secrets_env_file,
             DEEPSEEK_API_KEY_ENV_VAR,
@@ -888,6 +888,7 @@ def load_provider_secret_env(path: str | Path) -> dict[str, str]:
             value = parsed[0] if parsed else ""
         except ValueError:
             value = value.strip("'\"")
+        value = value.strip()
         result[name] = value
     return result
 
@@ -895,6 +896,8 @@ def load_provider_secret_env(path: str | Path) -> dict[str, str]:
 def save_provider_secret_env(path: str | Path, name: str, value: str) -> None:
     if not _ENV_NAME_PATTERN.match(name):
         raise TrialClientError("api key environment variable name is invalid")
+    if isinstance(value, str):
+        value = value.strip()
     _require_non_empty("api_key", value)
     if any(char in value for char in "\r\n\0"):
         raise TrialClientError("api_key must be a single-line value")
@@ -1638,8 +1641,8 @@ TRIAL_CLIENT_HTML = """<!doctype html>
     }
 
     async function saveApiKey() {
-      const value = $('apiKeyInput').value;
-      if (!value.trim()) {
+      const value = $('apiKeyInput').value.trim();
+      if (!value) {
         $('keyMessage').textContent = '请输入 API key';
         return;
       }

@@ -88,6 +88,29 @@ class DeepSeekAdapterErrorMappingTests(unittest.TestCase):
         self.assertFalse(result.error.should_retry)
         self.assertEqual(result.error.provider_request_id, "chatcmpl_malformed_ab12cd")
 
+    def test_maps_length_truncated_response_to_actionable_malformed_error(self) -> None:
+        request = _execution_request()
+
+        result = provider_result_from_deepseek_response(
+            request,
+            {
+                "id": "chatcmpl_truncated_ab12cd",
+                "choices": [
+                    {
+                        "finish_reason": "length",
+                        "message": {"content": '{"unit_candidates": ['},
+                    }
+                ],
+            },
+        )
+
+        self.assertFalse(result.succeeded)
+        self.assertIsNotNone(result.error)
+        self.assertEqual(result.error.error_type, ProviderErrorType.MALFORMED_RESPONSE)
+        self.assertIn("truncated before valid JSON", result.error.message)
+        self.assertIn("increase max_tokens or shorten the note", result.error.message)
+        self.assertEqual(result.error.provider_request_id, "chatcmpl_truncated_ab12cd")
+
     def test_usage_defaults_when_provider_usage_absent(self) -> None:
         usage = usage_from_deepseek_response({"id": "resp_no_usage"})
 

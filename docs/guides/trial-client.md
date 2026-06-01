@@ -137,6 +137,10 @@ Status and history APIs return only whether the key is present; they never
 return the key value. During extraction, only the subprocess environment
 receives the key value.
 
+The client trims surrounding whitespace before saving or loading the local key
+value. This keeps copied keys usable even when an existing quoted
+`provider-secrets.env` value contains accidental leading or trailing spaces.
+
 ## React Frontend
 
 A maintainable React/Vite frontend lives in:

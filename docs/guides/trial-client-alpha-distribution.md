@@ -119,6 +119,8 @@ The trial client remains local-first:
 - Run settings are stored locally at
   `<package>/.diamonddust-trial/trial-client-settings.json` so the client can
   remember model, timeout, max output, and per-run cost preferences.
+- The trial client trims surrounding whitespace before saving or loading the
+  local API key value, including quoted values in existing local secret files.
 - Provider calls happen only when the user explicitly runs extraction.
 - Raw provider request and response bodies are not persisted by default.
 - Trial output is written under the selected workspace.
