@@ -430,16 +430,36 @@ def _extract_structured_output(response: object) -> object:
         try:
             return json.loads(content)
         except json.JSONDecodeError as exc:
+            if _is_length_truncated_response(response):
+                raise DeepSeekAdapterError(
+                    "DeepSeek response was truncated before valid JSON; "
+                    "increase max_tokens or shorten the note"
+                ) from exc
             raise DeepSeekAdapterError("DeepSeek response content is not JSON") from exc
+
+    if _is_length_truncated_response(response):
+        raise DeepSeekAdapterError(
+            "DeepSeek response was truncated before valid JSON; "
+            "increase max_tokens or shorten the note"
+        )
 
     raise DeepSeekAdapterError("DeepSeek response did not contain JSON content")
 
 
 def _chat_completion_message_content(response: object) -> object | None:
-    choices = _lookup(response, "choices")
-    choice = _first_item(choices)
+    choice = _chat_completion_first_choice(response)
     message = _lookup(choice, "message")
     return _lookup(message, "content")
+
+
+def _chat_completion_first_choice(response: object) -> object | None:
+    choices = _lookup(response, "choices")
+    return _first_item(choices)
+
+
+def _is_length_truncated_response(response: object) -> bool:
+    choice = _chat_completion_first_choice(response)
+    return _lookup(choice, "finish_reason") == "length"
 
 
 def _create_chat_completion(client: object, request_mapping: Mapping[str, object]) -> object:

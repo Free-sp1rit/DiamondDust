@@ -2,6 +2,26 @@
 
 Record completed development milestones and links to reviews here.
 
+## 2026-06-01 — Trial Client Secret Trim Fix Completed
+
+- Scope: Fixed a Win11 trial-client provider-call failure caused by copied
+  DeepSeek API keys retaining accidental surrounding whitespace in the local
+  `provider-secrets.env` file.
+- Outcome: The browser input, backend save path, and local secret-file reader
+  now trim surrounding whitespace while keeping key values private. Existing
+  quoted local secret files with leading or trailing whitespace are normalized
+  at read time. DeepSeek length-truncated JSON responses now return a clearer
+  malformed-response message.
+- Review:
+  `docs/reviews/milestone-reviews/2026-06-01-trial-client-secret-trim.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 trial-client auth-boundary fix; no new provider
+  approval, retry behavior, raw output persistence, formal apply, publication,
+  or dependency was introduced.
+- Validation: 295 unit tests passed, compile check passed, local trial fixture
+  smoke passed, diff check passed, and architecture scan reported zero critical
+  violations.
+
 ## 2026-05-29 — Win Trial Alpha Startup Fixes Completed
 
 - Scope: Fixed Win11 alpha startup issues found during real package trial.
