@@ -21,6 +21,13 @@ type ArtifactVersion = {
   deletable?: boolean;
 };
 
+type RunSettings = {
+  model: string;
+  timeout_seconds: number;
+  max_tokens: number;
+  cost_limit: number;
+};
+
 type TrialNote = {
   path: string;
   name: string;
@@ -35,6 +42,8 @@ type TrialStatus = {
   api_key_present: boolean;
   api_key_env_var: string;
   secrets_env_file: string;
+  run_settings?: RunSettings;
+  run_settings_file?: string;
   workspace?: JsonRecord;
   input_dir?: string;
   vault_root?: string;
@@ -84,8 +93,14 @@ export default function App() {
   const [status, setStatus] = useState<TrialStatus | null>(null);
   const [selectedNote, setSelectedNote] = useState("");
   const [model, setModel] = useState("");
+  const [timeoutSeconds, setTimeoutSeconds] = useState("60");
+  const [maxTokens, setMaxTokens] = useState("4096");
+  const [costLimit, setCostLimit] = useState("1.00");
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [workspaceDir, setWorkspaceDir] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [feedbackVerdict, setFeedbackVerdict] = useState("needs_review");
+  const [feedbackNotes, setFeedbackNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("loading");
   const [currentResult, setCurrentResult] = useState<TrialResult | null>(null);
@@ -102,7 +117,12 @@ export default function App() {
   async function refresh() {
     const next = await api<TrialStatus>("/api/status");
     setStatus(next);
-    setModel((previous) => previous || next.default_model);
+    if (!settingsLoaded) {
+      applyRunSettings(next.run_settings, next.default_model);
+      setSettingsLoaded(true);
+    } else {
+      setModel((previous) => previous || next.default_model);
+    }
     if (!selectedNote && next.notes.length) {
       setSelectedNote(next.notes[0].path);
     }
@@ -114,7 +134,8 @@ export default function App() {
   }, []);
 
   async function saveApiKey() {
-    if (!apiKey.trim()) {
+    const value = apiKey.trim();
+    if (!value) {
       setMessage("请输入 API key");
       return;
     }
@@ -123,13 +144,34 @@ export default function App() {
       await api("/api/secrets/deepseek", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_key: apiKey })
+        body: JSON.stringify({ api_key: value })
       });
       setApiKey("");
       await refresh();
       setMessage("key saved locally");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "save failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveRunSettings() {
+    setBusy(true);
+    try {
+      const result = await api<{ run_settings?: RunSettings; run_settings_file?: string }>(
+        "/api/run-settings",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(runSettingsPayload())
+        }
+      );
+      applyRunSettings(result.run_settings, model);
+      setSettingsLoaded(true);
+      setMessage(result.run_settings_file || "settings saved");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "settings failed");
     } finally {
       setBusy(false);
     }
@@ -194,7 +236,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           note_path: selectedNote,
-          model
+          ...runSettingsPayload()
         })
       });
       setCurrentResult(result);
@@ -202,6 +244,31 @@ export default function App() {
       setMessage(result.run_id);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "run failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveFeedback() {
+    if (!currentResult?.run_id) {
+      setMessage("请先选择或运行一个产物");
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await api<{ markdown_path?: string }>("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          run_id: currentResult.run_id,
+          verdict: feedbackVerdict,
+          issue_tags: feedbackVerdict === "needs_review" ? [] : [feedbackVerdict],
+          notes: feedbackNotes
+        })
+      });
+      setMessage(result.markdown_path || "feedback saved");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "feedback failed");
     } finally {
       setBusy(false);
     }
@@ -289,6 +356,10 @@ export default function App() {
             <button disabled={busy} onClick={saveApiKey}>
               保存到本机
             </button>
+          </section>
+
+          <section className="panel">
+            <h2>运行配置</h2>
             <label>
               模型
               <select value={model} onChange={(event) => setModel(event.target.value)}>
@@ -299,6 +370,43 @@ export default function App() {
                 ))}
               </select>
             </label>
+            <div className="field-grid">
+              <label>
+                超时秒数
+                <input
+                  type="number"
+                  min="1"
+                  value={timeoutSeconds}
+                  onChange={(event) => setTimeoutSeconds(event.target.value)}
+                />
+              </label>
+              <label>
+                最大输出
+                <input
+                  type="number"
+                  min="1"
+                  value={maxTokens}
+                  onChange={(event) => setMaxTokens(event.target.value)}
+                />
+              </label>
+            </div>
+            <label>
+              单次成本上限
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={costLimit}
+                onChange={(event) => setCostLimit(event.target.value)}
+              />
+            </label>
+            <button className="secondary" disabled={busy} onClick={saveRunSettings}>
+              保存运行配置
+            </button>
+            <dl className="compact">
+              <dt>配置文件</dt>
+              <dd>{text(status?.run_settings_file)}</dd>
+            </dl>
           </section>
 
           <section className="panel">
@@ -371,6 +479,39 @@ export default function App() {
               )}
             </div>
           </section>
+
+          <section className="panel">
+            <h2>反馈</h2>
+            <label>
+              结论
+              <select
+                value={feedbackVerdict}
+                onChange={(event) => setFeedbackVerdict(event.target.value)}
+              >
+                <option value="useful">可用</option>
+                <option value="empty_extraction">空输出</option>
+                <option value="missing_ideas">漏提</option>
+                <option value="too_granular">过细</option>
+                <option value="hallucination">疑似幻觉</option>
+                <option value="language_issue">语言问题</option>
+                <option value="needs_review">待复核</option>
+              </select>
+            </label>
+            <label>
+              备注
+              <textarea
+                value={feedbackNotes}
+                onChange={(event) => setFeedbackNotes(event.target.value)}
+              />
+            </label>
+            <button
+              className="secondary"
+              disabled={busy || !currentResult?.run_id}
+              onClick={saveFeedback}
+            >
+              保存反馈
+            </button>
+          </section>
         </aside>
 
         <section className="content">
@@ -411,10 +552,47 @@ export default function App() {
               </div>
             </section>
           </section>
+
+          <section className="details-grid">
+            <section>
+              <h2>边界</h2>
+              <div className="stack">
+                <JsonSummaryCard value={currentResult?.boundaries || status?.boundaries} />
+              </div>
+            </section>
+            <section>
+              <h2>Artifacts</h2>
+              <div className="stack">
+                <JsonSummaryCard value={currentResult?.artifact_paths} />
+              </div>
+            </section>
+          </section>
         </section>
       </section>
     </main>
   );
+
+  function runSettingsPayload() {
+    return {
+      model,
+      timeout_seconds: Number(timeoutSeconds),
+      max_tokens: Number(maxTokens),
+      cost_limit: Number(costLimit)
+    };
+  }
+
+  function applyRunSettings(settings: RunSettings | undefined, fallbackModel: string) {
+    const next = settings || {
+      model: fallbackModel,
+      timeout_seconds: 60,
+      max_tokens: 4096,
+      cost_limit: 1
+    };
+    setModel(next.model || fallbackModel);
+    setTimeoutSeconds(String(next.timeout_seconds || 60));
+    setMaxTokens(String(next.max_tokens || 4096));
+    setCostLimit(formatCostLimit(next.cost_limit || 1));
+  }
 }
 
 function asNullableRecord(value: unknown): JsonRecord | null {
@@ -536,6 +714,44 @@ function RelationCard({ relation }: { relation: JsonRecord }) {
   );
 }
 
+function JsonSummaryCard({ value }: { value: unknown }) {
+  const record = asRecord(value);
+  const entries = Object.entries(record);
+  if (!entries.length) {
+    return (
+      <article className="summary-card">
+        <p className="muted">暂无记录</p>
+      </article>
+    );
+  }
+  return (
+    <article className="summary-card">
+      <dl className="compact wide">
+        {entries.map(([key, item]) => (
+          <FragmentPair name={key} value={item} key={key} />
+        ))}
+      </dl>
+      <details>
+        <summary>机器结构</summary>
+        <JsonBlock value={value} />
+      </details>
+    </article>
+  );
+}
+
+function FragmentPair({ name, value }: { name: string; value: unknown }) {
+  return (
+    <>
+      <dt>{name}</dt>
+      <dd>{text(value)}</dd>
+    </>
+  );
+}
+
 function JsonBlock({ value }: { value: unknown }) {
   return <pre>{JSON.stringify(value, null, 2)}</pre>;
+}
+
+function formatCostLimit(value: number): string {
+  return Number.isFinite(value) ? value.toFixed(2) : "1.00";
 }

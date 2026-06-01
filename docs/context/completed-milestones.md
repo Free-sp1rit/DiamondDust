@@ -2,6 +2,26 @@
 
 Record completed development milestones and links to reviews here.
 
+## 2026-06-01 — Trial Client Run Settings And Frontend Parity Completed
+
+- Scope: Brought the React trial-client frontend up to parity with the
+  embedded fallback page for runtime controls, feedback capture, boundary
+  display, and artifact path display.
+- Outcome: The trial client now persists selected model, timeout seconds, max
+  output tokens, and per-run cost limit in
+  `.diamonddust-trial/trial-client-settings.json`. Both the React frontend and
+  embedded fallback page use the backend-owned run-settings endpoint.
+- Review:
+  `docs/reviews/milestone-reviews/2026-06-01-trial-client-run-settings.md`.
+- Review decision: pass.
+- Gate impact: Post-Gate 7 trial-client usability milestone; no new provider
+  approval, raw output persistence, formal apply, publication, dependency, or
+  release behavior was introduced.
+- Validation: Focused trial-client/distribution tests passed, React frontend
+  build passed, 293 unit tests passed, compile check passed, local trial
+  fixture smoke passed, diff check passed, and architecture scan reported zero
+  critical violations.
+
 ## 2026-05-29 — Win Trial Alpha Startup Fixes Completed
 
 - Scope: Fixed Win11 alpha startup issues found during real package trial.

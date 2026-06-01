@@ -26,7 +26,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -60,7 +61,8 @@ button.danger {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-height: 38px;
   border: 1px solid var(--line);
@@ -68,6 +70,11 @@ select {
   padding: 8px 10px;
   background: #fff;
   color: var(--ink);
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
 }
 
 label {
@@ -163,6 +170,12 @@ h3 {
   flex: 1;
 }
 
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .compact {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr);
@@ -178,6 +191,10 @@ h3 {
 .compact dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.compact.wide {
+  grid-template-columns: 160px minmax(0, 1fr);
 }
 
 .metrics {
@@ -210,11 +227,18 @@ h3 {
   gap: 18px;
 }
 
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
 .source-context-panel {
   display: grid;
   gap: 12px;
 }
 
+.details-grid > section,
 .result-grid > section {
   display: grid;
   gap: 12px;
@@ -224,10 +248,17 @@ h3 {
 .unit-card,
 .source-context-card,
 .relation-card,
+.summary-card,
 .version {
   display: grid;
   gap: 10px;
   padding: 12px;
+}
+
+.summary-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
 .source-context-card {
@@ -345,6 +376,7 @@ pre {
 
 @media (max-width: 980px) {
   .layout,
+  .details-grid,
   .result-grid {
     grid-template-columns: 1fr;
   }
@@ -363,5 +395,11 @@ pre {
 
   .layout {
     padding: 14px;
+  }
+
+  .field-grid,
+  .compact,
+  .compact.wide {
+    grid-template-columns: 1fr;
   }
 }

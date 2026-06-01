@@ -212,6 +212,9 @@ PowerShell 用户也可以运行：
 - 通过 Win11 启动器运行时，API key 保存在本发行包目录的
   `.diamonddust-trial/secrets/provider-secrets.env`。保存 key 后不要把
   解压后的整个目录转发给他人。
+- 运行配置保存在本发行包目录的
+  `.diamonddust-trial/trial-client-settings.json`，用于记住模型、超时、
+  最大输出和单次成本上限。
 - 试用产物写入你选择的工作目录。
 - 启动诊断日志写入本目录的 `.diamonddust-trial/logs/`。
 - 本发行包不包含 API key、`knowledge-vault/`、`.git/`、`.venv/`、
@@ -254,6 +257,7 @@ def _write_manifest(
             "raw_provider_request_included": False,
             "raw_provider_response_included": False,
             "trial_runtime_dir_included": False,
+            "trial_run_settings_included": False,
             "formal_write_enabled": False,
             "publication_enabled": False,
         },
